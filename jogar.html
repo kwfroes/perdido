@@ -1,78 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0e1410">
-  <title>Perdido - Protótipo</title>
-  <link rel="icon" href="favicon.ico" sizes="any" />
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-16.png" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="css/main.css">
-</head>
-<body>
-  <div id="game-frame">
-    <canvas id="game" width="640" height="360"></canvas>
-  </div>
-
-  <div id="rotate-overlay">
-    <div class="rot-icon"></div>
-    <p>Gire o aparelho</p>
-    <small>Perdido é jogado na horizontal.</small>
-  </div>
-
-  <div id="menu" hidden>
-    <div class="card">
-      <h1>Perdido</h1>
-      <p class="sub">Cada semente gera uma ilha diferente. Use a mesma semente para voltar ao mesmo mundo.</p>
-
-      <div id="mismatch" class="mismatch" hidden></div>
-      <div class="cols">
-      <div class="col-saves"><div id="slots" class="slots"></div></div>
-
-      <div class="col-new">
-      <label class="newgame">Novo jogo</label>
-
-      <label for="seed-input">Semente</label>
-      <div class="row">
-        <input id="seed-input" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="ex.: K7QM-3XZP, ou qualquer texto">
-        <button id="btn-random" type="button" title="Gerar semente aleatória">Aleatória</button>
-      </div>
-
-      <label>Tamanho do mundo</label>
-      <div class="sizes">
-        <label class="opt"><input type="radio" name="size" value="G" checked> Grande <small>200×200</small></label>
-        <label class="opt"><input type="radio" name="size" value="E"> Enorme <small>400×400</small></label>
-      </div>
-      <p class="hint small">O Enorme leva alguns segundos para gerar e tem cavernas.</p>
-
-
-      <p id="seed-note" class="note" hidden></p>
-      <p id="seed-error" class="error" hidden></p>
-      <button id="btn-play" type="button" class="primary">Próximo: escolher personagem →</button>
-      </div>
-      </div>
-      <p class="hint">Cole um código completo (ex.: <code>V2-E-K7QM-3XZP</code>) para recriar o mundo de outra pessoa. No jogo, <b>K</b> copia o código e <b>F4</b> mostra o mapa.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0e1410" />
+    <title>Perdido - Protótipo</title>
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="assets/icons/icon-32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="assets/icons/icon-16.png"
+    />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="css/main.css" />
+    <script src="js/sw-register.js" defer></script>
+  </head>
+  <body>
+    <div id="game-frame">
+      <canvas id="game" width="640" height="360"></canvas>
     </div>
-  </div>
 
-  <!-- 2º passo do Novo jogo: escolha do personagem -->
-  <div id="charsel" hidden>
-    <div class="cs-card">
-      <div class="cs-head"><h1>Quem vai se perder?</h1><span id="cs-world" class="cs-world"></span></div>
-      <div class="cs-body">
-        <div id="cs-list" class="cs-list" role="radiogroup" aria-label="Personagem"></div>
-        <div class="cs-stage"><div id="cs-fig" class="cs-fig"></div></div>
-        <div id="cs-sheet" class="cs-sheet"></div>
-      </div>
-      <div class="cs-foot"><button id="cs-back" type="button">← Voltar</button><span class="cs-keys">↑↓ troca · Enter começa · Esc volta</span><button id="cs-start" type="button" class="primary">Começar a aventura</button></div>
+    <div id="rotate-overlay">
+      <div class="rot-icon"></div>
+      <p>Gire o aparelho</p>
+      <small>Perdido é jogado na horizontal.</small>
     </div>
-  </div>
 
-  <script type="module" src="js/main.js"></script>
-</body>
+    <div id="menu" hidden>
+      <div class="card">
+        <h1>Perdido</h1>
+        <p class="sub">
+          Cada semente gera uma ilha diferente. Use a mesma semente para voltar
+          ao mesmo mundo.
+        </p>
+
+        <div id="mismatch" class="mismatch" hidden></div>
+        <div class="cols">
+          <div class="col-saves"><div id="slots" class="slots"></div></div>
+
+          <div class="col-new">
+            <label class="newgame">Novo jogo</label>
+
+            <label for="seed-input">Semente</label>
+            <div class="row">
+              <input
+                id="seed-input"
+                type="text"
+                maxlength="80"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="ex.: K7QM-3XZP, ou qualquer texto"
+              />
+              <button
+                id="btn-random"
+                type="button"
+                title="Gerar semente aleatória"
+              >
+                Aleatória
+              </button>
+            </div>
+
+            <label>Tamanho do mundo</label>
+            <div class="sizes">
+              <label class="opt"
+                ><input type="radio" name="size" value="G" checked /> Grande
+                <small>200×200</small></label
+              >
+              <label class="opt"
+                ><input type="radio" name="size" value="E" /> Enorme
+                <small>400×400</small></label
+              >
+            </div>
+            <p class="hint small">
+              O Enorme leva alguns segundos para gerar e tem cavernas.
+            </p>
+
+            <p id="seed-note" class="note" hidden></p>
+            <p id="seed-error" class="error" hidden></p>
+            <button id="btn-play" type="button" class="primary">
+              Próximo: escolher personagem →
+            </button>
+          </div>
+        </div>
+        <p class="hint">
+          Cole um código completo (ex.: <code>V2-E-K7QM-3XZP</code>) para
+          recriar o mundo de outra pessoa. No jogo, <b>K</b> copia o código e
+          <b>F4</b> mostra o mapa.
+        </p>
+      </div>
+    </div>
+
+    <!-- 2º passo do Novo jogo: escolha do personagem -->
+    <div id="charsel" hidden>
+      <div class="cs-card">
+        <div class="cs-head">
+          <h1>Quem vai se perder?</h1>
+          <span id="cs-world" class="cs-world"></span>
+        </div>
+        <div class="cs-body">
+          <div
+            id="cs-list"
+            class="cs-list"
+            role="radiogroup"
+            aria-label="Personagem"
+          ></div>
+          <div class="cs-stage"><div id="cs-fig" class="cs-fig"></div></div>
+          <div id="cs-sheet" class="cs-sheet"></div>
+        </div>
+        <div class="cs-foot">
+          <button id="cs-back" type="button">← Voltar</button
+          ><span class="cs-keys">↑↓ troca · Enter começa · Esc volta</span
+          ><button id="cs-start" type="button" class="primary">
+            Começar a aventura
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
 </html>
