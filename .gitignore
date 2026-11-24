@@ -1,2 +1,4 @@
 repomix-output.xml
 repomix-output-perdido.xml
+__pycache__/
+*.pyc
