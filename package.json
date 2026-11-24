@@ -1,0 +1,12 @@
+{
+  "name": "perdido",
+  "private": true,
+  "type": "module",
+  "description": "Perdido (titulo provisorio): jogo top-down pixel art em HTML/CSS/JS + Canvas 2D",
+  "scripts": {
+    "test": "node tests/engine.test.mjs && node tests/charsel.test.mjs && node tests/calendar.test.mjs && node tests/save.test.mjs && node tests/weather.test.mjs && node tests/fruits.test.mjs && node tests/islands.test.mjs && node tests/animals.test.mjs --quick && node tests/generator.test.mjs --quick && node tests/generator2.test.mjs --quick",
+    "test:full": "node tests/engine.test.mjs && node tests/calendar.test.mjs && node tests/fruits.test.mjs && node tests/islands.test.mjs && node tests/animals.test.mjs && node tests/generator.test.mjs && node tests/generator2.test.mjs",
+    "test:browserless": "node tests/browserless/game.test.mjs && node tests/browserless/menu.test.mjs && node tests/browserless/water.test.mjs && node tests/browserless/boat.test.mjs && node tests/browserless/time.test.mjs && node tests/browserless/diagonal.test.mjs && node tests/browserless/save.test.mjs && node tests/browserless/slots.test.mjs && node tests/browserless/weather.test.mjs && node tests/browserless/inventory.test.mjs && node tests/browserless/terminal.test.mjs && node tests/browserless/wear.test.mjs && node tests/browserless/touch.test.mjs && node tests/browserless/vitals.test.mjs && node tests/browserless/fire.test.mjs && node tests/browserless/iron.test.mjs && node tests/browserless/noble.test.mjs && node tests/browserless/canoe.test.mjs && node tests/browserless/r1.test.mjs && node tests/browserless/cave.test.mjs",
+    "serve": "python -m http.server 8000"
+  }
+}

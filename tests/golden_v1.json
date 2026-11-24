@@ -1,0 +1,92 @@
+{
+ "V1-G-K7QM-3XZP": {
+  "sha1": "4ec40d40c28c15970482b85b74006c7fcc7163a9",
+  "objects": 1418,
+  "attempt": 0,
+  "start": [
+   96,
+   104
+  ]
+ },
+ "V1-G-ILHA": {
+  "sha1": "36c9cfa0096917931d4219ee61d732e7d79bb67f",
+  "objects": 994,
+  "attempt": 0,
+  "start": [
+   94,
+   94
+  ]
+ },
+ "V1-G-PERDIDO": {
+  "sha1": "d4f1a4a6667d3c05d34ee367345deb4cfd210670",
+  "objects": 1274,
+  "attempt": 0,
+  "start": [
+   100,
+   100
+  ]
+ },
+ "V1-G-V1-REGRESSAO-1": {
+  "sha1": "93912532510b52d9a6f25b3d54be3d818644901a",
+  "objects": 1045,
+  "attempt": 0,
+  "start": [
+   100,
+   100
+  ]
+ },
+ "V1-M-AAAA-BBBB": {
+  "sha1": "2a598052b897b0c80217647998e0a263adeb1932",
+  "objects": 468,
+  "attempt": 0,
+  "start": [
+   75,
+   75
+  ]
+ },
+ "V1-M-MATA-VERDE": {
+  "sha1": "cb400bb67e273025ea8934c6e094c297075f66b2",
+  "objects": 478,
+  "attempt": 0,
+  "start": [
+   75,
+   75
+  ]
+ },
+ "V1-P-ILHA PERDIDA": {
+  "sha1": "f92270523e0d5061818eb38b0a8cf13df329a217",
+  "objects": 215,
+  "attempt": 0,
+  "start": [
+   50,
+   50
+  ]
+ },
+ "V1-P-X2N5-7HFR": {
+  "sha1": "457cbe26079c34a893a3da9c02790a01ab53fd1e",
+  "objects": 203,
+  "attempt": 0,
+  "start": [
+   45,
+   45
+  ]
+ },
+ "V1-G-TESTE": {
+  "sha1": "8749fbf2a10b8feb6553c097f14de75500991827",
+  "objects": 1098,
+  "attempt": 0,
+  "start": [
+   100,
+   100
+  ]
+ },
+ "V1-M-DETERMINISMO": {
+  "sha1": "fdd14622f67d7f449ae3e464f646942485a097d6",
+  "objects": 636,
+  "attempt": 0,
+  "start": [
+   75,
+   75
+  ]
+ }
+}

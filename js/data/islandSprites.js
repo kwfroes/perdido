@@ -1,0 +1,4 @@
+// GERADO por tools/build_island_assets.py: não edite à mão.
+export const ISLAND_SPRITES = {"pitanga_bush": [30, 30], "ore_ferro": [32, 29], "ore_ferro_big": [48, 51], "ore_ferro_cracked": [32, 29], "ore_ferro_rubble": [28, 22], "ore_prata": [30, 30], "ore_prata_big": [48, 51], "ore_prata_cracked": [30, 30], "ore_prata_rubble": [28, 22], "ore_ouro": [30, 29], "ore_ouro_big": [48, 51], "ore_ouro_cracked": [30, 29], "ore_ouro_rubble": [28, 21], "ore_platina": [32, 29], "ore_platina_big": [48, 51], "ore_platina_cracked": [32, 29], "ore_platina_rubble": [28, 21], "canoe": [82, 26], "paddle": [28, 28]};
+export const PITANGA_ANCHORS = [[12, 13], [24, 18], [7, 22], [19, 6], [19, 23], [18, 17], [6, 13], [9, 8], [23, 10]];
+export const CANOE_SPRITES = {"dirs": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"], "frames": 4, "f": {"cell": [84, 70]}, "m": {"cell": [84, 72]}, "ef": {"cell": [80, 74]}, "em": {"cell": [82, 76]}};

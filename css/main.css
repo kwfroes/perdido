@@ -1,0 +1,155 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: #0e1410; overflow: hidden; font-family: system-ui, "Segoe UI", sans-serif; }
+#game-frame { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+#game { image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+
+#menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+        background: radial-gradient(ellipse at center, rgba(14,24,18,.86), rgba(6,10,8,.96)); z-index: 10; }
+#menu[hidden] { display: none; }
+#menu .card { width: min(460px, 100%); background: #1a1410; border: 1px solid #d9a066; border-radius: 10px; padding: 24px 26px; color: #f3e9d8; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+#menu h1 { font-size: 30px; letter-spacing: 2px; color: #d9a066; margin-bottom: 4px; }
+#menu .sub { color: #c8bfae; font-size: 14px; margin-bottom: 18px; line-height: 1.4; }
+#menu label { display: block; font-size: 13px; color: #d9a066; margin: 14px 0 6px; }
+#menu .row { display: flex; gap: 8px; }
+#menu input[type=text] { flex: 1; min-width: 0; background: #0e0b08; color: #f3e9d8; border: 1px solid #5b4630; border-radius: 6px; padding: 10px 12px; font: 15px ui-monospace, Consolas, monospace; letter-spacing: 1px; text-transform: uppercase; }
+#menu input[type=text]:focus { outline: 2px solid #d9a066; border-color: #d9a066; }
+#menu button { cursor: pointer; border: 1px solid #5b4630; background: #2a2018; color: #f3e9d8; border-radius: 6px; padding: 10px 14px; font-size: 14px; }
+#menu button:hover { background: #3a2c20; border-color: #d9a066; }
+#menu button.primary { width: 100%; margin-top: 18px; background: #d9a066; color: #1a1410; font-weight: 700; font-size: 16px; border-color: #d9a066; padding: 12px; }
+#menu button.primary:hover { background: #e6b27a; }
+#menu .sizes { display: flex; gap: 8px; flex-wrap: wrap; }
+#menu .opt { display: flex; align-items: center; gap: 6px; margin: 0; background: #0e0b08; border: 1px solid #5b4630; border-radius: 6px; padding: 8px 10px; cursor: pointer; color: #f3e9d8; font-size: 14px; }
+#menu .opt small { color: #8d8272; }
+#menu .opt:has(input:checked) { border-color: #d9a066; background: #2a2018; }
+#menu .error { color: #ff9c8a; font-size: 13px; margin-top: 12px; }
+#menu .hint { color: #8d8272; font-size: 12px; margin-top: 16px; line-height: 1.5; }
+#menu code { color: #d9a066; }
+#menu .hint.small { margin-top: 8px; font-size: 12px; }
+#menu .note { color: #ffd9a0; font-size: 13px; margin-top: 12px; line-height: 1.4; }
+#menu .note[hidden] { display: none; }
+
+/* jogos salvos */
+#menu .slots { margin: 6px 0 10px; }
+#menu .slot { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin: 4px 0; border: 1px solid #5a4632; border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.03); }
+#menu .slot.selected { border-color: #d9a066; background: rgba(217,160,102,0.12); }
+#menu .slot .n { font-weight: bold; color: #d9a066; width: 16px; }
+#menu .slot .info { flex: 1; font-size: 12px; line-height: 1.35; }
+#menu .slot.empty .info { color: #8f8574; font-style: italic; }
+#menu .slot.broken .info { color: #ffb4a8; }
+#menu .slot button { padding: 3px 8px; font-size: 12px; }
+#menu .slot button.danger { background: #8a2f22; color: #fff; }
+#menu .mismatch { border: 1px solid #ffb4a8; border-radius: 6px; padding: 10px; margin: 8px 0; background: rgba(140,50,40,0.25); }
+#menu.asking .card > *:not(.mismatch):not(h1) { display: none; }
+#menu .newgame { margin-top: 10px; }
+
+/* ---------- Mobile: paisagem e controles de toque ---------- */
+html, body, #game, #touch-controls { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#menu input[type=text] { user-select: text; -webkit-user-select: text; }
+html.touch #menu, html.touch #menu * { touch-action: pan-y; }
+
+/* menu em telas baixas (celular deitado): o cartão rola por dentro */
+@media (max-height: 480px) {
+  #menu { align-items: flex-start; padding: 8px; }
+  #menu .card { max-height: calc(100dvh - 16px); overflow-y: auto; padding: 14px 18px; }
+  #menu h1 { font-size: 22px; } #menu .sub { margin-bottom: 8px; font-size: 13px; }
+  #menu label { margin: 8px 0 4px; } #menu .hint { margin-top: 8px; }
+}
+
+/* aviso de girar: só em aparelho de toque em retrato */
+#rotate-overlay { display: none; position: fixed; inset: 0; z-index: 50; background: #1a1410; color: #f3e9d8;
+  flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; font-size: 18px; }
+#rotate-overlay small { color: #8d8272; font-size: 13px; }
+#rotate-overlay .rot-icon { width: 46px; height: 74px; border: 3px solid #d9a066; border-radius: 8px; animation: tc-rot 2s ease-in-out infinite; }
+@keyframes tc-rot { 0%, 25% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) { html.touch #rotate-overlay { display: flex; } }
+
+#touch-controls { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+#touch-controls[hidden] { display: none; }
+#touch-controls > * { pointer-events: auto; }
+.tc-stick { position: absolute; left: calc(18px + env(safe-area-inset-left)); bottom: calc(18px + env(safe-area-inset-bottom));
+  width: 116px; height: 116px; border-radius: 50%; background: rgba(24,18,12,.35); border: 2px solid rgba(217,160,102,.55); }
+.tc-stick.on { background: rgba(24,18,12,.5); }
+.tc-knob { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%;
+  background: rgba(217,160,102,.75); border: 2px solid #f3e9d8; pointer-events: none; }
+.tc-stick:not(.on) .tc-knob { transition: transform .08s; }
+.tc-btn { display: flex; align-items: center; justify-content: center; border: 2px solid rgba(217,160,102,.7); color: #f3e9d8;
+  background: rgba(24,18,12,.6); border-radius: 50%; padding: 0; font: inherit; }
+.tc-btn[hidden] { display: none; }
+.tc-btn.on { background: rgba(217,160,102,.6); }
+.tc-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tc-act { position: absolute; right: calc(24px + env(safe-area-inset-right)); bottom: calc(26px + env(safe-area-inset-bottom));
+  width: 76px; height: 76px; flex-direction: column; gap: 1px; }
+.tc-act b { font-size: 14px; letter-spacing: 1px; color: #d9a066; }
+.tc-act span { font-size: 10px; max-width: 70px; line-height: 1.1; text-align: center; }
+.tc-act.on b { color: #1a1410; }
+.tc-bar { position: absolute; top: 48px; right: calc(8px + env(safe-area-inset-right)); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.tc-bar .tc-btn { width: 40px; height: 40px; border-radius: 9px; pointer-events: auto; }
+
+
+/* ---------- Escolha de personagem (2º passo do Novo jogo) ---------- */
+#charsel { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: radial-gradient(ellipse at center, rgba(26,20,16,.92), rgba(8,6,4,.97)); }
+#charsel[hidden] { display: none; }
+.cs-card { width: min(980px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: #1a1410; border: 1px solid #d9a066;
+  border-radius: 10px; color: #f3e9d8; box-shadow: 0 10px 40px rgba(0,0,0,.6); overflow: hidden; }
+.cs-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 20px 10px; border-bottom: 1px solid #3a2c20; }
+.cs-head h1 { font-size: 24px; letter-spacing: 1px; color: #d9a066; margin: 0; }
+.cs-world { color: #8d8272; font-size: 12px; font-family: ui-monospace, Consolas, monospace; }
+.cs-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 170px minmax(220px, 300px) 1fr; }
+.cs-list { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-right: 1px solid #3a2c20; overflow-y: auto; }
+.cs-item { display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px; border: 1px solid #4a3c2c; border-radius: 6px;
+  background: rgba(255,255,255,0.03); color: #f3e9d8; font: inherit; cursor: pointer; }
+.cs-item:hover { border-color: #8d6b48; }
+.cs-item.selected { border-color: #d9a066; background: rgba(217,160,102,0.16); box-shadow: 0 0 0 1px #d9a066 inset; }
+.cs-item b { display: block; font-size: 14px; } .cs-item small { display: block; color: #d9a066; font-size: 11px; }
+/* rosto: quadro parado (coluna 5, linha da frente) da folha 240x256, ampliado 2x, só cabeça e ombros */
+.cs-face { flex: none; width: 40px; height: 40px; border-radius: 50%; background-repeat: no-repeat; background-size: 480px 512px;
+  background-position: -404px -4px; image-rendering: pixelated; background-color: #2a2018; border: 1px solid #5b4630; }
+.cs-stage { position: relative; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 34px; min-height: 280px;
+  background: linear-gradient(#22301e 0%, #1c2a19 62%, #6b5536 62.5%, #8a6c45 100%); border-right: 1px solid #3a2c20; overflow: hidden; }
+.cs-stage::after { content: ''; position: absolute; left: 50%; bottom: 26px; width: 110px; height: 18px; margin-left: -55px; border-radius: 50%; background: rgba(0,0,0,.35); }
+.cs-fig { position: relative; z-index: 1; background-repeat: no-repeat; image-rendering: pixelated; }
+.cs-sheet { padding: 14px 20px; overflow-y: auto; }
+.cs-sheet h2 { font-size: 26px; color: #f3e9d8; margin: 0; }
+.cs-meta { color: #d9a066; font-size: 13px; margin: 2px 0 10px; }
+.cs-story { font-size: 14px; line-height: 1.55; color: #ded3c1; margin-bottom: 12px; }
+.cs-sheet h3 { font-size: 13px; color: #d9a066; text-transform: uppercase; letter-spacing: 1px; margin: 4px 0 6px; }
+.cs-traits { display: grid; gap: 7px; }
+.cs-tr { display: grid; grid-template-columns: 92px 1fr 28px; align-items: center; column-gap: 8px; }
+.cs-tl { font-size: 13px; font-weight: 600; }
+.cs-bar { position: relative; height: 8px; border-radius: 4px; background: #0e0b08; border: 1px solid #3a2c20; overflow: hidden; }
+.cs-bar b { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #a8743f, #e2a96a); }
+.cs-bar i { position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1px; background: rgba(243,233,216,.45); }   /* média = 50 */
+.cs-tv { font-size: 12px; color: #8d8272; text-align: right; font-family: ui-monospace, Consolas, monospace; }
+.cs-te { grid-column: 2 / 4; font-size: 12px; color: #b9ad9a; margin-top: 1px; }
+.cs-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.cs-tags span { font-size: 12px; padding: 3px 8px; border-radius: 10px; }
+.cs-tags .pro { background: rgba(127,211,106,.14); color: #a8e08a; border: 1px solid rgba(127,211,106,.35); }
+.cs-tags .con { background: rgba(224,90,74,.14); color: #ff9c8a; border: 1px solid rgba(224,90,74,.35); }
+.cs-foot { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-top: 1px solid #3a2c20; }
+.cs-foot button { cursor: pointer; border: 1px solid #5b4630; background: #2a2018; color: #f3e9d8; border-radius: 6px; padding: 10px 14px; font-size: 14px; }
+.cs-foot button:hover { background: #3a2c20; border-color: #d9a066; }
+.cs-foot button.primary { margin-left: auto; background: #d9a066; color: #1a1410; font-weight: 700; font-size: 15px; border-color: #d9a066; padding: 11px 22px; }
+.cs-foot button.primary:hover { background: #e6b27a; }
+.cs-keys { color: #6f6455; font-size: 11px; }
+html.touch .cs-keys { display: none; }
+html.touch #charsel, html.touch #charsel * { touch-action: pan-y; }
+/* telas estreitas: lista em cima (linha), palco e ficha lado a lado */
+@media (max-width: 760px) {
+  .cs-body { grid-template-columns: 180px 1fr; grid-template-rows: auto 1fr; }
+  .cs-list { grid-column: 1 / 3; flex-direction: row; border-right: none; border-bottom: 1px solid #3a2c20; overflow-x: auto; padding: 8px; }
+  .cs-item { flex: 1 0 auto; }
+}
+/* celular deitado (pouca altura): tudo menor; a ficha rola */
+@media (max-height: 520px) {
+  #charsel { padding: 6px; }
+  .cs-card { max-height: calc(100dvh - 12px); }
+  .cs-head { padding: 6px 12px; } .cs-head h1 { font-size: 17px; }
+  .cs-body { grid-template-columns: 132px 190px 1fr; }
+  .cs-list { padding: 6px; gap: 4px; } .cs-item { padding: 4px; } .cs-face { width: 30px; height: 30px; background-size: 360px 384px; background-position: -303px -3px; }
+  .cs-stage { min-height: 0; padding-bottom: 22px; } .cs-stage::after { bottom: 16px; width: 80px; margin-left: -40px; }
+  .cs-sheet { padding: 8px 12px; } .cs-sheet h2 { font-size: 19px; } .cs-meta { margin-bottom: 4px; font-size: 12px; }
+  .cs-story { font-size: 12px; line-height: 1.4; margin-bottom: 6px; }
+  .cs-tr { grid-template-columns: 78px 1fr 24px; } .cs-tl { font-size: 12px; } .cs-te { font-size: 11px; }
+  .cs-foot { padding: 6px 12px; } .cs-foot button.primary { padding: 8px 16px; }
+}

@@ -1,0 +1,174 @@
+import { ITEMS, ITEM_ORDER, RECIPES, DURABILITY } from '../data/items.js';
+
+// Inventário (tecla I): duas abas.
+//   Itens:    grade com ícone e quantidade; o item selecionado mostra nome e descrição.
+//   Fabricar: receitas (ferramentas); E/Enter fabrica a selecionada se houver material.
+// Tab (ou Q) troca de aba; setas/WASD movem a seleção; I ou Esc fecham. Pausa o tempo.
+const COLS = 5, CELL = 30, PAD = 8, W = 200, RH = 25;   // RH = altura de cada receita
+
+// quebra o texto em linhas que cabem em maxW (mede com a fonte atual do ctx)
+export function wrapText(ctx, text, maxW) {
+  const out = []; let line = '';
+  for (const word of String(text).split(' ')) {
+    const t = line ? line + ' ' + word : word;
+    if (ctx.measureText(t).width > maxW && line) { out.push(line); line = word; } else line = t;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+// etiqueta do tipo do item (dica rápida, colorida): o que é e o que faz
+export function itemTag(k, dur = {}) {
+  const it = ITEMS[k];
+  if (DURABILITY[k]) { const d = Math.max(0, dur[k] ?? DURABILITY[k]); return { text: `FERRAMENTA  ${d}/${DURABILITY[k]}`, color: '#8fc3ea' }; }
+  if (it.food) return { text: `COMIDA  +${it.food.hunger} fome${it.food.energy ? ` +${it.food.energy} energia` : ''}${it.food.hp ? ` +${it.food.hp} vida` : ''}`, color: '#a8e08a' };
+  if (it.place) return { text: 'COLOCÁVEL  (monta no mundo)', color: '#e8c84a' };
+  if (it.use) return { text: it.use === 'light' ? 'USÁVEL  (acender: ~3 h de luz)' : it.use === 'heal' ? `REMÉDIO  +${it.heal} vida` : 'USÁVEL  (amolar a ferramenta mais gasta)', color: it.use === 'heal' ? '#a8e08a' : '#f2c46a' };
+  if (k === 'lanterna') return { text: 'EQUIPAMENTO  (luz sempre, na mochila)', color: '#8fc3ea' };
+  if (k === 'remo') return { text: 'EQUIPAMENTO  (para remar)', color: '#8fc3ea' };
+  return { text: 'MATERIAL', color: '#b9ad9a' };
+}
+
+export class Inventory {
+  constructor() { this.open = false; this.sel = 0; this.tab = 'items'; this.msg = null; this.touch = false; this.hits = null; this.scroll = 0; }
+  // toque: devolve o que está sob (x, y) em coordenadas lógicas, a partir das áreas gravadas no último draw()
+  //   { type: 'tab', tab } | { type: 'slot', i } | { type: 'recipe', i } | { type: 'craft' } | { type: 'close' } | { type: 'outside' } | null (dentro, sem alvo)
+  hitTest(x, y) {
+    const h = this.hits; if (!h) return null; const inR = (r) => r && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
+    if (inR(h.close)) return { type: 'close' };
+    if (!inR(h.box)) return { type: 'outside' };
+    for (const t of h.tabs) if (inR(t)) return { type: 'tab', tab: t.k };
+    if (inR(h.up)) return { type: 'scroll', d: -1 };
+    if (inR(h.down)) return { type: 'scroll', d: 1 };
+    if (inR(h.craft)) return { type: 'craft' };
+    if (inR(h.eat)) return { type: 'eat' };
+    for (const c of h.cells) if (inR(c)) return { type: h.kind === 'items' ? 'slot' : 'recipe', i: c.i };
+    return null;
+  }
+  toggle() { this.open = !this.open; this.sel = 0; this.tab = 'items'; this.msg = null; }
+  switchTab() { this.tab = this.tab === 'items' ? 'craft' : 'items'; this.sel = 0; this.msg = null; this.scroll = 0; }
+  scrollBy(d) { this.scroll = Math.max(0, Math.min(RECIPES.length - (this.rowsVis || RECIPES.length), this.scroll + d)); }
+  entries(items) { return ITEM_ORDER.filter(k => items[k] > 0).map(k => [k, items[k]]); }
+  count() { return this.tab === 'items' ? null : RECIPES.length; }
+  move(dx, dy, n) {
+    if (this.tab === 'craft') { this.sel = Math.max(0, Math.min(RECIPES.length - 1, this.sel + dy + dx)); return; }
+    if (!n) return; this.sel = Math.max(0, Math.min(n - 1, this.sel + dx + dy * COLS));
+  }
+  // pode fabricar? { ok, why }
+  canCraft(r, items) {
+    if (r.max && (items[r.item] || 0) >= r.max) return { ok: false, why: 'Você já tem' };
+    if (r.tool && !items[r.tool]) return { ok: false, why: 'Precisa de ' + ITEMS[r.tool].label.toLowerCase() };
+    for (const [k, n] of Object.entries(r.needs)) if ((items[k] || 0) < n) return { ok: false, why: 'Falta material' };
+    return { ok: true };
+  }
+  // fabrica a receita selecionada; devolve a mensagem
+  craft(items) {
+    const r = RECIPES[this.sel]; if (!r) return null; const c = this.canCraft(r, items);
+    if (!c.ok) { this.msg = c.why === 'Você já tem' ? `Você já tem ${ITEMS[r.item].label.toLowerCase()}.` : c.why + '.'; return null; }
+    for (const [k, n] of Object.entries(r.needs)) { items[k] -= n; if (!items[k]) delete items[k]; }
+    const out = r.out || 1; items[r.item] = (items[r.item] || 0) + out; this.msg = `Você fez: ${ITEMS[r.item].label.toLowerCase()}${out > 1 ? ` x${out}` : ''}!`; return r.item;
+  }
+
+  draw(ctx, vw, vh, items, icons, dur = {}) {
+    if (!this.open) return; this.dur = dur;
+    const maxW = W - PAD * 2;
+    ctx.font = '9px monospace';
+    // altura: calculada antes de desenhar, para o texto nunca sair da janela
+    let body, lines;
+    if (this.tab === 'items') {
+      const list = this.entries(items), rows = Math.max(2, Math.ceil(list.length / COLS));
+      if (this.sel >= list.length) this.sel = Math.max(0, list.length - 1);
+      const cur = list[this.sel], fd = cur && ITEMS[cur[0]].food;
+      const txt = cur ? ITEMS[cur[0]].text + (DURABILITY[cur[0]] ? ` Durabilidade: ${Math.max(0, dur[cur[0]] ?? DURABILITY[cur[0]])}/${DURABILITY[cur[0]]}.` : '')
+        + (fd ? ` Alimenta: +${fd.hunger} fome${fd.energy ? `, +${fd.energy} energia` : ''}${fd.hp ? `, +${fd.hp} vida` : ''}.${this.touch ? '' : ' E: comer.'}` : '')
+        + (ITEMS[cur[0]].place ? (this.touch ? ' Toque em Colocar e escolha o lugar.' : ' E: colocar no mundo.') : '') + (ITEMS[cur[0]].use && !this.touch ? ' E: usar.' : '') : 'Vazio. Colha frutas, pegue pedras e madeira, bata em rochas e minérios.';
+      lines = wrapText(ctx, txt, maxW); body = { list, rows, cur, tag: cur ? itemTag(cur[0], dur) : null };
+    } else {
+      lines = wrapText(ctx, this.msg || (this.touch ? 'Toque numa receita e em Fabricar.' : 'Tab: voltar aos itens. E: fabricar.'), maxW);
+    }
+    const eatBtn = this.touch && this.tab === 'items' && body.cur && (ITEMS[body.cur[0]].food || ITEMS[body.cur[0]].place || ITEMS[body.cur[0]].use);
+    const btnH = this.touch && (this.tab === 'craft' || eatBtn) ? 20 : 0;   // botão [Fabricar] / [Comer] (só no toque)
+    // receitas: só as que cabem na tela; o resto rola (setas / ▲▼ no toque); a seleção fica sempre à vista
+    if (this.tab === 'craft') {
+      this.rowsVis = Math.max(3, Math.min(RECIPES.length, Math.floor((vh - 80 - lines.length * 10 - (this.touch ? 20 : 0)) / RH)));
+      if (this.sel < this.scroll) this.scroll = this.sel; if (this.sel >= this.scroll + this.rowsVis) this.scroll = this.sel - this.rowsVis + 1;
+      this.scroll = Math.max(0, Math.min(RECIPES.length - this.rowsVis, this.scroll));
+    }
+    const gridH = this.tab === 'items' ? body.rows * CELL : this.rowsVis * RH;
+    const h = 20 + 12 + gridH + 6 + (this.tab === 'items' && body.cur ? 22 : 0) + lines.length * 10 + PAD + btnH;
+    const x = Math.round((vw - W) / 2), y = Math.round((vh - h) / 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, vw, vh);
+    ctx.fillStyle = 'rgba(24,18,12,0.96)'; ctx.fillRect(x, y, W, h);
+    ctx.strokeStyle = '#d9a066'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, W - 1, h - 1);
+    // abas
+    ctx.font = 'bold 10px monospace';
+    const hits = this.hits = { kind: this.tab, box: { x, y, w: W, h }, tabs: [], cells: [], craft: null, eat: null, close: null, up: null, down: null };
+    const tabs = [['items', 'Itens'], ['craft', 'Fabricar']]; let tx = x + PAD;
+    for (const [k, label] of tabs) { const lw = ctx.measureText(label).width; ctx.fillStyle = this.tab === k ? '#d9a066' : '#7d6b55'; ctx.fillText(label, tx, y + 13); if (this.tab === k) ctx.fillRect(tx, y + 15, lw, 1);
+      hits.tabs.push({ k, x: tx - 4, y, w: lw + 8, h: 22 }); tx += lw + 12; }
+    if (this.touch) {                                                    // [X] grande no canto (no teclado: a dica de teclas)
+      const bx = x + W - 22, by = y + 2; ctx.strokeStyle = '#d9a066'; ctx.strokeRect(bx + 0.5, by + 0.5, 19, 17);
+      ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText('X', bx + 7, by + 13); hits.close = { x: bx - 6, y: by - 4, w: 32, h: 26 };
+    } else { ctx.font = '8px monospace'; ctx.fillStyle = '#9c8a74'; const hint = 'Tab | I/Esc'; ctx.fillText(hint, x + W - PAD - ctx.measureText(hint).width, y + 13); }
+    const gy = y + 24;
+    if (this.tab === 'items') this.drawItems(ctx, x, gy, body, icons);
+    else this.drawCraft(ctx, x, gy, items, icons);
+    // texto
+    let ty = gy + gridH + 12;
+    ctx.font = '9px monospace';
+    if (this.tab === 'items' && body.cur) { ctx.fillStyle = '#f3e9d8'; ctx.fillText(ITEMS[body.cur[0]].label, x + PAD, ty); ty += 11;
+      ctx.font = 'bold 7px monospace'; ctx.fillStyle = body.tag.color; ctx.fillText(body.tag.text, x + PAD, ty); ty += 11; ctx.font = '9px monospace'; }
+    ctx.fillStyle = this.tab === 'craft' && this.msg && /fez/.test(this.msg) ? '#a8e08a' : '#c8bfae';
+    for (const l of lines) { ctx.fillText(l, x + PAD, ty); ty += 10; }
+    if (btnH) {
+      const eat = this.tab === 'items', r = RECIPES[this.sel], plc = eat && body.cur && ITEMS[body.cur[0]].place, usa = eat && body.cur && ITEMS[body.cur[0]].use;
+      const can = plc || usa ? true : eat ? !(this.vitals && this.vitals.hunger >= 98) : r && this.canCraft(r, items).ok, bw = 70, bx = x + W - PAD - bw, by = y + h - PAD - 16;
+      ctx.fillStyle = can ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(bx, by, bw, 16);
+      ctx.font = 'bold 9px monospace'; ctx.fillStyle = can ? '#1a1410' : '#8f8170'; const t = plc ? 'Colocar' : usa ? 'Usar' : eat ? 'Comer' : 'Fabricar'; ctx.fillText(t, bx + (bw - ctx.measureText(t).width) / 2, by + 11);
+      hits[eat ? 'eat' : 'craft'] = { x: bx - 4, y: by - 4, w: bw + 8, h: 24 };
+    }
+  }
+  drawIcon(ctx, im, cx, cy, size) {
+    if (!im) return; const m = Math.max(im.width, im.height), s = m > size ? size / m : Math.max(1, Math.floor(size / m));
+    const iw = Math.round(im.width * s), ih = Math.round(im.height * s); ctx.drawImage(im, Math.round(cx - iw / 2), Math.round(cy - ih / 2), iw, ih);
+  }
+  drawItems(ctx, x, gy, { list, rows }, icons) {
+    for (let i = 0; i < COLS * rows; i++) {
+      const cx = x + PAD + (i % COLS) * CELL, cy = gy + Math.floor(i / COLS) * CELL;
+      if (list[i] && this.hits) this.hits.cells.push({ i, x: cx, y: cy, w: CELL, h: CELL });
+      ctx.fillStyle = i === this.sel && list[i] ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(cx + 1, cy + 1, CELL - 2, CELL - 2);
+      if (!list[i]) continue;
+      const [k, n] = list[i];
+      if (DURABILITY[k]) {                                                // barra de durabilidade embaixo do ícone
+        const f = Math.max(0, Math.min(1, ((this.dur || {})[k] ?? DURABILITY[k]) / DURABILITY[k])), bw = CELL - 8;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(cx + 4, cy + CELL - 5, bw, 3);
+        ctx.fillStyle = f > 0.5 ? '#7fd36a' : f > 0.2 ? '#e8c84a' : '#e05a4a'; ctx.fillRect(cx + 4, cy + CELL - 5, Math.max(1, Math.round(bw * f)), 3);
+      } this.drawIcon(ctx, icons[k], cx + CELL / 2, cy + CELL / 2 - 1, 22);
+      if (DURABILITY[k] && n === 1) continue;                            // ferramenta: a barra substitui o número
+      ctx.font = 'bold 8px monospace'; const t = String(n), tw = ctx.measureText(t).width;
+      ctx.fillStyle = '#000'; ctx.fillText(t, cx + CELL - tw - 2, cy + CELL - 2); ctx.fillStyle = '#fff'; ctx.fillText(t, cx + CELL - tw - 3, cy + CELL - 3);
+    }
+  }
+  drawCraft(ctx, x, gy, items, icons) {
+    const n = this.rowsVis || RECIPES.length, s0 = this.scroll || 0;
+    if (s0 > 0 || s0 + n < RECIPES.length) {                               // marcas de rolagem (e áreas de toque)
+      ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#d9a066'; const ax = x + W - PAD - 8;
+      if (s0 > 0) { ctx.fillText('▲', ax, gy - 2); if (this.hits) this.hits.up = { x: ax - 10, y: gy - 14, w: 26, h: 16 }; }
+      if (s0 + n < RECIPES.length) { ctx.fillText('▼', ax, gy + n * RH + 6); if (this.hits) this.hits.down = { x: ax - 10, y: gy + n * RH - 4, w: 26, h: 16 }; }
+    }
+    RECIPES.forEach((r, i) => {
+      if (i < s0 || i >= s0 + n) return;
+      const ry = gy + (i - s0) * RH, c = this.canCraft(r, items);
+      if (this.hits) this.hits.cells.push({ i, x: x + PAD, y: ry, w: W - PAD * 2, h: RH });
+      ctx.fillStyle = i === this.sel ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(x + PAD, ry, W - PAD * 2, RH - 2);
+      this.drawIcon(ctx, icons[r.item], x + PAD + 11, ry + RH / 2 - 1, 18);
+      const name = ITEMS[r.item].label + (r.out > 1 ? ` x${r.out}` : '');
+      ctx.font = 'bold 8px monospace'; ctx.fillStyle = c.ok ? '#f3e9d8' : '#8f8170'; ctx.fillText(name, x + PAD + 24, ry + 10);
+      ctx.font = '7px monospace'; let nx = x + PAD + 24;
+      if (!c.ok && c.why === 'Você já tem') { ctx.fillStyle = '#d9a066'; ctx.fillText('Já tem esta ferramenta', nx, ry + 20); return; }
+      const parts = Object.entries(r.needs).map(([k, n]) => [`${ITEMS[k].label} ${Math.min(items[k] || 0, n)}/${n}`, (items[k] || 0) >= n]);
+      if (r.tool) parts.push([`+ ${ITEMS[r.tool].label.toLowerCase()}`, !!items[r.tool]]);
+      for (const [t, okk] of parts) { const tw = ctx.measureText(t).width; if (nx + tw > x + W - PAD) break; ctx.fillStyle = okk ? '#a8e08a' : '#e08a7a'; ctx.fillText(t, nx, ry + 20); nx += tw + 5; }
+    });
+  }
+}
