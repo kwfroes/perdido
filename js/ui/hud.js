@@ -54,7 +54,7 @@ export function drawVitals(ctx, v, x, y, t = 0) {
     ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x + 11, ry + 1, W, 4);
     ctx.fillStyle = blink ? '#ffffff' : col; ctx.fillRect(x + 11, ry + 1, Math.round(W * Math.max(0, Math.min(1, f))), 4);
   });
-  const tags = []; if (v.tired) tags.push('cansado'); if (v.warm) tags.push('aquecido'); else if (Number.isFinite(v.res) && v.res <= 0) tags.push('com frio');
+  const tags = []; if (v.tired) tags.push('cansado'); if (v.warm) tags.push('aquecido'); else if (v.sheltered) tags.push('abrigado da chuva'); else if (Number.isFinite(v.res) && v.res <= 0) tags.push('com frio');
   if (tags.length) { ctx.font = '8px monospace'; ctx.fillStyle = '#f2d24a'; ctx.fillText(tags.join(' · '), x + 3, y + H + 8); }
 }
 
@@ -76,7 +76,7 @@ export function drawHud(ctx, info) {
   ctx.font = '10px monospace';
   if (info.hintTime > 0 && !info.touch) {
     ctx.globalAlpha = Math.min(1, info.hintTime);
-    box(ctx, 'WASD mover | Shift correr | E agir (segure p/ golpear) | I inventário | +/- zoom | F4 mapa | K código | F2 menu', 6, info.vh - 20);
+    box(ctx, 'WASD mover | Shift correr | E agir (segure p/ golpear) | I mochila | +/- zoom | F4 mapa | K código | F2 menu | F1 esta ajuda', 6, info.vh - 20);
     ctx.globalAlpha = 1;
   }
   if (info.debugLevel > 0) {

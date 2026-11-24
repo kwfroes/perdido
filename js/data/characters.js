@@ -64,8 +64,10 @@ export const CHARACTERS = {
     walk: {
       down:  [{ f: 0 }, { f: 4, dy: -1 }, { f: 0, flip: true }, { f: 4, dy: -1 }],
       up:    [{ f: 0 }, { f: 4, dy: -1 }, { f: 0, flip: true }, { f: 4, dy: -1 }],
-      right: [0, 1, 2, 3],
-      left:  [0, 1, 2, 3],
+      // A1: na folha dos exploradores os 4 quadros laterais são todos "passo aberto" (as pernas pareciam paradas);
+      // intercalar com o quadro parado (pés juntos) dá o ciclo abre-fecha
+      right: [0, { f: 4, dy: -1 }, 2, { f: 4, dy: -1 }],
+      left:  [0, { f: 4, dy: -1 }, 2, { f: 4, dy: -1 }],
     },
     stepDist: { right: 9.5, left: 9.5, down: 10.5, up: 10.5 },
   },
@@ -81,8 +83,8 @@ export const CHARACTERS = {
     walk: {
       down:  [{ f: 0 }, { f: 4, dy: -1 }, { f: 0, flip: true }, { f: 4, dy: -1 }],
       up:    [{ f: 0 }, { f: 4, dy: -1 }, { f: 0, flip: true }, { f: 4, dy: -1 }],
-      right: [0, 1, 2, 3],
-      left:  [0, 1, 2, 3],
+      right: [0, { f: 4, dy: -1 }, 2, { f: 4, dy: -1 }],   // A1: idem Helena
+      left:  [0, { f: 4, dy: -1 }, 2, { f: 4, dy: -1 }],
     },
     stepDist: { right: 9.5, left: 9.5, down: 10.5, up: 10.5 },
   },

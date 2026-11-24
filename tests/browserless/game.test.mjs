@@ -99,7 +99,7 @@ tap('KeyE'); step(2); ok('E abre o diálogo', G.dialog.isOpen);
 step(200); tap('KeyE'); ok('E fecha o diálogo', !G.dialog.isOpen);
 tap('F4'); step(2); ok('F4 abre o mapa', G.overview.open); await shot('mapa_f4'); tap('Escape'); step(1); ok('Esc fecha o mapa', !G.overview.open);
 tap('KeyK'); step(3); await new Promise(r => setTimeout(r, 10)); ok('K copia o código do mundo', globalThis.__copied === W.code, globalThis.__copied);
-{ const lv = []; for (let i = 0; i < 3; i++) { tap('F3'); lv.push(G.state.debugLevel); step(2); } ok('F3 cicla a depuração sem erro', lv.join(',') === '2,0,1' || lv.join(',') === '0,1,2', lv.join(',')); }
+{ const lv = []; for (let i = 0; i < 3; i++) { tap('F3'); lv.push(G.state.debugLevel); step(2); } ok('F3 cicla a depuração sem erro', ['2,0,1', '0,1,2', '1,2,0'].includes(lv.join(',')), lv.join(',')); }
 { const c0 = P.characterId; G.terminal.run(c0 === 'male' ? 'personagem fem' : 'personagem masc'); step(1); ok('terminal troca o personagem', P.characterId !== c0); G.terminal.run(c0 === 'male' ? 'personagem masc' : 'personagem fem'); step(1); }
 
 // ---- ZOOM: teclas, roda do mouse, câmera ----

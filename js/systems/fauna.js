@@ -64,7 +64,9 @@ export class Fauna {
   isActive(def) { const a = def.activity; return a === 'any' || (a === 'night' ? this.night : a === 'day' ? !this.night : true); }
 
   // ---------------- movimento ----------------
-  tileOk(a, x, y) { return habitatOk(this.world, this.fields, a.def, Math.floor(x / T), Math.floor((y - 1) / T)); }
+  tileOk(a, x, y) { const tx = Math.floor(x / T), ty = Math.floor((y - 1) / T); return habitatOk(this.world, this.fields, a.def, tx, ty) || (a.def.swims && this.freshAt(tx, ty)); }
+  // água doce (rio, vau, lago): onde quem nada (teiú) pode entrar
+  freshAt(tx, ty) { const w = this.world, i = ty * w.W + tx, k = w.waterKind && w.waterKind[i]; return w.terrain[i] === 3 && (k === WK.LAKE || k === WK.RIVER || k === WK.FORD); }
   pickTarget(a, r0, r1, fromX = a.homeX, fromY = a.homeY) {
     for (let k = 0; k < 12; k++) {
       const ang = a.rng() * Math.PI * 2, d = r0 + a.rng() * (r1 - r0), x = fromX + Math.cos(ang) * d, y = fromY + Math.sin(ang) * d * 0.7;
@@ -78,7 +80,7 @@ export class Fauna {
     const s = Math.min(d, speed * dt), mx = dx / d * s, my = dy / d * s;
     if (Math.abs(mx) > 0.05) a.facing = mx > 0 ? 1 : -1;
     let nx = a.x + mx, ny = a.y + my;
-    if (a.def.behavior !== 'swimmer') { const [fw, fh] = a.def.foot; const p = this.collision.moveFoot(a.x, a.y, fw, fh, mx, my); nx = p.x; ny = p.y; }
+    if (a.def.behavior !== 'swimmer') { const [fw, fh] = a.def.foot; const p = this.collision.moveFoot(a.x, a.y, fw, fh, mx, my, a.def.swims ? (r) => r.owner !== 'water' : null); nx = p.x; ny = p.y; }
     if (!this.tileOk(a, nx, ny)) { if (this.tileOk(a, nx, a.y)) ny = a.y; else if (this.tileOk(a, a.x, ny)) nx = a.x; else return 0; }
     const moved = Math.sqrt((nx - a.x) * (nx - a.x) + (ny - a.y) * (ny - a.y)); a.x = nx; a.y = ny; return moved;
   }
@@ -139,7 +141,11 @@ export class Fauna {
         const ax = a.x - px, ay = a.y - py, L = Math.sqrt(ax * ax + ay * ay) || 1;
         const tx = a.x + ax / L * 80, ty = a.y + ay / L * 80;
         if (def.flee === 'hop') { if (a.state !== 'hop') { a.state = 'hop'; a.anim = 'hop'; a.animT = 0; a.timer = 0.5; a.target = { x: tx, y: ty }; } }
-        else { a.state = 'flee'; a.anim = def.anims.run ? 'run' : 'walk'; const sp = (def.runSpeed || def.speed * 2) * a.speedMul; if (this.step(a, tx, ty, sp, dt) < 0.01) { a.stuck += dt; } return; }
+        else { a.state = 'flee'; a.anim = def.anims.run ? 'run' : 'walk'; const sp = (def.runSpeed || def.speed * 2) * a.speedMul;
+          // encurralado (parede de água, tronco): tenta escapar de lado em vez de ficar parado
+          if (this.step(a, tx, ty, sp, dt) < 0.01) { a.stuck += dt; const ang = Math.atan2(ay, ax);
+            for (const k of [1, -1, 2, -2]) { const b = ang + k * Math.PI / 3; if (this.step(a, a.x + Math.cos(b) * 80, a.y + Math.sin(b) * 80, sp, dt) > 0.01) { a.stuck = 0; break; } } }
+          return; }
       }
     }
     if (a.alpha < 1 && a.timer <= 0) a.alpha = Math.min(1, a.alpha + dt);
@@ -225,6 +231,9 @@ export class Fauna {
       ctx.fillStyle = `rgba(0,0,0,${a.alt > 2 ? 0.12 : 0.2})`; ctx.beginPath(); ctx.ellipse(gx, gy - 1, w / 2, Math.max(1.5, w / 6), 0, 0, Math.PI * 2); ctx.fill();
     }
     const top = gy - Math.round(a.lift + a.alt) - ch + (a.hang && a.state !== 'circle' ? ch : 0);   // morcego pendurado: o topo do sprite fica no galho
+    if (a.def.swims && this.freshAt(Math.floor(a.x / T), Math.floor((a.y - 1) / T))) {          // nadando: só o dorso acima da água + marola
+      const keep = Math.round(ch * 0.55); ctx.drawImage(img, fi * cw, 0, cw, keep, gx - cw / 2, top + 3, cw, keep);
+      ctx.strokeStyle = 'rgba(220,240,255,0.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(gx, top + keep + 2, cw * 0.38, 2.5, 0, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; return; }
     if (a.alpha < 1) ctx.globalAlpha = a.alpha;
     ctx.drawImage(img, fi * cw, 0, cw, ch, gx - cw / 2, top, cw, ch);
     ctx.globalAlpha = 1;

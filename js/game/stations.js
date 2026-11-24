@@ -1,3 +1,5 @@
+// A1: árvores de copa larga (raio de abrigo em px, a partir do tronco)
+const BIG_TREES = { tree_giant: 52, tree_01: 40, tree_mature: 36, tree_bushy: 34, tree_fruit: 36, siri_4: 32 };
 // R1 — Estações de trabalho: fogueira (4d.1) e forno + argila (4d.2/4e) — opções, menus e ações.
 // Métodos da partida (Session) separados por assunto. São instalados no protótipo da Session por js/game/session.js
 // (installMixins): dentro deles, `this` continua sendo a partida — o comportamento é o mesmo de antes da divisão.
@@ -15,8 +17,17 @@ export class StationsMixin {
   envFor() {
     if (this.cave) { this.vitals.warm = false; return { night: false, rain: false, storm: false, dry: false, fire: false }; }   // 5A: a caverna abriga do tempo
     const w = this.weather.now, heavy = this.fires.heavyRain(w), p = this.player;
-    const env = { night: this.clock.isNight, storm: heavy, rain: !heavy && this.weather.raining, dry: this.clock.info.season === 2, fire: this.fires.litNear(p.x, p.y, FIRE.WARM_R) || this.furnaces.litNear(p.x, p.y, FIRE.WARM_R * 0.8) };
-    this.vitals.warm = env.fire; return env;
+    const cover = this.weather.raining && !heavy && this.underCanopy(p.x, p.y);    // A1: copa de árvore grande segura a chuva (a trovoada, não)
+    const env = { night: this.clock.isNight, storm: heavy, rain: !heavy && this.weather.raining && !cover, dry: this.clock.info.season === 2, fire: this.fires.litNear(p.x, p.y, FIRE.WARM_R) || this.furnaces.litNear(p.x, p.y, FIRE.WARM_R * 0.8) };
+    this.vitals.warm = env.fire; this.vitals.sheltered = cover; return env;
+  }
+  // embaixo da copa de uma árvore grande (perto do tronco, sem passar muito à frente dele)
+  underCanopy(x, y) {
+    for (const o of this.index.near(x - 60, y - 30, x + 60, y + 60, this._cbuf || (this._cbuf = []))) {
+      const r = BIG_TREES[o.viewType || o.type]; if (!r) continue;
+      const dx = Math.abs(o.x - x), dy = y - o.y; if (dx <= r && dy > -r * 0.9 && dy < 14) return true;
+    }
+    return false;
   }
   rawFruit() { return Object.keys(ROAST).find(k => this.items[k] > 0) || null; }
   // uma ação por vez no E (o rótulo mostra qual): lenha quando está acabando > assar > mais lenha > carvão

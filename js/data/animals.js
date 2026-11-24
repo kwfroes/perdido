@@ -26,7 +26,7 @@ export const ANIMALS = {
     restText: 'O jabuti está recolhido no casco, quieto. Ele sai no começo da manhã e no fim da tarde.',
   },
   teiu: {
-    label: 'Teiú', sheet: 'teiu', behavior: 'walker', activity: 'day', flee: 'run',
+    label: 'Teiú', sheet: 'teiu', behavior: 'walker', activity: 'day', flee: 'run', swims: true,   // A1: nada em rio, vau e lago (foge pela água)
     habitat: { biomes: ['MEADOW', 'CLEARING', 'BEACH', 'ROCKY'], on: 'land' }, density: 4, group: [1, 1],
     speed: 16, runSpeed: 70, fear: 70, home: 220, foot: [14, 4],
     anims: { walk: { frames: ['walk0', 'walk1', 'walk2', 'walk3'], fps: 8 }, idle: { frames: ['idle'], fps: 1 }, tongue: { frames: ['tongue0', 'tongue1', 'idle'], fps: 6 },
@@ -93,7 +93,7 @@ export const ANIMALS = {
   },
   gato: {
     label: 'Gato-do-mato', sheet: 'gato', behavior: 'walker', activity: 'night', flee: 'run',
-    habitat: { biomes: ['FOREST'], on: 'land', mainOnly: true }, density: 0.5, min: { 200: 1, 400: 2 }, group: [1, 1],
+    habitat: { biomes: ['FOREST'], on: 'land', mainOnly: true }, density: 1, min: { 200: 3, 400: 5 }, group: [1, 1],   // A1: era raro demais (1 por mapa)
     speed: 22, runSpeed: 95, fear: 110, home: 400, foot: [14, 4],
     anims: { walk: { frames: ['walk0', 'walk1', 'walk2', 'walk3'], fps: 6 }, idle: { frames: ['alert'], fps: 1 }, sit: { frames: ['sit'], fps: 1 },
              stalk: { frames: ['stalk'], fps: 1 }, run: { frames: ['run', 'walk1'], fps: 8 }, rest: { frames: ['sleep'], fps: 1 } },

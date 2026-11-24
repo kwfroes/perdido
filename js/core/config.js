@@ -47,5 +47,5 @@ export const CONFIG = {
   BOAT_CURRENT: 14,     // px/s que a correnteza do rio empurra a canoa
   BOAT_FPS: 6,          // quadros de remada por segundo
   MAP_SHOW_CANOE: true, // TEMPORÁRIO: mostra a canoa no mapa (F4). Depois: só depois de achá-la pela 1a vez ou fabricar uma
-  DEBUG_LEVEL: 1,       // 0 = nada, 1 = FPS/posição, 2 = + colisões (tecla F3 alterna)
+  DEBUG_LEVEL: 0,       // 0 = nada, 1 = FPS/posição, 2 = + colisões (tecla F3 alterna)
 };

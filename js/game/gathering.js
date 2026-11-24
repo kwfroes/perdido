@@ -32,6 +32,7 @@ export class GatheringMixin {
     if (t.type === 'trouxa') return { kind: 'bundle', label: 'Pegar a trouxa' };
     if (t.caveId !== undefined) return { kind: 'cave', label: 'Entrar na caverna' };
     if (this.cave && !t.isExit && t.type !== 'trouxa' && !this.litAt(t.x, t.y - 6)) return { kind: 'dark', label: 'Escuro demais' };   // 5A: no escuro não se vê o que é
+    if (t.type === 'tree_sapling') return { kind: 'pick', item: 'broto', n: 1, label: 'Tirar o broto' };   // A1: ingrediente do unguento
     if (t.type === 'mushrooms') return { kind: 'pick', item: 'cogumelo', n: 2, label: 'Colher cogumelos' };
     if (t.isExit) return { kind: 'exitCave', label: 'Sair da caverna' };
     if (t.type === 'vein_loose') return { kind: 'pick', item: 'quartzo', n: 1, label: 'Pegar o cristal' };

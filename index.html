@@ -1,408 +1,306 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Perdido — Ilhas, Estações e Travessias</title>
-    <meta
-      name="description"
-      content="Explore ilhas tropicais geradas por semente, enfrente estações e tempestades, domine o fogo e os metais e atravesse o mar em busca de novas terras."
-    />
-    <script>
-      if (/[#&](seed=|touch)/.test(location.hash))
-        location.replace("jogar.html" + location.hash);
-    </script>
-    <link rel="icon" href="favicon.ico" sizes="any" />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="assets/icons/icon-32.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="assets/icons/icon-16.png"
-    />
-    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <meta name="theme-color" content="#0e1410" />
-    <link rel="stylesheet" href="landing/style.css" />
-    <script src="js/sw-register.js" defer></script>
-  </head>
-  <body>
-    <!-- Cabeçalho e Menu -->
-    <header class="topbar">
-      <div class="container nav-wrap">
-        <a href="#inicio" class="brand">
-          <img
-            class="brand-mark"
-            src="assets/icons/logo-96.png"
-            alt=""
-            width="34"
-            height="34"
-          />
-          <span>PERDIDO</span>
-        </a>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perdido — Ilhas, Estações e Travessias</title>
+  <meta name="description" content="Explore ilhas tropicais geradas por semente, enfrente estações e tempestades, domine o fogo e os metais e atravesse o mar em busca de novas terras." />
+  <script>if (/[#&](seed=|touch)/.test(location.hash)) location.replace('jogar.html' + location.hash);</script>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-16.png" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <script src="js/sw-register.js" defer></script>
+  <meta name="theme-color" content="#0e1410" />
+  <link rel="stylesheet" href="landing/style.css" />
+</head>
+<body>
+  <!-- Cabeçalho e Menu -->
+  <header class="topbar">
+    <div class="container nav-wrap">
+      <a href="#inicio" class="brand">
+        <img class="brand-mark" src="assets/icons/logo-96.png" alt="" width="34" height="34" />
+        <span>PERDIDO</span>
+      </a>
 
-        <button
-          class="nav-toggle"
-          id="nav-toggle"
-          aria-label="Abrir menu"
-          aria-expanded="false"
-        >
-          ☰
-        </button>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+        ☰
+      </button>
 
-        <nav class="nav" id="main-nav">
-          <a href="#sobre">O Jogo</a>
-          <a href="#sobrevivencia">Sobrevivência</a>
-          <a href="#exploradores">Exploradores</a>
-          <a href="#estacoes">Estações &amp; Clima</a>
-          <a href="#mundos">Mundos</a>
-          <a href="jogar.html" class="nav-cta">Jogar Agora</a>
-        </nav>
+      <nav class="nav" id="main-nav">
+        <a href="#sobre">O Jogo</a>
+        <a href="#sobrevivencia">Sobrevivência</a>
+        <a href="#exploradores">Exploradores</a>
+        <a href="#estacoes">Estações &amp; Clima</a>
+        <a href="#mundos">Mundos</a>
+        <a href="jogar.html" class="nav-cta">Jogar Agora</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Principal -->
+  <main id="inicio">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">SOBREVIVÊNCIA • EXPLORAÇÃO • TRAVESSIA</p>
+          <img class="hero-logo" src="assets/icons/logo.png" alt="Logo do Perdido: coqueiro e canoa com remo" width="132" height="132" />
+          <h1>Perdido</h1>
+          <p class="subtitle">Ilhas, Estações e Travessias</p>
+          <p class="lead">
+            Você acorda em uma ilha desconhecida com apenas o que a natureza oferece.
+            Aprenda a ler o tempo, acenda sua primeira fogueira, forje ferramentas mais resistentes
+            e prepare sua canoa para encarar o mar aberto.
+          </p>
+
+          <div class="hero-actions">
+            <a href="jogar.html" class="btn primary">Entrar na Ilha</a>
+            <a href="#sobre" class="btn secondary">Conhecer a Jornada</a>
+          </div>
+
+          <ul class="hero-highlights">
+            <li><strong>Cada ilha é única:</strong> compartilhe códigos de mundo com amigos</li>
+            <li><strong>4 personagens jogáveis:</strong> cada um com seu próprio ritmo e resistência</li>
+            <li><strong>PC e Celular:</strong> jogue no navegador com teclado ou toque</li>
+          </ul>
+        </div>
+
+        <aside class="hero-card" aria-label="Cartão de expedição">
+          <div class="card-header">
+            <span class="dot"></span>
+            <span>DIÁRIO DE EXPEDIÇÃO</span>
+          </div>
+          <div class="card-body">
+            <div class="stat-row">
+              <span>Ambiente</span>
+              <strong>Litoral, Matas, Rios e Ilhotas</strong>
+            </div>
+            <div class="stat-row">
+              <span>Ciclo Natural</span>
+              <strong>Dia, Noite e 4 Estações</strong>
+            </div>
+            <div class="stat-row">
+              <span>Progresso</span>
+              <strong>Pedra → Ferro → Prata, Ouro e Platina</strong>
+            </div>
+            <div class="stat-row">
+              <span>Travessias</span>
+              <strong>Vaus rasos e Canoa no mar</strong>
+            </div>
+            <div class="quote-box">
+              “Nem toda tempestade se vence na pressa. Às vezes, sobreviver é saber esperar o vento virar ao lado do fogo.”
+            </div>
+          </div>
+        </aside>
       </div>
-    </header>
+    </section>
 
-    <!-- Hero Principal -->
-    <main id="inicio">
-      <section class="hero">
-        <div class="container hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">SOBREVIVÊNCIA • EXPLORAÇÃO • TRAVESSIA</p>
-            <img
-              class="hero-logo"
-              src="assets/icons/logo.png"
-              alt="Logo do Perdido: coqueiro e canoa com remo"
-              width="132"
-              height="132"
-            />
-            <h1>Perdido</h1>
-            <p class="subtitle">Ilhas, Estações e Travessias</p>
-            <p class="lead">
-              Você acorda em uma ilha desconhecida com apenas o que a natureza
-              oferece. Aprenda a ler o tempo, acenda sua primeira fogueira,
-              forje ferramentas mais resistentes e prepare sua canoa para
-              encarar o mar aberto.
-            </p>
-
-            <div class="hero-actions">
-              <a href="jogar.html" class="btn primary">Entrar na Ilha</a>
-              <a href="#sobre" class="btn secondary">Conhecer a Jornada</a>
-            </div>
-
-            <ul class="hero-highlights">
-              <li>
-                <strong>Cada ilha é única:</strong> compartilhe códigos de mundo
-                com amigos
-              </li>
-              <li>
-                <strong>4 personagens jogáveis:</strong> cada um com seu próprio
-                ritmo e resistência
-              </li>
-              <li>
-                <strong>PC e Celular:</strong> jogue no navegador com teclado ou
-                toque
-              </li>
-            </ul>
-          </div>
-
-          <aside class="hero-card" aria-label="Cartão de expedição">
-            <div class="card-header">
-              <span class="dot"></span>
-              <span>DIÁRIO DE EXPEDIÇÃO</span>
-            </div>
-            <div class="card-body">
-              <div class="stat-row">
-                <span>Ambiente</span>
-                <strong>Litoral, Matas, Rios e Ilhotas</strong>
-              </div>
-              <div class="stat-row">
-                <span>Ciclo Natural</span>
-                <strong>Dia, Noite e 4 Estações</strong>
-              </div>
-              <div class="stat-row">
-                <span>Progresso</span>
-                <strong>Pedra → Ferro → Prata, Ouro e Platina</strong>
-              </div>
-              <div class="stat-row">
-                <span>Travessias</span>
-                <strong>Vaus rasos e Canoa no mar</strong>
-              </div>
-              <div class="quote-box">
-                “Nem toda tempestade se vence na pressa. Às vezes, sobreviver é
-                saber esperar o vento virar ao lado do fogo.”
-              </div>
-            </div>
-          </aside>
+    <!-- Sobre o Jogo -->
+    <section id="sobre" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">A EXPERIÊNCIA</p>
+          <h2>Sobreviver é observar o ambiente</h2>
+          <p class="section-desc">
+            Em <strong>Perdido</strong>, você não segue setas mágicas no céu. Você aprende a reconhecer
+            frutas maduras na época certa, rios que dão passagem a pé, rastros de animais e o momento
+            certo de lançar a canoa na água.
+          </p>
         </div>
-      </section>
 
-      <!-- Sobre o Jogo -->
-      <section id="sobre" class="section">
-        <div class="container">
-          <div class="section-head">
-            <p class="eyebrow">A EXPERIÊNCIA</p>
-            <h2>Sobreviver é observar o ambiente</h2>
-            <p class="section-desc">
-              Em <strong>Perdido</strong>, você não segue setas mágicas no céu.
-              Você aprende a reconhecer frutas maduras na época certa, rios que
-              dão passagem a pé, rastros de animais e o momento certo de lançar
-              a canoa na água.
-            </p>
-          </div>
-
-          <div class="cards-3">
-            <article class="feature-card">
-              <h3>Natureza Viva</h3>
-              <p>
-                Frutíferas amadurecem e secam conforme a estação. Animais
-                diurnos e noturnos habitam biomas específicos — de jabutis e
-                teiús a garças, corujas e gatos-do-mato.
-              </p>
-            </article>
-
-            <article class="feature-card">
-              <h3>Fogo e Metalurgia</h3>
-              <p>
-                Monte fogueiras para espantar o frio da noite, assar alimentos e
-                produzir carvão. Molde fornos de argila na beira dos rios para
-                fundir ferro, prata, ouro e platina.
-              </p>
-            </article>
-
-            <article class="feature-card">
-              <h3>O Risco do Mar</h3>
-              <p>
-                A canoa abre caminho para ilhotas distantes, mas o casco se
-                desgasta com o uso e as tempestades. Leve madeira e corda para
-                reparos — ou enfrente o naufrágio.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- Pilares de Sobrevivência -->
-      <section id="sobrevivencia" class="section alt">
-        <div class="container">
-          <div class="section-head">
-            <p class="eyebrow">CORPO E OFÍCIO</p>
-            <h2>Quatro sinais vitais e uma evolução gradual</h2>
-          </div>
-
-          <div class="vitals-grid">
-            <div class="vital-item">
-              <span class="badge hp">Vida</span>
-              <p>
-                Recupera-se quando você está bem alimentado, descansado e
-                protegido do frio.
-              </p>
-            </div>
-            <div class="vital-item">
-              <span class="badge hunger">Fome</span>
-              <p>
-                Colha pitangas, siriguelas e bananas — ou asse na brasa para
-                sustentar muito mais.
-              </p>
-            </div>
-            <div class="vital-item">
-              <span class="badge energy">Energia</span>
-              <p>
-                Correr, remar, atravessar rios e golpear rochas cansam. Sem
-                fôlego, seu ritmo cai.
-              </p>
-            </div>
-            <div class="vital-item">
-              <span class="badge res">Resistência</span>
-              <p>
-                Chuvas, trovoadas e noites frias drenam seu vigor. Fique perto
-                do fogo para se aquecer.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Personagens -->
-      <section id="exploradores" class="section">
-        <div class="container">
-          <div class="section-head">
-            <p class="eyebrow">ESCOLHA SEU CAMINHO</p>
-            <h2>Quatro sobreviventes, quatro estilos</h2>
-            <p class="section-desc">
-              Cada personagem começa com características próprias que
-              influenciam fôlego, fome e resistência ao clima.
-            </p>
-          </div>
-
-          <div class="chars-grid">
-            <article class="char-card">
-              <span class="char-role">Nativa da Ilha</span>
-              <h3>Nawa</h3>
-              <p>
-                Anda longe pela mata e suporta bem o tempo ruim sem perder o
-                ritmo.
-              </p>
-              <div class="char-tags">
-                <span class="tag good">+ Vigor</span>
-                <span class="tag good">+ Resistência</span>
-              </div>
-            </article>
-
-            <article class="char-card">
-              <span class="char-role">Nativo da Ilha</span>
-              <h3>Cauã</h3>
-              <p>
-                À vontade na água e no trabalho pesado, mas sente fome mais
-                cedo.
-              </p>
-              <div class="char-tags">
-                <span class="tag good">+ Fôlego</span>
-                <span class="tag good">+ Vigor</span>
-                <span class="tag warn">− Metabolismo</span>
-              </div>
-            </article>
-
-            <article class="char-card">
-              <span class="char-role">Exploradora Perdida</span>
-              <h3>Helena</h3>
-              <p>
-                Sabe racionar comida e aproveita melhor cada alimento, mas cansa
-                rápido na água.
-              </p>
-              <div class="char-tags">
-                <span class="tag good">+ Metabolismo</span>
-                <span class="tag warn">− Fôlego</span>
-              </div>
-            </article>
-
-            <article class="char-card">
-              <span class="char-role">Explorador Perdido</span>
-              <h3>Mateus</h3>
-              <p>
-                Robusto e resistente a tempestades, mas exige mais alimento
-                durante a jornada.
-              </p>
-              <div class="char-tags">
-                <span class="tag good">+ Resistência</span>
-                <span class="tag good">+ Vida</span>
-                <span class="tag warn">− Metabolismo</span>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- Estações e Clima -->
-      <section id="estacoes" class="section alt">
-        <div class="container">
-          <div class="section-head">
-            <p class="eyebrow">O CALENDÁRIO DA COSTA</p>
-            <h2>Quatro estações que transformam a ilha</h2>
-          </div>
-
-          <div class="seasons-grid">
-            <div class="season-card">
-              <h3>1. Chuvas</h3>
-              <p>
-                Água abundante, lagoas cheias e primeira safra de pitanga e
-                siriguela.
-              </p>
-            </div>
-            <div class="season-card">
-              <h3>2. Estiagem</h3>
-              <p>
-                O céu abre, o chão seca aos poucos e a mata mantém suas folhas
-                verdes.
-              </p>
-            </div>
-            <div class="season-card">
-              <h3>3. Seca</h3>
-              <p>
-                O calor aperta, as árvores perdem folhas e a resistência cai
-                mais depressa.
-              </p>
-            </div>
-            <div class="season-card">
-              <h3>4. Trovoadas</h3>
-              <p>
-                Relâmpagos cortam o horizonte, flores brotam nos galhos nus e o
-                mar fica perigoso.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Mundos e Sementes -->
-      <section id="mundos" class="section">
-        <div class="container world-box">
-          <div>
-            <p class="eyebrow">EXPLORAÇÃO COMPARTILHADA</p>
-            <h2>Mesmo código, exatamente a mesma ilha</h2>
+        <div class="cards-3">
+          <article class="feature-card">
+            <h3>Natureza Viva</h3>
             <p>
-              Todo mundo gerado em <strong>Perdido</strong> possui um código
-              único. Você pode criar uma ilha aleatória ou digitar um código
-              conhecido para explorar exatamente os mesmos rios, trilhas,
-              cavernas e ilhotas que outro jogador.
+              Frutíferas amadurecem e secam conforme a estação. Animais diurnos e noturnos
+              habitam biomas específicos — de jabutis e teiús a garças, corujas e gatos-do-mato.
             </p>
-            <div class="seed-demo">
-              <label for="seed-preview">Exemplo de código de mundo:</label>
-              <div class="seed-row">
-                <code id="seed-preview">V2-E-1808-1997</code>
-                <button type="button" id="btn-copy-seed" class="btn small">
-                  Copiar código
-                </button>
-              </div>
-              <span
-                id="copy-feedback"
-                class="feedback"
-                aria-live="polite"
-              ></span>
-            </div>
-          </div>
+          </article>
 
-          <div class="roadmap-box">
-            <h3>O que vem por aí</h3>
-            <ul>
-              <li>
-                <strong>Cavernas subterrâneas:</strong> galerias escuras
-                iluminadas por tochas e cristais
-              </li>
-              <li>
-                <strong>Abrigo e casa própria:</strong> construção em etapas com
-                cama, baú e bancada
-              </li>
-              <li>
-                <strong>Caça, pesca e lavoura:</strong> arco e flecha, vara de
-                pesca e plantio
-              </li>
-              <li>
-                <strong>Novas terras e vilas:</strong> ilhas vizinhas habitadas,
-                trocas e missões de resgate
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-    </main>
+          <article class="feature-card">
+            <h3>Fogo e Metalurgia</h3>
+            <p>
+              Monte fogueiras para espantar o frio da noite, assar alimentos e produzir carvão.
+              Molde fornos de argila na beira dos rios para fundir ferro, prata, ouro e platina.
+            </p>
+          </article>
 
-    <!-- Rodapé -->
-    <footer class="footer">
-      <div class="container footer-wrap">
-        <div><strong>PERDIDO</strong> — Ilhas, Estações e Travessias</div>
-        <div class="footer-links">
-          <a href="#inicio">Topo</a>
-          <a href="#sobre">O Jogo</a>
-          <a href="#exploradores">Exploradores</a>
-          <a href="jogar.html">Abrir Jogo</a>
+          <article class="feature-card">
+            <h3>O Risco do Mar</h3>
+            <p>
+              A canoa abre caminho para ilhotas distantes, mas o casco se desgasta com o uso e
+              as tempestades. Leve madeira e corda para reparos — ou enfrente o naufrágio.
+            </p>
+          </article>
         </div>
       </div>
-    </footer>
+    </section>
 
-    <script src="landing/script.js"></script>
-  </body>
+    <!-- Pilares de Sobrevivência -->
+    <section id="sobrevivencia" class="section alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">CORPO E OFÍCIO</p>
+          <h2>Quatro sinais vitais e uma evolução gradual</h2>
+        </div>
+
+        <div class="vitals-grid">
+          <div class="vital-item">
+            <span class="badge hp">Vida</span>
+            <p>Recupera-se quando você está bem alimentado, descansado e protegido do frio.</p>
+          </div>
+          <div class="vital-item">
+            <span class="badge hunger">Fome</span>
+            <p>Colha pitangas, siriguelas e bananas — ou asse na brasa para sustentar muito mais.</p>
+          </div>
+          <div class="vital-item">
+            <span class="badge energy">Energia</span>
+            <p>Correr, remar, atravessar rios e golpear rochas cansam. Sem fôlego, seu ritmo cai.</p>
+          </div>
+          <div class="vital-item">
+            <span class="badge res">Resistência</span>
+            <p>Chuvas, trovoadas e noites frias drenam seu vigor. Fique perto do fogo para se aquecer.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Personagens -->
+    <section id="exploradores" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">ESCOLHA SEU CAMINHO</p>
+          <h2>Quatro sobreviventes, quatro estilos</h2>
+          <p class="section-desc">
+            Cada personagem começa com características próprias que influenciam fôlego, fome e resistência ao clima.
+          </p>
+        </div>
+
+        <div class="chars-grid">
+          <article class="char-card">
+            <span class="char-role">Nativa da Ilha</span>
+            <h3>Nawa</h3>
+            <p>Anda longe pela mata e suporta bem o tempo ruim sem perder o ritmo.</p>
+            <div class="char-tags">
+              <span class="tag good">+ Vigor</span>
+              <span class="tag good">+ Resistência</span>
+            </div>
+          </article>
+
+          <article class="char-card">
+            <span class="char-role">Nativo da Ilha</span>
+            <h3>Cauã</h3>
+            <p>À vontade na água e no trabalho pesado, mas sente fome mais cedo.</p>
+            <div class="char-tags">
+              <span class="tag good">+ Fôlego</span>
+              <span class="tag good">+ Vigor</span>
+              <span class="tag warn">− Metabolismo</span>
+            </div>
+          </article>
+
+          <article class="char-card">
+            <span class="char-role">Exploradora Perdida</span>
+            <h3>Helena</h3>
+            <p>Sabe racionar comida e aproveita melhor cada alimento, mas cansa rápido na água.</p>
+            <div class="char-tags">
+              <span class="tag good">+ Metabolismo</span>
+              <span class="tag warn">− Fôlego</span>
+            </div>
+          </article>
+
+          <article class="char-card">
+            <span class="char-role">Explorador Perdido</span>
+            <h3>Mateus</h3>
+            <p>Robusto e resistente a tempestades, mas exige mais alimento durante a jornada.</p>
+            <div class="char-tags">
+              <span class="tag good">+ Resistência</span>
+              <span class="tag good">+ Vida</span>
+              <span class="tag warn">− Metabolismo</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Estações e Clima -->
+    <section id="estacoes" class="section alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow">O CALENDÁRIO DA COSTA</p>
+          <h2>Quatro estações que transformam a ilha</h2>
+        </div>
+
+        <div class="seasons-grid">
+          <div class="season-card">
+            <h3>1. Chuvas</h3>
+            <p>Água abundante, lagoas cheias e primeira safra de pitanga e siriguela.</p>
+          </div>
+          <div class="season-card">
+            <h3>2. Estiagem</h3>
+            <p>O céu abre, o chão seca aos poucos e a mata mantém suas folhas verdes.</p>
+          </div>
+          <div class="season-card">
+            <h3>3. Seca</h3>
+            <p>O calor aperta, as árvores perdem folhas e a resistência cai mais depressa.</p>
+          </div>
+          <div class="season-card">
+            <h3>4. Trovoadas</h3>
+            <p>Relâmpagos cortam o horizonte, flores brotam nos galhos nus e o mar fica perigoso.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mundos e Sementes -->
+    <section id="mundos" class="section">
+      <div class="container world-box">
+        <div>
+          <p class="eyebrow">EXPLORAÇÃO COMPARTILHADA</p>
+          <h2>Mesmo código, exatamente a mesma ilha</h2>
+          <p>
+            Todo mundo gerado em <strong>Perdido</strong> possui um código único. Você pode criar uma ilha
+            aleatória ou digitar um código conhecido para explorar exatamente os mesmos rios, trilhas,
+            cavernas e ilhotas que outro jogador.
+          </p>
+          <div class="seed-demo">
+            <label for="seed-preview">Exemplo de código de mundo:</label>
+            <div class="seed-row">
+              <code id="seed-preview">V2-E-1808-1997</code>
+              <button type="button" id="btn-copy-seed" class="btn small">Copiar código</button>
+            </div>
+            <span id="copy-feedback" class="feedback" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div class="roadmap-box">
+          <h3>O que vem por aí</h3>
+          <ul>
+            <li><strong>Cavernas subterrâneas:</strong> galerias escuras iluminadas por tochas e cristais</li>
+            <li><strong>Abrigo e casa própria:</strong> construção em etapas com cama, baú e bancada</li>
+            <li><strong>Caça, pesca e lavoura:</strong> arco e flecha, vara de pesca e plantio</li>
+            <li><strong>Novas terras e vilas:</strong> ilhas vizinhas habitadas, trocas e missões de resgate</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rodapé -->
+  <footer class="footer">
+    <div class="container footer-wrap">
+      <div>
+        <strong>PERDIDO</strong> — Ilhas, Estações e Travessias
+      </div>
+      <div class="footer-links">
+        <a href="#inicio">Topo</a>
+        <a href="#sobre">O Jogo</a>
+        <a href="#exploradores">Exploradores</a>
+        <a href="jogar.html">Abrir Jogo</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="landing/script.js"></script>
+</body>
 </html>

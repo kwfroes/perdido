@@ -77,7 +77,7 @@ export const FRUIT_CYCLES = {
   coco:    { kind: 'cycle', period: 24, green: 4, ripe: 14, rotten: 21, end: 24 },                // o coqueiro emite cachos o ano inteiro
   banana:  { kind: 'cycle', period: 40, green: 10, ripe: 26, rotten: 34, end: 40 },               // um cacho por "touceira", depois rebrota
   siri:    { kind: 'season', seasons: [0], green: 0, ripe: 7, rotten: 17, end: 21, jitter: 7 },  // frutifica nas Chuvas (cada árvore atrasa 0..7 dias)
-  pitanga: { kind: 'season', seasons: [0, 3], green: 1, ripe: 7, rotten: 13, end: 16, jitter: 11 }, // 2 safras: Chuvas e Trovoadas
+  pitanga: { kind: 'season', seasons: [0, 3], green: 0, ripe: 3, rotten: 9, end: 12, jitter: 10 },   // 2 safras: Chuvas e Trovoadas (A1: madura já do 3º dia)
 };
 
 // estado da fruta de uma árvore (espécie sp) no dia corrido `day` (1, 2, ...)

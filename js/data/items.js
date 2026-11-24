@@ -40,7 +40,8 @@ export const ITEMS = {
   diamante:       { label: 'Diamante',         icon: 'assets/items/item_diamante.png',              text: 'O mais duro de todos. Um dia vira a ponta de uma ferramenta.' },
   lanterna:       { label: 'Lanterna de quartzo', icon: 'assets/items/item_quartzo.png',            text: 'Quartzo numa armação de platina. Ilumina em volta sempre, sem combustível.' },
   cogumelo:       { label: 'Cogumelo',         icon: 'assets/items/item_cogumelo.png',              text: 'Cogumelo claro de caverna. Cru faz mal; é ingrediente de remédio.' },
-  unguento:       { label: 'Unguento',         icon: 'assets/items/item_unguento.png',              text: 'Pasta de cogumelo, resina e folha. Cura +35 de vida.', use: 'heal', heal: 35 },
+  broto:          { label: 'Broto',            icon: 'assets/items/item_broto.png',                 text: 'O olho tenro de uma árvore nova. Amargo; vai no unguento.' },
+  unguento:       { label: 'Unguento',         icon: 'assets/items/item_unguento.png',              text: 'Pasta de cogumelo, resina, folha e broto. Cura +35 de vida.', use: 'heal', heal: 35 },
   carvao:         { label: 'Carvão',           icon: 'assets/items/item_carvao.png',                text: 'Madeira queimada devagar. Vai alimentar a fundição.' },
   madeira:        { label: 'Madeira',          icon: 'assets/items/item_madeira.png',               text: 'Pedaço de tronco. Serve para cabos e construções.' },
   picareta_pedra: { label: 'Picareta de pedra', icon: 'assets/items/item_picareta_pedra.png',      text: 'Pedra pontuda amarrada num cabo. Quebra rochas e minério de ferro.' },
@@ -126,7 +127,7 @@ export const RECIPES = [
   { item: 'kit_fogueira',   needs: { pedra: 5, graveto: 3, madeira: 1 },         out: 1 },
   { item: 'kit_forno',      needs: { argila: 8, pedra: 6 },                      out: 1 },
   { item: 'tocha',          needs: { madeira: 1, fibra: 1, resina: 1 },          out: 2 },
-  { item: 'unguento',       needs: { cogumelo: 2, resina: 1, folha_larga: 1 },   out: 1 },
+  { item: 'unguento',       needs: { cogumelo: 2, resina: 1, folha_larga: 1, broto: 1 }, out: 1 },   // A1: + broto (estava fácil)
   { item: 'tocha_fixa',     needs: { tocha: 2, pedra: 2 },                       out: 1 },
   { item: 'lanterna',       needs: { quartzo: 2, barra_platina: 1, corda: 1 },   out: 1, max: 1 },
   { item: 'remo',           needs: { madeira: 2 }, tool: 'machado_pedra',        out: 1, max: 1 },

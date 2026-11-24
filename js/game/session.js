@@ -244,6 +244,7 @@ export class Session {
     if (this.terminal.open) input.pressed.clear();
     else if (input.wasPressed('Backquote')) { this.terminal.show(); input.pressed.clear(); }
     if (input.wasPressed('F3')) state.debugLevel = (state.debugLevel + 1) % 3;
+    if (input.wasPressed('F1')) state.hintTime = state.hintTime > 0 ? 0 : 12;                 // A1: F1 mostra/esconde a barra de teclas
     if (input.wasPressed('F4')) { if (this.cave) this.toast('Sem mapa aqui dentro. A saída fica na parede de cima.', 2); else overview.toggle(); }
     if (input.wasPressed('KeyK')) this.copyCode();
     if (input.wasPressed('Minus') || input.wasPressed('NumpadSubtract')) this.zoom(+1);      // afasta: vê mais mundo

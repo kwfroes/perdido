@@ -56,7 +56,7 @@ export const P2 = {
   // ilhotas (paisagem): raio [mín, máx] em tiles e distância mínima da ilha principal, para 200x200 e 400x400
   ISLET_R: [[6, 9], [8, 13]], ISLET_GAP: [8, 12], ISLET_SPACING: 14, ISLET_MIN: 60,
   ORE_SPACING: 22,                 // distância mínima (tiles) entre jazidas da ilha principal
-  PITANGA: [0.05, 0.035, 0.004],   // por célula 2x2: areia da restinga, campo perto do mar, campo longe do mar
+  PITANGA: [0.075, 0.05, 0.006],   // A1: +50% (quase ninguém achava)   // por célula 2x2: areia da restinga, campo perto do mar, campo longe do mar
   // sinais de animais
   HIVE_PROB: 0.006,                // por célula 2x2 de mata
   CAT_TRAILS: [3, 8],              // trilhas de pegadas de gato-do-mato em 200x200 e 400x400

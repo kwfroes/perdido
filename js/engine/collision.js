@@ -39,19 +39,19 @@ export class CollisionWorld {
     return out;
   }
   // Move o "pé" (px,py = centro da base) em dx/dy, resolvendo um eixo por vez (permite deslizar).
-  moveFoot(px, py, w, h, dx, dy) {
+  moveFoot(px, py, w, h, dx, dy, keep = null) {   // keep(r): só esses retângulos bloqueiam (null = todos)
     const hw = w / 2;
     let nx = Math.min(Math.max(px + dx, hw), this.worldW - hw);
     let box = { x: nx - hw, y: py - h, w, h };
     for (const r of this.query(box.x, box.y, box.x + w, box.y + h)) {
-      if (!overlap(box, r)) continue;
+      if (!overlap(box, r) || (keep && !keep(r))) continue;
       nx = dx > 0 ? r.x - hw : dx < 0 ? r.x + r.w + hw : nx;
       box = { x: nx - hw, y: py - h, w, h };
     }
     let ny = Math.min(Math.max(py + dy, h), this.worldH);
     box = { x: nx - hw, y: ny - h, w, h };
     for (const r of this.query(box.x, box.y, box.x + w, box.y + h)) {
-      if (!overlap(box, r)) continue;
+      if (!overlap(box, r) || (keep && !keep(r))) continue;
       ny = dy > 0 ? r.y : dy < 0 ? r.y + r.h + h : ny;
       box = { x: nx - hw, y: ny - h, w, h };
     }
