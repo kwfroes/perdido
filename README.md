@@ -13,7 +13,7 @@ Abra http://localhost:8000
 Ao abrir, o menu pede uma semente (texto livre ou o botão Aleatória) e o tamanho: **Grande 200x200** ou **Enorme 400x400**.
 - Mesmo código => mesmo mundo, sempre. O **código do mundo** tem o formato `V2-E-K7QM-3XZP` (versão do gerador - tamanho - semente).
 - Colar um código completo no campo ajusta a semente e o tamanho sozinho. Texto qualquer vira semente (maiúsculas, espaços extras ignorados).
-- Link para compartilhar: `index.html#seed=V2-E-K7QM-3XZP` (o endereço do navegador já é atualizado ao jogar).
+- Link para compartilhar: `jogar.html#seed=V2-E-K7QM-3XZP` (links antigos com `index.html#seed=` são redirecionados) (o endereço do navegador já é atualizado ao jogar).
 - **Versões do gerador.** Mundos novos usam a v2. A **v1** (tamanhos 100/150/200, sem rios) continua disponível e **congelada**:
   um código `V1-...` recria exatamente a mesma ilha de antes (há um teste que prova isso, com mundos de referência em `tests/golden_v1.json`).
   A **v2 continua sendo alterada no lugar** (só há um jogador). Para não quebrar saves em silêncio, cada save guarda uma **marca do mundo**

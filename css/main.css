@@ -153,3 +153,21 @@ html.touch #charsel, html.touch #charsel * { touch-action: pan-y; }
   .cs-tr { grid-template-columns: 78px 1fr 24px; } .cs-tl { font-size: 12px; } .cs-te { font-size: 11px; }
   .cs-foot { padding: 6px 12px; } .cs-foot button.primary { padding: 8px 16px; }
 }
+
+/* ---------- Menu compacto: 2 colunas em telas largas; linhas de save numa linha só ---------- */
+#menu .card { width: min(820px, 100%); padding: 18px 22px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+#menu h1 { font-size: 26px; } #menu .sub { margin-bottom: 10px; font-size: 13px; }
+#menu .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; align-items: start; }
+#menu .col-saves .slots { margin-top: 0; }
+#menu .slots > label:first-child, #menu .col-new > label.newgame { margin-top: 0; }
+#menu .newgame { font-size: 14px; }
+#menu label { margin: 10px 0 5px; }
+#menu .slot { padding: 5px 8px; min-height: 40px; }
+#menu .slot .info { min-width: 0; }
+#menu .slot .info b { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#menu .slot .info .d { display: block; color: #b9ad9a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#menu .slot button, #menu .slot button.primary { width: auto; margin: 0; flex: none; padding: 5px 10px; font-size: 12px; }
+#menu button.primary { margin-top: 14px; }
+#menu .hint { margin-top: 12px; }
+#menu .slots .hint.small { margin-top: 4px; }
+@media (max-width: 700px) { #menu .cols { grid-template-columns: 1fr; } #menu .col-new > label.newgame { margin-top: 12px; } }

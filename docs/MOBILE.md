@@ -3,14 +3,14 @@
 Baseado no plano `plano_de_implementação_mobile_paisagem_e_touch.md`, com estas decisões:
 - Correr = empurrar o analógico até a borda (≥ 85% do raio). Não há botão Correr.
 - Toque e teclado convivem. O toque chama `Input.press/release`, então jogador, canoa, golpe repetido e menus usam as mesmas regras.
-- Testar no PC: abra `index.html#touch` (ou `?touch=1`) e use o modo dispositivo do navegador (F12).
+- Testar no PC: abra `jogar.html#touch` (ou `?touch=1`) e use o modo dispositivo do navegador (F12).
 
 ## Arquivos
 | Arquivo | Papel |
 |---|---|
 | `js/ui/touchState.js` | lógica pura: analógico → WASD/Shift (zona morta 15%), AGIR (segurar = E), toques únicos, rótulo do AGIR |
 | `js/ui/touchControls.js` | DOM: monta só com `matchMedia` + `document.body` + toque (o harness não tem, testes antigos intactos); orientação, `visualViewport`, tela cheia e trava paisagem no Jogar |
-| `index.html` / `css/main.css` | viewport sem zoom e com `viewport-fit=cover`, `#rotate-overlay`, controles com áreas seguras, menu rolável em altura ≤ 480 px |
+| `jogar.html` / `css/main.css` | viewport sem zoom e com `viewport-fit=cover`, `#rotate-overlay`, controles com áreas seguras, menu rolável em altura ≤ 480 px |
 | `js/main.js` | `app.blocked` (retrato) pausa a partida; `touch.sync()` por quadro |
 | `js/ui/hud.js` | no toque: balão sem "E" e sem a barra de teclas |
 

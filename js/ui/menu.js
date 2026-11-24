@@ -32,12 +32,12 @@ function renderSlots(el, slots, selected, pendingDelete) {
       const m = s.summary, del = pendingDelete === s.slot
         ? `<button type="button" data-action="delete-confirm" data-slot="${s.slot}" class="danger">Apagar mesmo</button><button type="button" data-action="delete-cancel" data-slot="${s.slot}">Não</button>`
         : `<button type="button" data-action="delete" data-slot="${s.slot}" title="Apagar">✕</button>`;
-      return `<div class="slot${sel}" data-action="select" data-slot="${s.slot}"><span class="n">${s.slot}</span><span class="info"><b>${esc(m.code)}</b><br>${CHARACTERS[m.character] ? esc(CHARACTERS[m.character].short) + ' · ' : ''}Dia ${m.day} · ${esc(m.season)} · ${fmtTime(m.playTime)}</span>`
+      return `<div class="slot${sel}" data-action="select" data-slot="${s.slot}"><span class="n">${s.slot}</span><span class="info"><b>${esc(m.code)}</b><span class="d">${CHARACTERS[m.character] ? esc(CHARACTERS[m.character].short) + ' · ' : ''}Dia ${m.day} · ${esc(m.season)} · ${fmtTime(m.playTime)}</span></span>`
         + `<button type="button" data-action="continue" data-slot="${s.slot}" class="primary small">Continuar</button>${del}</div>`;
     }
     if (s.broken) return `<div class="slot broken${sel}" data-action="select" data-slot="${s.slot}"><span class="n">${s.slot}</span><span class="info">Save com problema: ${esc(s.error)}</span><button type="button" data-action="delete" data-slot="${s.slot}">✕</button></div>`;
     return `<div class="slot empty${sel}" data-action="select" data-slot="${s.slot}"><span class="n">${s.slot}</span><span class="info">Vazio</span></div>`;
-  }).join('') + `<p class="hint small">"Jogar" começa um jogo novo no espaço ${selected}${slots.find(s => s.slot === selected && s.summary) ? ' (substitui o que está lá)' : ''}.</p>`;
+  }).join('') + `<p class="hint small">O novo jogo vai para o espaço ${selected}${slots.find(s => s.slot === selected && s.summary) ? ' (substitui o que está lá)' : ''}.</p>`;
 }
 
 // Mostra o menu. Devolve (Promise):
