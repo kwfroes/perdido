@@ -17,9 +17,10 @@ export class StationsMixin {
   envFor() {
     if (this.cave) { this.vitals.warm = false; return { night: false, rain: false, storm: false, dry: false, fire: false }; }   // 5A: a caverna abriga do tempo
     const w = this.weather.now, heavy = this.fires.heavyRain(w), p = this.player;
-    const cover = this.weather.raining && !heavy && this.underCanopy(p.x, p.y);    // A1: copa de árvore grande segura a chuva (a trovoada, não)
-    const env = { night: this.clock.isNight, storm: heavy, rain: !heavy && this.weather.raining && !cover, dry: this.clock.info.season === 2, fire: this.fires.litNear(p.x, p.y, FIRE.WARM_R) || this.furnaces.litNear(p.x, p.y, FIRE.WARM_R * 0.8) };
-    this.vitals.warm = env.fire; this.vitals.sheltered = cover; return env;
+    const roof = this.shelterAt(p.x, p.y);                                          // 5B: abrigo e casa seguram chuva e trovoada
+    const cover = !!roof || (this.weather.raining && !heavy && this.underCanopy(p.x, p.y));   // A1: copa de árvore grande segura a chuva (a trovoada, não)
+    const env = { night: this.clock.isNight, storm: heavy && !roof, rain: !heavy && this.weather.raining && !cover, dry: this.clock.info.season === 2, fire: this.fires.litNear(p.x, p.y, FIRE.WARM_R) || this.furnaces.litNear(p.x, p.y, FIRE.WARM_R * 0.8) };
+    this.vitals.warm = env.fire; this.vitals.sheltered = cover && (this.weather.raining || heavy); return env;
   }
   // embaixo da copa de uma árvore grande (perto do tronco, sem passar muito à frente dele)
   underCanopy(x, y) {

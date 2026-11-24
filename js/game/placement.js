@@ -27,10 +27,12 @@ export class PlacementMixin {
   // posição da prévia: logo à frente do jogador
   placeTrack() {
     const pl = this.placing, p = this.player, [fx, fy] = p.facingVec;
-    const k = pl.type === 'canoe' ? 1.8 : 1; pl.x = Math.round(p.x + fx * 30 * k); pl.y = Math.round(p.y + fy * 22 * k + (fy >= 0 ? 8 : -2));
+    const k = pl.type === 'canoe' ? 1.8 : pl.type === 'casa_1' ? 2.6 : pl.type === 'abrigo' ? 1.2 : 1; pl.x = Math.round(p.x + fx * 30 * k); pl.y = Math.round(p.y + fy * 22 * k + (fy >= 0 ? 8 : -2));
+    if (pl.type === 'abrigo') { const f = this.fires.list.find(f => Math.hypot(f.x - pl.x, f.y - pl.y) < 48); if (f) { pl.x = f.x; pl.y = f.y + 8; } }   // 5B: encaixa em cima da fogueira
     const r = this.canPlace(pl.type, pl.x, pl.y); pl.ok = r.ok; pl.why = r.why;
   }
   canPlace(type, x, y) {
+    if (type === 'abrigo') return this.canPlaceAbrigo(x, y);
     const c = OBJECT_DEFS[type].collider, x0 = x - c.w / 2, y0 = y - c.h, x1 = x + c.w / 2, y1 = y;
     for (const [px, py] of [[x0, y0], [x1, y0], [x0, y1 - 1], [x1, y1 - 1], [x, y - c.h / 2]]) {
       if (px <= 0 || py <= 0 || px >= this.area.W * TS || py >= this.area.H * TS || this.area.at(Math.floor(px / TS), Math.floor(py / TS)) === 3) return { ok: false, why: 'Não dá para montar na água.' };
@@ -46,6 +48,16 @@ export class PlacementMixin {
     const b = this.boat; if (b.state === 'beached' || b.state === 'moored') { const bx = b.state === 'beached' && this.canoeObj ? this.canoeObj.x : b.x, by = b.state === 'beached' && this.canoeObj ? this.canoeObj.y : b.y; if (Math.hypot(bx - x, by - y) < 46) return { ok: false, why: 'Perto demais da canoa.' }; }
     return { ok: true, why: '' };
   }
+  // abrigo: não tem colisor (só estacas) e PODE ficar sobre uma fogueira; só não vale na água/rocha nem em cima de outro abrigo
+  canPlaceAbrigo(x, y) {
+    for (const [px, py] of [[x - 40, y - 2], [x + 40, y - 2], [x, y - 30]]) {
+      const t = px > 0 && py > 0 && px < this.area.W * TS && py < this.area.H * TS ? this.area.at(Math.floor(px / TS), Math.floor(py / TS)) : 3;
+      if (t === 3) return { ok: false, why: 'Não dá para montar na água.' }; if (t === 4) return { ok: false, why: 'Tem rocha no caminho.' };
+    }
+    if (this.homes.some(h => h.type === 'abrigo' && Math.hypot(h.x - x, h.y - y) < 70)) return { ok: false, why: 'Já tem um abrigo aqui.' };
+    for (const r of this.collision.query(x - 42, y - 6, x + 42, y)) if (r.w && x - 42 < r.x + r.w && x + 42 > r.x && y - 6 < r.y + r.h && y > r.y && !(r.owner && r.owner.type === 'fogueira')) return { ok: false, why: 'As estacas batem em alguma coisa.' };
+    return { ok: true, why: '' };
+  }
   placeStep(act) {
     const pl = this.placing; if (!act) return;
     if (!pl.ok) { this.toast(pl.why || 'Não dá para montar aqui.', 1.8); return; }
@@ -58,6 +70,7 @@ export class PlacementMixin {
       this.canoe = { max, dur: max, built: true, repairs: 0, broken: false, warned: 0 };
       this.placing = null; this.interaction.target = null; this.toast(`Canoa nova pronta! Aguenta bem mais que a velha.${old ? ' A antiga foi desmontada.' : ''}`, 3); return;
     }
+    else if (OBJECT_DEFS[pl.type] && OBJECT_DEFS[pl.type].dir === 'home') { this.placeHome(pl.type, pl.x, pl.y); this.placing = null; this.interaction.target = null; return; }   // 5B
     else if (pl.type === 'torch_wall') {                                          // tocha fixa: objeto acrescentado ao mapa ativo (mundo ou caverna)
       const spec = { type: 'torch_wall', x: pl.x, y: pl.y }; spec.id = `+torch_wall:${spec.x}:${spec.y}`; this.delta.add(spec); this.addObject(spec, spec.id);
       this.placing = null; this.interaction.target = null; this.toast('Tocha fixa acesa.', 2); return;
@@ -66,7 +79,7 @@ export class PlacementMixin {
     this.toast(pl.type === 'forno' ? 'Forno montado. Coloque 2 minérios e 1 carvão (E).' : 'Fogueira montada. Chegue perto e acenda (E).', 2.8);
   }
   drawPlacing(ctx) {
-    const pl = this.placing; if (!pl) return; const img = this.assets[pl.type], c = OBJECT_DEFS[pl.type].collider;
+    const pl = this.placing; if (!pl) return; const img = this.assets[pl.type], c = OBJECT_DEFS[pl.type].collider || { w: 84, h: 6 };
     ctx.fillStyle = pl.ok ? 'rgba(90,220,110,0.35)' : 'rgba(230,70,60,0.4)'; ctx.fillRect(pl.x - c.w / 2 - 2, pl.y - c.h - 1, c.w + 4, c.h + 3);
     ctx.globalAlpha = 0.6; ctx.drawImage(img, Math.round(pl.x - img.width / 2), Math.round(pl.y - img.height)); ctx.globalAlpha = 1;
     ctx.strokeStyle = pl.ok ? '#6fe07f' : '#f0604f'; ctx.lineWidth = 1; ctx.strokeRect(Math.round(pl.x - c.w / 2 - 2) + 0.5, Math.round(pl.y - c.h - 1) + 0.5, c.w + 3, c.h + 2);

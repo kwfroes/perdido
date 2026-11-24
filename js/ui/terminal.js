@@ -55,7 +55,7 @@ export class Terminal {
           'limpar-inventario   reparar   durabilidade',
           'clima <aberto|nublado|chuva|trovoada|auto>   relampago <on|off>',
           'agua <on|off>   personagem <nawa|caua|helena|mateus>',
-          'canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
+          'casa (kits)   bancada (de bolso)   dormir   canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
           'status   curar   vida <n>   fome <n>   energia <n>   resistencia <n>   (fogueira: dar kit_fogueira)',
           'hora <hh[:mm]>   noite   manha   dia [+n]   estacao <chuvas|estiagem|seca|trovoadas|proxima>',
           'ir <inicio|canoa|ilhota|x y>   onde   limpar   fechar'].join('\n');
@@ -84,6 +84,9 @@ export class Terminal {
         return s.caveList.map(c => `${c.id}: ${({ P: 'pequena', M: 'média', G: 'grande' })[c.size]} em ${c.tx},${c.ty}${s.caveSaved.visited.has(c.id) ? ' (visitada)' : ''}`).join('\n') + (s.cave ? `\n(você está na ${s.cave.id})` : '');
       }
       case 'luz': s.give('tocha', 3); s.lightTorch(); return 'tocha acesa (+3 tochas).';
+      case 'bancada': s.cheatBench = !s.cheatBench; return `bancada de bolso: ${s.cheatBench ? 'ligada (fabrica tudo sem bancada perto)' : 'desligada'}.`;
+      case 'dormir': { const b = s.homes.find(h => h.type === 'cama'); if (!b) return 'não há cama.'; s.startSleep(b); return 'dormindo...'; }
+      case 'casa': s.give('kit_casa', 1); s.give('kit_cama', 1); s.give('kit_bau', 1); s.give('kit_bancada', 1); s.give('kit_abrigo', 1); return '+ kits de casa, cama, baú, bancada e abrigo.';
       case 'canoa': {                                                     // C1: testar o desgaste
         const c = s.canoe, pct = () => `${Math.round(s.canoeFrac * 100)}%`;
         if (!args.length) return `${c.broken && !s.canoeObj && s.boat.state === 'none' ? 'canoa partida' : c.built ? 'canoa nova' : 'canoa achada'}: ${pct()} (${Math.round(c.dur)} de ${c.max} px), consertos ${c.repairs}`;

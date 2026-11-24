@@ -7,7 +7,7 @@ const P = G.player, inv = G.inventory;
 const fresh = (o = {}) => new Session({ world: G.world, assets: G.assets, renderer: G.renderer, input: G.input, onCopy: async () => {}, ...o });
 const clear = () => { for (const k of Object.keys(G.items)) delete G.items[k]; G.ensureDur(); };
 const face = (o, dy = 14) => { P.x = o.x; P.y = o.y + dy; P.facing = 'up'; G.player.swing = null; step(4); };
-step(3); G.terminal.run('clima aberto');
+step(3); G.cheatBench = true;   // 5B: receitas de metal/canoa/lanterna pedem bancada G.terminal.run('clima aberto');
 
 // ---- argila ----
 const clays = G.objects.filter(o => /^clay_\d$/.test(o.type));

@@ -41,7 +41,8 @@ export class CanoeMixin {
   }
   taskStep(gameMin) {
     const k = this.task; if (!k) return; k.t += gameMin; if (k.t < k.need) return;
-    this.task = null; const R = CANOE.REPAIR, c = this.canoe;
+    this.task = null; if (k.kind === 'build') { this.buildDone(k); return; }                   // 5B: etapa da casa
+    const R = CANOE.REPAIR, c = this.canoe;
     for (const [it, q] of Object.entries(R.cost)) { this.items[it] -= q; if (!this.items[it]) delete this.items[it]; }
     if (k.sea && (this.rng || Math.random)() < R.seaFail) { this.toast('O conserto no mar não deu certo. A madeira e a corda se perderam.', 3); return; }
     const g = this.repairGain(); c.dur = Math.min(c.max, c.dur + g); c.repairs++; c.warned = CANOE.WARN.filter(t => this.canoeFrac < t).length;
@@ -118,7 +119,7 @@ export class CanoeMixin {
   drawTask(ctx, vw, vh) {
     const k = this.task; if (!k) return; const f = Math.min(1, k.t / k.need), w = 120, x = Math.round((vw - w) / 2), y = vh - 64;
     ctx.fillStyle = 'rgba(24,18,12,0.85)'; ctx.fillRect(x - 4, y - 13, w + 8, 22); ctx.font = '8px monospace'; ctx.fillStyle = '#f3e9d8';
-    const t = k.sea ? 'Consertando no mar...' : 'Consertando a canoa...'; ctx.fillText(t, x, y - 4);
+    const t = k.kind === 'build' ? `${k.stage.label}...` : k.sea ? 'Consertando no mar...' : 'Consertando a canoa...'; ctx.fillText(t, x, y - 4);
     ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x, y, w, 4); ctx.fillStyle = '#d9a066'; ctx.fillRect(x, y, Math.round(w * f), 4);
   }
   // E: pegar o remo, embarcar, desembarcar. Devolve true se tratou a tecla.

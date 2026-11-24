@@ -159,6 +159,15 @@ export const OBJECT_DEFS = {
   beams:        { img: 'beams', dir: 'cave', runtime: true, sprite: [50, 34], label: 'Escoras velhas', collider: { w: 40, h: 8 }, shadow: null, radius: 22, text: 'Alguém esteve aqui antes de você.' },
   rockfall:     { img: 'rockfall', dir: 'cave', runtime: true, sprite: [48, 32], label: 'Desmoronamento', collider: { w: 40, h: 12 }, shadow: null, radius: 22, text: 'Pedras caídas do teto.' },
   torch_wall:   { img: 'torch_wall', dir: 'cave', runtime: true, sprite: [12, 24], label: 'Tocha', collider: { w: 8, h: 4 }, shadow: null, radius: 6, text: 'Uma tocha fixa. Ilumina sem parar.' },
+  // 5B — casa (4 etapas), abrigo de palha, cama de folhas, baú e bancada (colocados pelo jogador; ficam no save em `homes`)
+  casa_1: { img: 'casa_1', dir: 'home', runtime: true, sprite: [146, 121], label: 'Casa (base)', collider: { w: 112, h: 22 }, shadow: null, radius: 60, text: 'A base da casa: pedras e esteios. Faltam as paredes.' },
+  casa_2: { img: 'casa_2', dir: 'home', runtime: true, sprite: [146, 121], label: 'Casa (paredes)', collider: { w: 112, h: 22 }, shadow: null, radius: 60, text: 'Paredes de taipa de pé. Falta a armação do telhado.' },
+  casa_3: { img: 'casa_3', dir: 'home', runtime: true, sprite: [146, 121], label: 'Casa (armação)', collider: { w: 112, h: 22 }, shadow: null, radius: 60, text: 'Só falta cobrir o telhado de palha.' },
+  casa:   { img: 'casa', dir: 'home', runtime: true, sprite: [146, 121], label: 'Casa', collider: { w: 112, h: 22 }, shadow: null, radius: 60, text: 'Sua casa. Perto dela, chuva e trovoada não te alcançam.' },
+  abrigo: { img: 'abrigo', dir: 'home', runtime: true, sprite: [136, 94], label: 'Abrigo de palha', collider: null, hit: { w: 60, h: 14 }, shadow: null, radius: 40, text: 'Um telhado de palha sobre quatro estacas. Embaixo dele, a chuva não alcança você nem a fogueira.' },
+  cama:   { img: 'cama', dir: 'home', runtime: true, sprite: [48, 37], label: 'Cama de folhas', collider: { w: 40, h: 12 }, shadow: null, radius: 22, text: 'Uma cama de folhas largas. Dá para dormir à noite.' },
+  bau:    { img: 'bau', dir: 'home', runtime: true, sprite: [36, 37], label: 'Baú', collider: { w: 26, h: 10 }, shadow: null, radius: 16, text: 'Um baú de tábuas. Guarda até 20 tipos de coisa, 50 de cada.' },
+  bancada: { img: 'bancada', dir: 'home', runtime: true, sprite: [59, 37], label: 'Bancada', collider: { w: 48, h: 12 }, shadow: null, radius: 26, text: 'Uma bancada de trabalho. Ferramentas de metal, canoa e lanterna se fazem perto dela.' },
   // S1 — trouxa: o que o jogador carregava ao morrer. Não bloqueia; interativa. (O brilho é a imagem trouxa_glow, desenhada pela sessão.)
   trouxa: { img: 'trouxa', runtime: true, sprite: [20, 22], label: 'Trouxa', collider: null, hit: { w: 22, h: 16 }, shadow: { w: 18, h: 5 }, radius: 10,
              text: 'Suas coisas, amarradas num pano. Ficaram onde você caiu.' },

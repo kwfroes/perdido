@@ -10,7 +10,7 @@ const fresh = (o = {}) => new Session({ world: G.world, assets: G.assets, render
 const pick = (re) => { if (!G.menu.open) { tap('KeyE'); step(1); } const i = G.menu.opts.findIndex(o => re.test(o.label)); if (i < 0) return false; tap('Digit' + (i + 1)); step(2); return true; };
 const untilDone = () => { for (let i = 0; i < 3000 && G.task; i++) step(1, 100); step(1); };
 const pct = () => Math.round(G.canoeFrac * 100);
-step(3); G.terminal.run('clima aberto'); G.terminal.run('manha');
+step(3); G.cheatBench = true;   // 5B: receitas de metal/canoa/lanterna pedem bancada G.terminal.run('clima aberto'); G.terminal.run('manha');
 
 // ---- orçamento ----
 const per = islandPerimeter(G.world);

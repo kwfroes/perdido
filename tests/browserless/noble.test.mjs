@@ -14,7 +14,7 @@ const face = (o, dy = 16) => { for (const n of hid) n.hidden = false; hid.clear(
   for (const n of G.objects) if (n !== o && n.hit && !n.hidden && Math.hypot(n.x - o.x, n.y - o.y) < 60) { n.hidden = true; hid.add(n); }
   P.x = o.x; P.y = o.y + dy; P.facing = 'up'; P.swing = null; step(4); };
 const hitAll = (o, n) => { for (let i = 0; i < n; i++) { tap('KeyE'); step(25); } };
-step(3); G.terminal.run('clima aberto');
+step(3); G.cheatBench = true;   // 5B: receitas de metal/canoa/lanterna pedem bancada G.terminal.run('clima aberto');
 
 const reach = (o, dy = 16) => G.footFree(o.x, o.y + dy);
 const plat = G.objects.find(o => o.type === 'ore_platina' && reach(o)), platBig = G.objects.find(o => o.type === 'ore_platina_big' && reach(o, 18));

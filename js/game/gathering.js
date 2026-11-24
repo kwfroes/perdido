@@ -30,6 +30,7 @@ export class GatheringMixin {
     if (t && t.kind === 'owl_pellet') return { kind: 'pellet', label: 'Desmanchar a bolota (osso)' };
     if (!t || !t.type) return null;
     if (t.type === 'trouxa') return { kind: 'bundle', label: 'Pegar a trouxa' };
+    if (t.home) return this.homeActionFor(t);
     if (t.caveId !== undefined) return { kind: 'cave', label: 'Entrar na caverna' };
     if (this.cave && !t.isExit && t.type !== 'trouxa' && !this.litAt(t.x, t.y - 6)) return { kind: 'dark', label: 'Escuro demais' };   // 5A: no escuro não se vê o que é
     if (t.type === 'tree_sapling') return { kind: 'pick', item: 'broto', n: 1, label: 'Tirar o broto' };   // A1: ingrediente do unguento
@@ -63,6 +64,7 @@ export class GatheringMixin {
       this.toast(`+${n} ${ITEMS[h.item].label.toLowerCase()}${n > 1 && h.item !== 'banana' ? 's' : ''}  (total ${this.items[h.item]})`, 2.5); return true;
     }
     if (a.kind === 'bundle') { this.pickBundle(t); return true; }
+    if (a.kind === 'home') { this.homeAct(t, a); return true; }
     if (a.kind === 'dark') { this.toast('Está escuro demais para ver o que é. Acenda uma tocha (I).', 2.5); return true; }
     if (a.kind === 'cave') { this.enterCave(t.caveId); return true; }
     if (a.kind === 'exitCave') { this.leaveCave(); return true; }
@@ -124,11 +126,12 @@ export class GatheringMixin {
       bd.obj = this.addObject({ type: 'trouxa', x: bd.x, y: bd.y }, `trouxa:${id}`); this.bundles.push(bd);
     }
     if (this.cave) this.leaveCave(true);                                            // 5A: acorda lá fora
-    p.x = this.world.start.x; p.y = this.world.start.y; p.swing = null; p.facing = 'down'; this.placing = null;
+    const bed = this.bed && this.footFreeOnLand(this.bed.x, this.bed.y) ? this.bed : null;        // 5B: acorda na última cama
+    p.x = bed ? bed.x : this.world.start.x; p.y = bed ? bed.y : this.world.start.y; p.swing = null; p.facing = 'down'; this.placing = null; this.sleeping = null;
     this.vitals.respawn(); this.inventory.open = false; this.dialog.close && this.dialog.close();
     this.camera.snapTo(...this.camTarget(), this.renderer.width, this.renderer.height);
     this.deaths = (this.deaths || 0) + 1;
-    this.dialog.show('Você desmaiou...', (opts.text ? opts.text + ' ' : '') + (keys.length ? `Acordou no lugar onde chegou à ilha. Suas coisas ficaram numa trouxa ${where}.` : 'Acordou no lugar onde chegou à ilha.'));
+    this.dialog.show('Você desmaiou...', (opts.text ? opts.text + ' ' : '') + (keys.length ? `${bed ? 'Acordou na sua cama' : 'Acordou no lugar onde chegou à ilha'}. Suas coisas ficaram numa trouxa ${where}.` : (bed ? 'Acordou na sua cama.' : 'Acordou no lugar onde chegou à ilha.')));
   }
   pickBundle(t) {
     const i = this.bundles.findIndex(b => b.obj === t); if (i < 0) return;

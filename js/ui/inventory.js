@@ -30,7 +30,11 @@ export function itemTag(k, dur = {}) {
 }
 
 export class Inventory {
-  constructor() { this.open = false; this.sel = 0; this.tab = 'items'; this.msg = null; this.touch = false; this.hits = null; this.scroll = 0; }
+  constructor() { this.open = false; this.sel = 0; this.tab = 'items'; this.msg = null; this.touch = false; this.hits = null; this.scroll = 0; this.chest = null; this.nearBench = false; }
+  // 5B: baú aberto -> abas "Mochila" e "Baú" (E guarda / pega o item selecionado)
+  openChest(c) { this.open = true; this.chest = c; this.tab = 'chest'; this.sel = 0; this.msg = null; }
+  get grid() { return this.tab === 'items' || this.tab === 'chest'; }
+  listFor(items) { return this.entries(this.tab === 'chest' && this.chest ? this.chest.items : items); }
   // toque: devolve o que está sob (x, y) em coordenadas lógicas, a partir das áreas gravadas no último draw()
   //   { type: 'tab', tab } | { type: 'slot', i } | { type: 'recipe', i } | { type: 'craft' } | { type: 'close' } | { type: 'outside' } | null (dentro, sem alvo)
   hitTest(x, y) {
@@ -42,11 +46,11 @@ export class Inventory {
     if (inR(h.down)) return { type: 'scroll', d: 1 };
     if (inR(h.craft)) return { type: 'craft' };
     if (inR(h.eat)) return { type: 'eat' };
-    for (const c of h.cells) if (inR(c)) return { type: h.kind === 'items' ? 'slot' : 'recipe', i: c.i };
+    for (const c of h.cells) if (inR(c)) return { type: h.kind === 'craft' ? 'recipe' : 'slot', i: c.i };
     return null;
   }
-  toggle() { this.open = !this.open; this.sel = 0; this.tab = 'items'; this.msg = null; }
-  switchTab() { this.tab = this.tab === 'items' ? 'craft' : 'items'; this.sel = 0; this.msg = null; this.scroll = 0; }
+  toggle() { this.open = !this.open; this.sel = 0; this.tab = 'items'; this.msg = null; this.chest = null; }
+  switchTab() { this.tab = this.chest ? (this.tab === 'items' ? 'chest' : 'items') : (this.tab === 'items' ? 'craft' : 'items'); this.sel = 0; this.msg = null; this.scroll = 0; }
   scrollBy(d) { this.scroll = Math.max(0, Math.min(RECIPES.length - (this.rowsVis || RECIPES.length), this.scroll + d)); }
   entries(items) { return ITEM_ORDER.filter(k => items[k] > 0).map(k => [k, items[k]]); }
   count() { return this.tab === 'items' ? null : RECIPES.length; }
@@ -58,6 +62,7 @@ export class Inventory {
   canCraft(r, items) {
     if (r.max && (items[r.item] || 0) >= r.max) return { ok: false, why: 'Você já tem' };
     if (r.tool && !items[r.tool]) return { ok: false, why: 'Precisa de ' + ITEMS[r.tool].label.toLowerCase() };
+    if (r.bench && !this.nearBench) return { ok: false, why: 'Precisa estar perto da bancada' };
     for (const [k, n] of Object.entries(r.needs)) if ((items[k] || 0) < n) return { ok: false, why: 'Falta material' };
     return { ok: true };
   }
@@ -75,18 +80,20 @@ export class Inventory {
     ctx.font = '9px monospace';
     // altura: calculada antes de desenhar, para o texto nunca sair da janela
     let body, lines;
-    if (this.tab === 'items') {
-      const list = this.entries(items), rows = Math.max(2, Math.ceil(list.length / COLS));
+    if (this.grid) {
+      const list = this.listFor(items), rows = Math.max(2, Math.ceil(list.length / COLS));
       if (this.sel >= list.length) this.sel = Math.max(0, list.length - 1);
       const cur = list[this.sel], fd = cur && ITEMS[cur[0]].food;
       const txt = cur ? ITEMS[cur[0]].text + (DURABILITY[cur[0]] ? ` Durabilidade: ${Math.max(0, dur[cur[0]] ?? DURABILITY[cur[0]])}/${DURABILITY[cur[0]]}.` : '')
         + (fd ? ` Alimenta: +${fd.hunger} fome${fd.energy ? `, +${fd.energy} energia` : ''}${fd.hp ? `, +${fd.hp} vida` : ''}.${this.touch ? '' : ' E: comer.'}` : '')
         + (ITEMS[cur[0]].place ? (this.touch ? ' Toque em Colocar e escolha o lugar.' : ' E: colocar no mundo.') : '') + (ITEMS[cur[0]].use && !this.touch ? ' E: usar.' : '') : 'Vazio. Colha frutas, pegue pedras e madeira, bata em rochas e minérios.';
-      lines = wrapText(ctx, txt, maxW); body = { list, rows, cur, tag: cur ? itemTag(cur[0], dur) : null };
+      const ctxt = this.chest ? (this.tab === 'chest' ? (cur ? `${ITEMS[cur[0]].text} ${this.touch ? 'Toque em Pegar.' : 'E: pegar tudo.'}` : 'O baú está vazio. Na aba Mochila, E guarda o item selecionado.')
+        : (cur ? `${ITEMS[cur[0]].label}: ${this.touch ? 'toque em Guardar.' : 'E guarda no baú (até 50 de cada, 20 tipos).'}` : 'Mochila vazia.')) : null;
+      lines = wrapText(ctx, ctxt || txt, maxW); body = { list, rows, cur, tag: cur ? itemTag(cur[0], dur) : null };
     } else {
       lines = wrapText(ctx, this.msg || (this.touch ? 'Toque numa receita e em Fabricar.' : 'Tab: voltar aos itens. E: fabricar.'), maxW);
     }
-    const eatBtn = this.touch && this.tab === 'items' && body.cur && (ITEMS[body.cur[0]].food || ITEMS[body.cur[0]].place || ITEMS[body.cur[0]].use);
+    const eatBtn = this.touch && this.grid && body.cur && (this.chest || ITEMS[body.cur[0]].food || ITEMS[body.cur[0]].place || ITEMS[body.cur[0]].use);
     const btnH = this.touch && (this.tab === 'craft' || eatBtn) ? 20 : 0;   // botão [Fabricar] / [Comer] (só no toque)
     // receitas: só as que cabem na tela; o resto rola (setas / ▲▼ no toque); a seleção fica sempre à vista
     if (this.tab === 'craft') {
@@ -94,8 +101,8 @@ export class Inventory {
       if (this.sel < this.scroll) this.scroll = this.sel; if (this.sel >= this.scroll + this.rowsVis) this.scroll = this.sel - this.rowsVis + 1;
       this.scroll = Math.max(0, Math.min(RECIPES.length - this.rowsVis, this.scroll));
     }
-    const gridH = this.tab === 'items' ? body.rows * CELL : this.rowsVis * RH;
-    const h = 20 + 12 + gridH + 6 + (this.tab === 'items' && body.cur ? 22 : 0) + lines.length * 10 + PAD + btnH;
+    const gridH = this.grid ? body.rows * CELL : this.rowsVis * RH;
+    const h = 20 + 12 + gridH + 6 + (this.grid && body.cur ? 22 : 0) + lines.length * 10 + PAD + btnH;
     const x = Math.round((vw - W) / 2), y = Math.round((vh - h) / 2);
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, vw, vh);
     ctx.fillStyle = 'rgba(24,18,12,0.96)'; ctx.fillRect(x, y, W, h);
@@ -103,7 +110,7 @@ export class Inventory {
     // abas
     ctx.font = 'bold 10px monospace';
     const hits = this.hits = { kind: this.tab, box: { x, y, w: W, h }, tabs: [], cells: [], craft: null, eat: null, close: null, up: null, down: null };
-    const tabs = [['items', 'Itens'], ['craft', 'Fabricar']]; let tx = x + PAD;
+    const tabs = this.chest ? [['items', 'Mochila'], ['chest', `Baú ${Object.keys(this.chest.items).length}/20`]] : [['items', 'Itens'], ['craft', 'Fabricar']]; let tx = x + PAD;
     for (const [k, label] of tabs) { const lw = ctx.measureText(label).width; ctx.fillStyle = this.tab === k ? '#d9a066' : '#7d6b55'; ctx.fillText(label, tx, y + 13); if (this.tab === k) ctx.fillRect(tx, y + 15, lw, 1);
       hits.tabs.push({ k, x: tx - 4, y, w: lw + 8, h: 22 }); tx += lw + 12; }
     if (this.touch) {                                                    // [X] grande no canto (no teclado: a dica de teclas)
@@ -111,20 +118,20 @@ export class Inventory {
       ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText('X', bx + 7, by + 13); hits.close = { x: bx - 6, y: by - 4, w: 32, h: 26 };
     } else { ctx.font = '8px monospace'; ctx.fillStyle = '#9c8a74'; const hint = 'Tab | I/Esc'; ctx.fillText(hint, x + W - PAD - ctx.measureText(hint).width, y + 13); }
     const gy = y + 24;
-    if (this.tab === 'items') this.drawItems(ctx, x, gy, body, icons);
+    if (this.grid) this.drawItems(ctx, x, gy, body, icons);
     else this.drawCraft(ctx, x, gy, items, icons);
     // texto
     let ty = gy + gridH + 12;
     ctx.font = '9px monospace';
-    if (this.tab === 'items' && body.cur) { ctx.fillStyle = '#f3e9d8'; ctx.fillText(ITEMS[body.cur[0]].label, x + PAD, ty); ty += 11;
+    if (this.grid && body.cur) { ctx.fillStyle = '#f3e9d8'; ctx.fillText(ITEMS[body.cur[0]].label, x + PAD, ty); ty += 11;
       ctx.font = 'bold 7px monospace'; ctx.fillStyle = body.tag.color; ctx.fillText(body.tag.text, x + PAD, ty); ty += 11; ctx.font = '9px monospace'; }
     ctx.fillStyle = this.tab === 'craft' && this.msg && /fez/.test(this.msg) ? '#a8e08a' : '#c8bfae';
     for (const l of lines) { ctx.fillText(l, x + PAD, ty); ty += 10; }
     if (btnH) {
-      const eat = this.tab === 'items', r = RECIPES[this.sel], plc = eat && body.cur && ITEMS[body.cur[0]].place, usa = eat && body.cur && ITEMS[body.cur[0]].use;
-      const can = plc || usa ? true : eat ? !(this.vitals && this.vitals.hunger >= 98) : r && this.canCraft(r, items).ok, bw = 70, bx = x + W - PAD - bw, by = y + h - PAD - 16;
+      const eat = this.grid, r = RECIPES[this.sel], plc = eat && body.cur && ITEMS[body.cur[0]].place, usa = eat && body.cur && ITEMS[body.cur[0]].use;
+      const can = this.chest || plc || usa ? true : eat ? !(this.vitals && this.vitals.hunger >= 98) : r && this.canCraft(r, items).ok, bw = 70, bx = x + W - PAD - bw, by = y + h - PAD - 16;
       ctx.fillStyle = can ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(bx, by, bw, 16);
-      ctx.font = 'bold 9px monospace'; ctx.fillStyle = can ? '#1a1410' : '#8f8170'; const t = plc ? 'Colocar' : usa ? 'Usar' : eat ? 'Comer' : 'Fabricar'; ctx.fillText(t, bx + (bw - ctx.measureText(t).width) / 2, by + 11);
+      ctx.font = 'bold 9px monospace'; ctx.fillStyle = can ? '#1a1410' : '#8f8170'; const t = this.chest ? (this.tab === 'chest' ? 'Pegar' : 'Guardar') : plc ? 'Colocar' : usa ? 'Usar' : eat ? 'Comer' : 'Fabricar'; ctx.fillText(t, bx + (bw - ctx.measureText(t).width) / 2, by + 11);
       hits[eat ? 'eat' : 'craft'] = { x: bx - 4, y: by - 4, w: bw + 8, h: 24 };
     }
   }

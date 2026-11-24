@@ -19,13 +19,14 @@ export class Fires {
   }
   heavyRain(w) { return !!w && (w.state === 'storm' || (w.rain || 0) >= FIRE.STORM_RAIN); }
   // devolve as fogueiras que apagaram neste passo (por chuva ou por falta de lenha), para avisar o jogador
-  update(gameMin, weather) {
+  update(gameMin, weather, covered = null) {   // covered(f): fogueira embaixo de abrigo (a chuva não apaga nem acelera)
     const out = []; if (gameMin <= 0) return out;
     const heavy = this.heavyRain(weather), mult = weather && weather.rain > 0.05 ? FIRE.RAIN_BURN : 1;
     for (const f of this.list) {
       if (!f.lit) continue;
-      if (heavy) { f.lit = false; out.push({ f, why: 'rain' }); continue; }
-      const b = Math.min(f.fuel, gameMin * mult), nb = Math.min(f.noCoal, b); f.fuel -= b; f.noCoal -= nb; f.burnt += b - nb; f.used = true;
+      const cv = covered && covered(f);
+      if (heavy && !cv) { f.lit = false; out.push({ f, why: 'rain' }); continue; }
+      const b = Math.min(f.fuel, gameMin * (cv ? 1 : mult)), nb = Math.min(f.noCoal, b); f.fuel -= b; f.noCoal -= nb; f.burnt += b - nb; f.used = true;
       while (f.burnt >= FIRE.COAL_EVERY) { f.burnt -= FIRE.COAL_EVERY; f.coal = Math.min(FIRE.COAL_MAX, f.coal + 1); }
       if (f.fuel <= 0) { f.fuel = 0; f.lit = false; out.push({ f, why: 'fuel' }); }
     }

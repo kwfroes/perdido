@@ -42,6 +42,11 @@ export const ITEMS = {
   cogumelo:       { label: 'Cogumelo',         icon: 'assets/items/item_cogumelo.png',              text: 'Cogumelo claro de caverna. Cru faz mal; é ingrediente de remédio.' },
   broto:          { label: 'Broto',            icon: 'assets/items/item_broto.png',                 text: 'O olho tenro de uma árvore nova. Amargo; vai no unguento.' },
   unguento:       { label: 'Unguento',         icon: 'assets/items/item_unguento.png',              text: 'Pasta de cogumelo, resina, folha e broto. Cura +35 de vida.', use: 'heal', heal: 35 },
+  kit_abrigo:     { label: 'Abrigo de palha',  icon: 'assets/items/item_kit_abrigo.png',            text: 'Estacas e palha para um abrigo. Monte sobre a fogueira: a chuva não apaga.', place: 'abrigo' },
+  kit_cama:       { label: 'Cama de folhas',   icon: 'assets/items/item_kit_cama.png',              text: 'Folhas largas amarradas. Monte e durma à noite.', place: 'cama' },
+  kit_bau:        { label: 'Baú',              icon: 'assets/items/item_kit_bau.png',               text: 'Tábuas e corda para um baú.', place: 'bau' },
+  kit_bancada:    { label: 'Bancada',          icon: 'assets/items/item_kit_bancada.png',           text: 'Para montar a bancada de trabalho.', place: 'bancada' },
+  kit_casa:       { label: 'Casa (base)',      icon: 'assets/items/item_kit_casa.png',              text: 'Pedras e esteios para a base da casa. Depois: paredes, armação e telhado.', place: 'casa_1' },
   carvao:         { label: 'Carvão',           icon: 'assets/items/item_carvao.png',                text: 'Madeira queimada devagar. Vai alimentar a fundição.' },
   madeira:        { label: 'Madeira',          icon: 'assets/items/item_madeira.png',               text: 'Pedaço de tronco. Serve para cabos e construções.' },
   picareta_pedra: { label: 'Picareta de pedra', icon: 'assets/items/item_picareta_pedra.png',      text: 'Pedra pontuda amarrada num cabo. Quebra rochas e minério de ferro.' },
@@ -127,17 +132,22 @@ export const RECIPES = [
   { item: 'kit_fogueira',   needs: { pedra: 5, graveto: 3, madeira: 1 },         out: 1 },
   { item: 'kit_forno',      needs: { argila: 8, pedra: 6 },                      out: 1 },
   { item: 'tocha',          needs: { madeira: 1, fibra: 1, resina: 1 },          out: 2 },
+  { item: 'kit_abrigo',     needs: { madeira: 4, folha_larga: 6, graveto: 4, corda: 2 }, out: 1 },
+  { item: 'kit_cama',       needs: { folha_larga: 8, graveto: 4, corda: 1 },     out: 1 },
+  { item: 'kit_bau',        needs: { madeira: 6, corda: 2 },                     out: 1 },
+  { item: 'kit_bancada',    needs: { madeira: 5, pedra: 4, corda: 1 }, tool: 'machado_pedra', out: 1, max: 1 },
+  { item: 'kit_casa',       needs: { pedra: 12, madeira: 4 },                    out: 1, max: 1 },
   { item: 'unguento',       needs: { cogumelo: 2, resina: 1, folha_larga: 1, broto: 1 }, out: 1 },   // A1: + broto (estava fácil)
   { item: 'tocha_fixa',     needs: { tocha: 2, pedra: 2 },                       out: 1 },
-  { item: 'lanterna',       needs: { quartzo: 2, barra_platina: 1, corda: 1 },   out: 1, max: 1 },
+  { item: 'lanterna',       needs: { quartzo: 2, barra_platina: 1, corda: 1 },   out: 1, bench: true, max: 1 },
   { item: 'remo',           needs: { madeira: 2 }, tool: 'machado_pedra',        out: 1, max: 1 },
-  { item: 'kit_canoa',      needs: { madeira: 10, corda: 4 }, tool: 'machado_ferro', out: 1, max: 1 },
-  { item: 'picareta_ferro', needs: { barra_ferro: 2, madeira: 2, corda: 1 },     out: 1, max: 1 },
-  { item: 'machado_ferro',  needs: { barra_ferro: 2, madeira: 2, corda: 1 },     out: 1, max: 1 },
-  { item: 'facao_ferro',    needs: { barra_ferro: 2, madeira: 1, corda: 1 },     out: 1, max: 1 },
-  { item: 'picareta_platina', needs: { barra_platina: 2, barra_ouro: 1, madeira: 2, corda: 1 }, out: 1, max: 1 },
-  { item: 'machado_platina',  needs: { barra_platina: 2, barra_ouro: 1, madeira: 2, corda: 1 }, out: 1, max: 1 },
-  { item: 'facao_platina',    needs: { barra_platina: 2, barra_prata: 1, madeira: 1, corda: 1 }, out: 1, max: 1 },
+  { item: 'kit_canoa',      needs: { madeira: 10, corda: 4 }, tool: 'machado_ferro', out: 1, bench: true, max: 1 },
+  { item: 'picareta_ferro', needs: { barra_ferro: 2, madeira: 2, corda: 1 },     out: 1, bench: true, max: 1 },
+  { item: 'machado_ferro',  needs: { barra_ferro: 2, madeira: 2, corda: 1 },     out: 1, bench: true, max: 1 },
+  { item: 'facao_ferro',    needs: { barra_ferro: 2, madeira: 1, corda: 1 },     out: 1, bench: true, max: 1 },
+  { item: 'picareta_platina', needs: { barra_platina: 2, barra_ouro: 1, madeira: 2, corda: 1 }, out: 1, bench: true, max: 1 },
+  { item: 'machado_platina',  needs: { barra_platina: 2, barra_ouro: 1, madeira: 2, corda: 1 }, out: 1, bench: true, max: 1 },
+  { item: 'facao_platina',    needs: { barra_platina: 2, barra_prata: 1, madeira: 1, corda: 1 }, out: 1, bench: true, max: 1 },
 ];
 // tipo de alvo de um objeto (ou null)
 export function targetKind(type) {
@@ -171,4 +181,12 @@ export const ROAST = { pitanga: 'pitanga_assada', siriguela: 'siriguela_assada',
 export const GEM_YIELD = { vein_s: ['quartzo', 1], vein_m: ['quartzo', 2], vein_l: ['quartzo', 3], crystal_quartzo: ['quartzo', 3],
   crystal_ametista: ['ametista', 2], crystal_esmeralda: ['esmeralda', 1], crystal_diamante: ['diamante', 1] };
 export const RESIN_TREES = { tree_tall: 2 };            // derrubar árvore alta: +2 resina
+
+// 5B — etapas da casa: o que cada etapa pede e quanto tempo de jogo leva (a base vem do kit)
+export const HOUSE_STAGES = [
+  { type: 'casa_2', label: 'Levantar as paredes',  needs: { argila: 12, graveto: 10, madeira: 4 }, minutes: 90 },
+  { type: 'casa_3', label: 'Montar a armação',     needs: { madeira: 8, corda: 4 },               minutes: 60 },
+  { type: 'casa',   label: 'Cobrir o telhado',     needs: { folha_larga: 12, capim: 10, corda: 2 }, minutes: 90 },
+];
+export const CHEST = { types: 20, max: 50 };
 

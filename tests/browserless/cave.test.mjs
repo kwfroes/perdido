@@ -16,7 +16,7 @@ const face = (o, dy = 16) => { for (const n of hid) n.hidden = false; hid.clear(
   for (const n of G.objects) if (n !== o && n.hit && !n.hidden && Math.hypot(n.x - o.x, n.y - o.y) < 60) { n.hidden = true; hid.add(n); }
   P.x = o.x; P.y = o.y + dy; P.facing = 'up'; P.swing = null; step(4); };
 const craft = (item) => { inv.open = true; inv.tab = 'craft'; inv.sel = RECIPES.findIndex(r => r.item === item); step(1); tap('KeyE'); step(1); inv.open = false; step(1); };
-step(3); G.terminal.run('clima aberto'); G.terminal.run('manha');
+step(3); G.cheatBench = true;   // 5B: receitas de metal/canoa/lanterna pedem bancada G.terminal.run('clima aberto'); G.terminal.run('manha');
 
 // ---- gerador ----
 { let okAll = true, info = [];

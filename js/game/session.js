@@ -36,6 +36,7 @@ import { PlacementMixin } from './placement.js';
 import { LightingMixin } from './lighting.js';
 import { CanoeMixin } from './canoe.js';
 import { CavesMixin } from './caves.js';
+import { HomeMixin } from './home.js';
 
 // Uma partida: mundo gerado + jogador + câmera + sistemas.
 // R1: os métodos por assunto ficam em js/game/<assunto>.js (classes "mixin") e são copiados para o protótipo no fim deste arquivo.
@@ -103,6 +104,7 @@ export class Session {
     this.furnaces = new Furnaces(save && save.furnaces);
     for (const f of this.furnaces.list) this.attachFurnace(f);
     this.placeClay();
+    this.initHomes(save);                                                      // 5B: casa, cama, baú, bancada, abrigo
     this.placeCaves(save && save.caves);                                       // 5A: entradas das cavernas (só 400x400)
     this.torch = save && save.torch && save.torch.left > 0 ? { left: save.torch.left } : null;
     this.camera = new Camera(WORLD_W, WORLD_H);
@@ -153,7 +155,7 @@ export class Session {
         wear: { dur: Math.round(this.canoe.dur), built: this.canoe.built, repairs: this.canoe.repairs, broken: this.canoe.broken } },
       items: { ...this.items }, durability: { ...this.dur }, delta: (this._over ? this._over.delta : this.delta).toJSON(),
       scene: this.cave ? { cave: this.cave.id } : null, caves: this.cavesToJSON(), torch: this.torch && this.torch.left > 0 ? { left: Math.round(this.torch.left) } : null,
-      vitals: this.vitals.toJSON(), traits: { ...this.vitals.traits }, fires: this.fires.toJSON(), furnaces: this.furnaces.toJSON(),
+      vitals: this.vitals.toJSON(), traits: { ...this.vitals.traits }, fires: this.fires.toJSON(), homes: this.homesToJSON(), bed: this.bed ? { x: Math.round(this.bed.x), y: Math.round(this.bed.y) } : null, furnaces: this.furnaces.toJSON(),
       bundles: this.bundles.map(b => ({ id: b.id, x: b.x, y: b.y, items: { ...b.items }, durability: { ...b.durability }, ...(b.cave !== undefined ? { cave: b.cave } : {}) })),
     };
   }
@@ -225,7 +227,7 @@ export class Session {
       else if (h.type === 'scroll') inv.scrollBy(h.d);
       else if (h.type === 'recipe') { if (inv.sel === h.i) this.craftSelected(); else { inv.sel = h.i; inv.msg = null; } }   // 2º toque na receita fabrica
       else if (h.type === 'craft') this.craftSelected();
-      else if (h.type === 'eat') this.useSelected();
+      else if (h.type === 'eat') { if (inv.chest) this.chestMove(inv.tab === 'items'); else this.useSelected(); }
       return true;
     }
     if (this.overview.open) { this.overview.open = false; return true; }
@@ -254,11 +256,13 @@ export class Session {
     if (this.placing && (input.wasPressed('Escape') || input.wasPressed('KeyI'))) { this.placing = null; this.toast('Cancelado.', 1.2); input.pressed.delete('KeyI'); input.pressed.delete('Escape'); }
     if (input.wasPressed('KeyI') && !overview.open && !dialog.isOpen) this.inventory.toggle();
     if (this.inventory.open) {
-      const n = this.inventory.entries(this.items).length;
-      if (input.wasPressed('Escape')) this.inventory.open = false;
-      if (input.wasPressed('Tab') || input.wasPressed('KeyQ')) this.inventory.switchTab();
-      if (this.inventory.tab === 'craft' && act) this.craftSelected();
-      else if (this.inventory.tab === 'items' && act) this.useSelected();
+      const inv = this.inventory; inv.nearBench = this.nearBench();
+      if (input.wasPressed('Escape')) inv.open = false;
+      if (input.wasPressed('Tab') || input.wasPressed('KeyQ')) inv.switchTab();
+      const n = inv.listFor(this.items).length;
+      if (inv.tab === 'craft' && act) this.craftSelected();
+      else if (inv.chest && act) this.chestMove(inv.tab === 'items');              // 5B: baú aberto: E guarda / pega
+      else if (inv.tab === 'items' && act) this.useSelected();
       if (input.wasPressed('ArrowRight') || input.wasPressed('KeyD')) this.inventory.move(1, 0, n);
       if (input.wasPressed('ArrowLeft') || input.wasPressed('KeyA')) this.inventory.move(-1, 0, n);
       if (input.wasPressed('ArrowDown') || input.wasPressed('KeyS')) this.inventory.move(0, 1, n);
@@ -268,12 +272,14 @@ export class Session {
       if (act) dialog.advance();
       if (input.wasPressed('Escape')) dialog.close();
       dialog.update(dt);
+    } else if (this.sleeping) {
+      /* dormindo */
     } else if (this.menu.open) {
       this.menu.handle(input);
     } else if (this.wreck) {
       /* boiando numa tábua: nada a fazer */
     } else if (this.task) {
-      if (input.wasPressed('Escape')) { this.task = null; this.toast('Conserto cancelado.', 1.5); }
+      if (input.wasPressed('Escape')) { this.toast(this.task.kind === 'build' ? 'Construção interrompida (o material não foi gasto).' : 'Conserto cancelado.', 1.5); this.task = null; }
     } else if (this.placing) {
       this.placeStep(act);
     } else if (act && (this.boat.sailing || this.interaction.target)) {
@@ -281,7 +287,7 @@ export class Session {
     }
 
     { // segurar E (ou espaço) num alvo de golpe repete o golpe no ritmo da ferramenta
-      const held = !dialog.isOpen && !overview.open && !this.inventory.open && !this.boat.sailing && !this.placing && !this.menu.open && !this.task && !this.wreck && (input.isDown('KeyE') || input.isDown('Space'));
+      const held = !dialog.isOpen && !overview.open && !this.inventory.open && !this.boat.sailing && !this.placing && !this.menu.open && !this.task && !this.wreck && !this.sleeping && (input.isDown('KeyE') || input.isDown('Space'));
       const a = held && this.interaction.target ? this.actionFor(this.interaction.target) : null;
       if (a && a.kind === 'hit' && a.best) { this._holdT = (this._holdT || 0) + dt; if (this._holdT >= CONFIG.HIT_REPEAT * (this.vitals.tired ? 1.6 : 1)) { this._holdT = 0; this.strike(this.interaction.target, a); } }
       else this._holdT = 0;
@@ -291,7 +297,8 @@ export class Session {
     const m0 = this.clock.minutes; this.clock.paused = locked; this.clock.advance(dt); const gameMin = Math.max(0, Math.min(60, this.clock.minutes - m0));   // terminal pulando dias não conta                            // o tempo para com o diálogo ou o mapa abertos
     this.weatherDt = locked ? 0 : dt; this.weather.update(this.clock.minutes, this.weatherDt); this.water.windOff = this.weather.windOff;
     this.fauna.night = this.clock.isNight; this.fauna.season = this.clock.info.season;
-    const still = locked || this.menu.open || !!this.task;                         // menu aberto ou consertando: o personagem não anda
+    if (this.sleeping && !locked) this.sleepStep(dt);
+    const still = locked || this.menu.open || !!this.task || !!this.sleeping;                         // menu aberto ou consertando: o personagem não anda
     if (this.debris && !locked) this.debris.t += dt;
     if (this.wreck) { if (!locked) this.wreckStep(dt); player.moving = false; }
     else if (this.boat.sailing) { const bx0 = this.boat.x, by0 = this.boat.y; this.boat.update(dt, input, still); player.x = this.boat.x; player.y = this.boat.y; player.moving = false; player.wading = false;
@@ -300,7 +307,7 @@ export class Session {
       this._stepAcc = (this._stepAcc || 0) + Math.hypot(player.x - px0, player.y - py0);
       if (this._stepAcc > 14 && !this.cave) { this._stepAcc = 0; if (this.weather.onPuddle(player.x, player.y)) this.weather.stepIn(player.x, player.y); } }
     { // 4d.1: fogueiras queimam no tempo do jogo (também longe do jogador)
-      for (const { f, why } of this.fires.update(gameMin, this.weather.now))
+      for (const { f, why } of this.fires.update(gameMin, this.weather.now, (f) => this.shelterAt(f.x, f.y - 2) === 'abrigo'))
         if (Math.hypot(f.x - player.x, f.y - player.y) < 400) this.toast(why === 'rain' ? 'A chuva forte apagou a fogueira.' : 'A fogueira apagou: acabou a lenha.', 2.5);
       for (const f of this.fires.list) if (f.obj) { const k = this.fires.frame(f, this.time); if (f.obj._frame !== k) { f.obj._frame = k; f.obj.img = this.assets[k]; } }
       for (const { f, items } of this.furnaces.update(gameMin))
@@ -398,6 +405,7 @@ export class Session {
     drawHud(ctx, { ...state, touch: this.touchMode, vitals: this.vitals, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
     this.drawPlaceButtons(ctx, vw, vh);
     this.drawTask(ctx, vw, vh);
+    this.drawSleep(ctx, vw, vh);
     this.menu.draw(ctx, vw, vh, this.touchMode);
     this.terminal.draw(ctx, vw, vh);                                            // por cima de tudo
     if (this.overview.open) this.overview.draw(ctx, vw, vh, player, this.camera);   // por cima de tudo
@@ -426,4 +434,4 @@ function installMixins(target, ...mixins) {
     Object.defineProperty(target.prototype, k, d);
   }
 }
-installMixins(Session, GatheringMixin, StationsMixin, PlacementMixin, LightingMixin, CanoeMixin, CavesMixin);
+installMixins(Session, GatheringMixin, StationsMixin, PlacementMixin, LightingMixin, CanoeMixin, CavesMixin, HomeMixin);

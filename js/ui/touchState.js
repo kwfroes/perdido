@@ -39,6 +39,7 @@ export function actLabel(s) {
   if (s.placing) return s.placing.ok ? 'Colocar' : '';
   if (s.inventory && s.inventory.open) {
     if (s.inventory.tab === 'craft') return 'Fabricar';
+    if (s.inventory.chest) return s.inventory.tab === 'chest' ? 'Pegar' : 'Guardar';
     const cur = s.inventory.entries(s.items)[s.inventory.sel]; return cur && ITEMS[cur[0]].place ? 'Colocar' : cur && ITEMS[cur[0]].use ? 'Usar' : cur && ITEMS[cur[0]].food ? 'Comer' : '';
   }
   if (s.overview && s.overview.open) return '';
