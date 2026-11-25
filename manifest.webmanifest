@@ -3,28 +3,27 @@
   "short_name": "Perdido",
   "description": "Sobrevivência e exploração em ilhas tropicais geradas por semente.",
   "lang": "pt-BR",
-  "id": "perdido",
+  "id": "./",
   "start_url": "./jogar.html?app=1",
   "scope": "./",
-  "display": "fullscreen",
-  "orientation": "landscape",
+  "display": "standalone",
   "background_color": "#0e1410",
   "theme_color": "#0e1410",
   "icons": [
     {
-      "src": "assets/icons/icon-192.png",
+      "src": "./assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-512.png",
+      "src": "./assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-maskable-512.png",
+      "src": "./assets/icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
