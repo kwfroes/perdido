@@ -16,6 +16,7 @@ import { generateCave, wallTiles, wallRects } from '../world/cave.js';
 import { mulberry32 } from '../world/noise.js';
 import { streamSeed } from '../world/seed.js';
 import { CAVE_SPRITES } from '../data/caveSprites.js';
+import { HAND_POINTS } from '../data/handPoints.js';
 import { ITEMS, DURABILITY } from '../data/items.js';
 
 export const CAVES = {
@@ -92,7 +93,7 @@ export class CavesMixin {
     const p = this.player, info = this.caveList[id]; this._entranceBack = { x: info.x, y: info.y + 26 };
     const sc = this.buildCave(id); this.swapScene(sc);
     const s = at && this.footFreeOnLand(at.x, at.y) ? at : sc.map.start; p.x = s.x; p.y = s.y; p.facing = 'down'; p.swing = null; p.wading = false;
-    this.placing = null; this.menu.close(); this.interaction.target = null; this.caveSaved.visited.add(id);
+    this.placing = null; this.menu.close(); this.interaction.target = null; if (!this.caveSaved.visited.has(id)) { this.gain('exploracao', 25); this.mark('caverna'); } this.caveSaved.visited.add(id);
     this.camera.snapTo(...this.camTarget(), this.renderer.width, this.renderer.height);
     if (!at) this.toast(`Caverna ${SIZE_LABEL[info.size]}. ${this.lightRadius() ? 'Sua luz mostra o caminho.' : 'Está escuro: acenda uma tocha (I).'}`, 3.5);
     return true;
@@ -143,7 +144,7 @@ export class CavesMixin {
   lightTorch() {
     if (this.items.lanterna) { this.toast('A lanterna já ilumina sem gastar nada.', 2); return false; }
     if (this.torch && this.torch.left > 0) { this.toast(`A tocha ainda está acesa (~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h).`, 2); return false; }
-    if (!this.items.tocha) return false; if (this.wreck) { this.toast('Molhada demais para acender.', 2); return false; }
+    if (!this.items.tocha) return false; if (this.wreck || this.player.swimming) { this.toast('Molhada demais para acender.', 2); return false; }
     this.items.tocha--; if (!this.items.tocha) delete this.items.tocha; this.torch = { left: CAVES.TORCH_MIN }; this.inventory.open = false;
     this.toast('Você acendeu uma tocha (~3 h de jogo).', 2.5); return true;
   }
@@ -161,15 +162,18 @@ export class CavesMixin {
   }
   // tocha na mão: o cabo na mão do personagem, a chama acima do ombro. De costas, ela fica atrás do corpo.
   //   offsets da mão (px a partir dos pés) por direção; a imagem tem o cabo embaixo à esquerda e a chama em cima à direita
+  // tocha na mão: presa no ponto da mão DO QUADRO que acabou de ser desenhado (js/data/handPoints.js, tirado da silhueta);
+  // sobe e desce com os passos e balança com o braço. De costas fica atrás do corpo. (A2: antes era um ponto fixo + um balanço próprio)
   drawHandTorch(ctx, front) {
-    if (this.items.lanterna || !this.torch || this.torch.left <= 0 || this.boat.sailing || this.wreck) return;
-    const p = this.player, f = p.facing, back = /^up/.test(f); if (back === front) return;
+    if (this.items.lanterna || !this.torch || this.torch.left <= 0 || this.boat.sailing || this.wreck || this.player.swing) return;
+    const p = this.player, back = /^up/.test(p.facing); if (back === front) return;
+    const lf = p.lastFrame, hp = HAND_POINTS[p.characterId]; if (!lf || !hp) return;
     const im = this.assets[`torch_hand_${Math.floor(this.time * 8) % 4}`]; if (!im) return;
-    const left = /Left$|^left$/.test(f), side = /^(left|right)$/.test(f);
-    const [hx, hy] = side ? [7, -27] : back ? [-9, -30] : [10, -26];             // mão: de lado à frente do corpo; de frente na mão direita da tela
-    const bob = p.moving ? Math.round(Math.sin(this.time * 16)) : 0, gx = 2, gy = im.height - 2;   // ponto do cabo que fica na mão
-    const ax = Math.round(p.x + (left ? -hx : hx)), ay = Math.round(p.y + hy + bob);
-    ctx.save(); ctx.translate(ax, ay); if (left) ctx.scale(-1, 1); ctx.rotate(-0.25); ctx.drawImage(im, -gx, -gy); ctx.restore();
+    // quadro espelhado (passo de frente/costas): pega a mão do OUTRO lado da folha e espelha -> a tocha fica sempre na mesma mão
+    const pt = (lf.diag ? hp.diag : lf.flip ? hp.other : hp.main)[lf.row]; if (!pt || !pt[lf.col]) return;
+    let [hx, hy] = pt[lf.col]; const cw = p.def.cell[0]; if (lf.flip) hx = cw - 1 - hx;
+    const left = hx < cw / 2, ax = lf.px + hx, ay = lf.py + hy;
+    ctx.save(); ctx.translate(ax, ay); if (left) ctx.scale(-1, 1); ctx.rotate(-0.2); ctx.drawImage(im, -2, -(im.height - 3)); ctx.restore();
   }
   // ametista: pedra de amolar
   sharpen() {

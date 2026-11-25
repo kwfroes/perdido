@@ -81,6 +81,7 @@ export function placeFauna(world) {
         for (let m = 0; m < n; m++) animals.push({ id: id++, species: name, x: o.x + (o.flip ? -fx : fx) * w0 + (m ? (m % 2 ? 6 : -6) : 0), y: o.y + 1, lift: Math.round(fy * h0) + (m ? 3 * m : 0), perch: o.type, hang: !!hb.hang });
         centers.push({ x: o.x, y: o.y });
         if (def.extras && def.extras.pellet && rng() < def.extras.pellet) props.push({ kind: 'owl_pellet', x: o.x + 10, y: o.y + 8 });
+        if (name === 'coruja' && rng() < 0.7) props.push({ kind: 'owl_egg', x: o.x - 12, y: o.y + 6 });   // L1: ovo de coruja no pé do poleiro
       }
       continue;
     }

@@ -14,6 +14,9 @@ export const CONFIG = {
     FOOT_W: 16,         // área de colisão nos pés
     FOOT_H: 10,
     ANCHOR_Y: 63,       // altura do sprite acima dos pés (usada pelo balão de interação)
+    LEGS_H: 13,         // S4: água rasa (1º bloco): linha da água na perna
+    SWIM_MULT: 0.5,     // S4: nadando
+    SHALLOW_MULT: 0.8,  // S4: água rasa (perna)
     WAIST_H: 24,        // altura da cintura acima dos pés (linha da água dentro de um vau)
     ANIM_FPS: 8,        // quadros por segundo da caminhada
     DEFAULT: 'female',  // personagem inicial (veja js/data/characters.js)

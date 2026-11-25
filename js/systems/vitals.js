@@ -11,6 +11,7 @@ export const VITALS = {
   RUN_E: 2.4, RUN_H: 0.012,   // por segundo real correndo (energia; fome extra)
   ROW_E: 0.9, ROW_H: 0.006,   // remando
   WADE_E: 0.7,                // andando no vau
+  SWIM_E: 1.6, SWIM_IDLE_E: 0.6, DROWN_HP: 1.2, DEEP_E: 3, DEEP_HP: 3,   // fundo (6º bloco+): energia cai 3x; sem energia, vida 3x   // S4: nadando (por segundo real); energia zerada nadando: perde vida
   HIT_E: 1.6, HIT_H: 0.04,    // por golpe
   REST_E: 4.0, WALK_E: 1.6,   // recuperação por segundo: parado / andando
   TIRED: 15, RESTED: 25,      // abaixo de 15% não corre; volta a correr acima de 25%
@@ -35,10 +36,12 @@ export class Vitals {
     this.res = clamp(Number.isFinite(s.res) ? s.res : 100, 0, 100);
     this.tired = this.energy < VITALS.TIRED;
   }
-  get effortMult() { return clamp(1 - (this.traits.vigor - 50) * 0.005, 0.6, 1.4) * (this.res <= 0 ? VITALS.RES.COLD_EFFORT : 1); }   // vigor 62 -> 6% a menos; resistência zerada: +50%
-  get hungerMult() { return clamp(1 - (this.traits.metabolism - 50) * 0.01, 0.6, 1.4); }  // metabolismo 64 -> 14% mais devagar
+  // S3: qualidades mudaram (dormindo): recalcula a vida máxima
+  retrait() { const old = this.maxHp; this.maxHp = Math.round((100 + (this.traits.hardiness - 50) * 0.5) * ((this.legend && this.legend.maxHp) || 1)); this.max.hp = this.maxHp; if (this.maxHp > old) this.hp += this.maxHp - old; this.hp = Math.min(this.hp, this.maxHp); }
+  get effortMult() { return (clamp(1 - (this.traits.vigor - 50) * 0.005, 0.6, 1.4) * (this.res <= 0 ? VITALS.RES.COLD_EFFORT : 1)) * (this.skillEffort || 1) * ((this.legend && this.legend.effort) || 1); }   // S3: exploração reduz o esforço   // vigor 62 -> 6% a menos; resistência zerada: +50%
+  get hungerMult() { return clamp(1 - (this.traits.metabolism - 50) * 0.01, 0.6, 1.4) * ((this.legend && this.legend.hunger) || 1); }  // metabolismo 64 -> 14% mais devagar
   get foodMult() { return clamp(1 + (this.traits.metabolism - 50) * 0.01, 0.7, 1.4); }    // e aproveita melhor a comida
-  get resMult() { return clamp(1 - (this.traits.hardiness - 50) * 0.01, 0.6, 1.4); }      // resistência alta perde mais devagar
+  get resMult() { return clamp(1 - (this.traits.hardiness - 50) * 0.01, 0.6, 1.4) * ((this.legend && this.legend.resLoss) || 1); }      // resistência alta perde mais devagar
   // gameMin: minutos de jogo que passaram (0 com janela aberta). dt: segundos reais (0 com janela aberta).
   // act: { running, rowing, wading, moving }   env (S2): { night, rain, storm, dry, fire }
   update(gameMin, dt, act = {}, env = null) {
@@ -49,12 +52,16 @@ export class Vitals {
     let de = 0;
     if (act.running) de -= V.RUN_E * em * dt;
     else if (act.rowing) de -= V.ROW_E * em * dt;
+    else if (act.swimming) de -= (act.moving ? V.SWIM_E : V.SWIM_IDLE_E) * em * this.lungMult * (act.swimLoad || 1) * (act.deep ? V.DEEP_E : 1) * dt;   // S4 + correnteza
     else if (act.wading) de -= V.WADE_E * em * dt;
     else de += (act.moving ? V.WALK_E : V.REST_E) * (this.hunger < V.LOW_HUNGER ? 0.5 : 1) * dt;
     this.energy = clamp(this.energy + de, 0, 100);
+    this.drowning = !!act.swimming && this.energy <= 0;                     // S4: sem energia nadando: afoga devagar
+    if (this.drowning) this.hp = clamp(this.hp - VITALS.DROWN_HP * (act.deep ? VITALS.DEEP_HP : 1) * dt, 0, this.maxHp);
     if (env) {                                                              // S2: resistência
       const R = V.RES; let rate;
       if (env.fire) rate = R.FIRE;
+      else if (env.home) rate = 5;                                          // dentro de casa: +5/h mesmo sem fogo
       else { let loss = 0; if (env.storm) loss += R.STORM; else if (env.rain) loss += R.RAIN; if (env.night) loss += R.NIGHT; if (env.dry) loss += R.DRY;
         rate = loss < 0 ? loss * this.resMult : R.CALM; }
       this.res = clamp(this.res + rate * gameMin / 60, 0, 100);
@@ -72,6 +79,8 @@ export class Vitals {
     if (this.energy > VITALS.RESTED) this.tired = false;
     return g;
   }
+  // S4: fôlego (qualidade 50 = média; lenda Peixe do fundo +50%) reduz o gasto na água
+  get lungMult() { return clamp(1 - (this.traits.lung - 50) * 0.01, 0.6, 1.4) / ((this.legend && this.legend.lung) || 1); }
   get dead() { return this.hp <= 0; }
   respawn() { const r = VITALS.RESPAWN; this.hp = Math.min(this.maxHp, r.hp); this.hunger = r.hunger; this.energy = r.energy; this.res = Math.max(this.res, 50); this.tired = false; }
   heal() { this.hp = this.maxHp; this.hunger = 100; this.energy = 100; this.res = 100; this.tired = false; }

@@ -1,3 +1,4 @@
+import { HUNT_SPRITES } from '../data/huntSprites.js';
 import { CAVE_SPRITES } from '../data/caveSprites.js';
 import { canoePalette, wornVariants } from './wear.js';
 import { CANOE_SPRITES } from '../data/islandSprites.js';
@@ -23,6 +24,10 @@ for (const [sp, states] of Object.entries(FRUIT_TREE_SPRITES)) for (const st of 
 for (const k of FLOWER_SPRITES) FILES[k] = `assets/environment/${k}.png`;
 for (const [k, it] of Object.entries(ITEMS)) FILES[`icon_${k}`] = it.icon;
 FILES.trouxa_glow = 'assets/environment/trouxa_glow.png';
+for (const k of HUNT_SPRITES) FILES[k] = `assets/fish/${k}.png`;   // 5C.1
+FILES.farm_terra = 'assets/farm/terra.png';   // 5C.2
+for (const k of ['in_indigena', 'in_ribeirinho', 'in_quilombola', 'luz_janela', 'luz_porta', 'fogao_0', 'fogao_1', 'fogao_2', 'fogao_3', 'rede_ocupada']) FILES[k] = `assets/home/${k}.png`;   // casa por dentro
+for (const k of ['res', 'hp', 'energy', 'hunger', 'lung']) FILES[`lenda_${k}`] = `assets/icons/lenda_${k}.png`;   // L1
 // 5A: cavernas (chão, paredes, morcegos, tochas)
 FILES.cave_floor = 'assets/cave/floor.png'; FILES.cave_wall = 'assets/cave/wall.png'; FILES.bat_fly = 'assets/cave/bat_fly.png';
 for (const k of ['bat_hang_0', 'bat_hang_1', 'torch_hand_0', 'torch_hand_1', 'torch_hand_2', 'torch_hand_3', 'torch_wall_0', 'torch_wall_1', 'torch_wall_2', 'torch_wall_3']) FILES[k] = `assets/cave/${k}.png`;
@@ -91,6 +96,7 @@ export async function loadAssets() {
     const src = assets.bat_fly, [cw, ch, n] = CAVE_SPRITES.bat_fly, c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const g = c.getContext('2d');
     for (let i = 0; i < n; i++) { g.save(); g.translate((n - i) * cw, 0); g.scale(-1, 1); g.drawImage(src, i * cw, 0, cw, ch, 0, 0, cw, ch); g.restore(); }
     assets.bat_fly_flip = c; }
+  assets.legendIcons = Object.fromEntries(['res', 'hp', 'energy', 'hunger', 'lung'].map(k => [k, assets[`lenda_${k}`]]));
   assets.itemIcons = Object.fromEntries(Object.keys(ITEMS).map(k => [k, assets[`icon_${k}`]]));
   assets.characters = {};
   const ids = Object.keys(CHARACTERS);

@@ -123,5 +123,17 @@ ok('ametista amola a ferramenta mais gasta (+40%)', G.dur.picareta_ferro === 20 
 // terminal
 ok('terminal "caverna" lista as 6', G.terminal.run('caverna').split('\n').length >= 6);
 
+// ---- A2: saída maior, tocha na mão, luz sem tremer ----
+{ const { HAND_POINTS } = await import('../../js/data/handPoints.js');
+  ok('saída da caverna em escala do personagem (>= 96 px de largura)', G.assets.cave_exit.width >= 96, `${G.assets.cave_exit.width}`);
+  ok('ponto da mão de todos os quadros dos 4 personagens', ['female', 'male', 'explorer_f', 'explorer_m'].every(id => HAND_POINTS[id] && HAND_POINTS[id].main.length === 4 && HAND_POINTS[id].other.length === 4 && HAND_POINTS[id].diag.length === 4));
+  G.terminal.run('caverna 2'); G.terminal.run('luz'); step(3); const P2 = G.player; P2.x = G.cave.map.start.x; P2.y = G.cave.map.start.y + 40;
+  const c = G.renderer.canvas.getContext('2d'), orig = c.drawImage.bind(c); let at = null;
+  c.drawImage = function (im, ...a) { if (im && im === G.assets[`torch_hand_${Math.floor(G.time * 8) % 4}`]) { const m = c.getTransform(); at = [m.e, m.f]; } return orig(im, ...a); };
+  step(1); c.drawImage = orig; const lf = P2.lastFrame;
+  ok('a tocha é desenhada presa à mão do quadro atual', at && lf && Math.abs(at[0] - (lf.px + HAND_POINTS[P2.characterId].main[lf.row][lf.col][0] - G.camera.x)) <= 2, JSON.stringify(at));
+  const L = G.lightSources(G.camera.x, G.camera.y, G.renderer.width, G.renderer.height).find(f => f.core);
+  ok('a luz da tocha tem um miolo limpo sobre o corpo (sem faixas cruzando o personagem)', !!L && L.y < P2.y);
+  G.terminal.run('caverna sair'); }
 console.log(R.map(([c, n, e]) => `${c ? 'OK   ' : 'FALHA'} | ${n}${e && !c ? ' | ' + e : ''}`).join('\n'));
 const f = R.filter(r => !r[0]).length; console.log(`\n${R.length - f} de ${R.length} verificações passaram${f ? ` | ${f} FALHAS` : ''}.`); process.exit(f ? 1 : 0);

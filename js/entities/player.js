@@ -46,8 +46,8 @@ export class Player {
     if (dx && dy) { dx *= Math.SQRT1_2; dy *= Math.SQRT1_2; }
     const { SPEED, FOOT_W, FOOT_H, RUN_MULT, RUN_STEP_MULT, WADE_MULT } = CONFIG.PLAYER;
     // Shift corre; dentro de um vau (água na cintura) anda devagar e não corre
-    this.running = !this.wading && !this.tired && (input.isDown('ShiftLeft') || input.isDown('ShiftRight'));   // cansado (S1): não corre
-    const speed = SPEED * (this.wading ? WADE_MULT : this.running ? RUN_MULT : 1);
+    this.running = !this.wading && !this.swimming && !this.inWater && !this.tired && (input.isDown('ShiftLeft') || input.isDown('ShiftRight'));   // cansado (S1): não corre
+    const P = CONFIG.PLAYER, speed = SPEED * (this.swimming ? P.SWIM_MULT : this.inWater ? P.SHALLOW_MULT : this.wading ? WADE_MULT : this.running ? RUN_MULT : 1);
     const p = collision.moveFoot(this.x, this.y, FOOT_W, FOOT_H, dx * speed * dt, dy * speed * dt);
     const moved = Math.hypot(p.x - this.x, p.y - this.y);
     this.x = p.x; this.y = p.y;
@@ -71,6 +71,7 @@ export class Player {
     if (this.isDiag && sheet.diag && this.moving) {
       const fi = Math.floor(this.animTime * ANIM_FPS) % 4, sxd = fi * cw, syd = DIAG_ROW[this.facing] * ch;
       const px = Math.round(this.x - ax), py = Math.round(this.y - ay);
+      this.lastFrame = { diag: true, row: DIAG_ROW[this.facing], col: fi, flip: false, px, py };   // A2: a tocha segue a mão deste quadro
       if (this.wading) { this.drawWading(ctx, sheet.diag, sxd, syd, cw, ch, px, py, false, ay); return; }
       ctx.drawImage(sheet.diag, sxd, syd, cw, ch, px, py, cw, ch); return;
     }
@@ -83,6 +84,7 @@ export class Player {
     }
     const sx = frame * cw, sy = d.rows[face] * ch;
     const px = Math.round(this.x - ax), py = Math.round(this.y - ay + dy);
+    this.lastFrame = { diag: false, row: d.rows[face], col: frame, flip, px, py };
     if (this.wading) { this.drawWading(ctx, sheet, sx, sy, cw, ch, px, py, flip, ay); return; }
     if (flip) {                                   // espelha em torno do centro da célula
       ctx.save(); ctx.translate(px + cw, py); ctx.scale(-1, 1);
@@ -99,7 +101,7 @@ export class Player {
     g.clearRect(0, 0, cw, ch);
     if (flip) { g.save(); g.translate(cw, 0); g.scale(-1, 1); g.drawImage(sheet, sx, sy, cw, ch, 0, 0, cw, ch); g.restore(); }
     else g.drawImage(sheet, sx, sy, cw, ch, 0, 0, cw, ch);
-    const waist = ay - CONFIG.PLAYER.WAIST_H;                       // linha da água, em px dentro da célula
+    const waist = ay - (this.waterLine || CONFIG.PLAYER.WAIST_H);  // linha da água, em px dentro da célula (S4: perna ou cintura)
     g.globalCompositeOperation = 'source-atop';
     g.fillStyle = 'rgba(64,168,204,0.62)'; g.fillRect(0, waist, cw, ch - waist);
     g.fillStyle = 'rgba(230,248,252,0.85)'; g.fillRect(0, waist, cw, 1);

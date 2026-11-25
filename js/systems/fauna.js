@@ -33,7 +33,7 @@ export class Animal {
     this.rng = mulberry32(rngSeed);
     this.speedMul = this.young ? (def.young.speed / def.speed) : 1;
   }
-  get label() { return this.young ? this.def.young.label : this.def.label; }
+  get label() { return this.actionLabel || (this.young ? this.def.young.label : this.def.label); }   // L1: com ação (pegar), o balão mostra a ação
   get sortY() { return this.y; }
   get text() { return this.resting && this.def.restText ? this.def.restText : this.def.text; }
   get cell() { return ANIMAL_SPRITES[this.sheet].cell; }

@@ -44,12 +44,13 @@ export class CanoeMixin {
     this.task = null; if (k.kind === 'build') { this.buildDone(k); return; }                   // 5B: etapa da casa
     const R = CANOE.REPAIR, c = this.canoe;
     for (const [it, q] of Object.entries(R.cost)) { this.items[it] -= q; if (!this.items[it]) delete this.items[it]; }
-    if (k.sea && (this.rng || Math.random)() < R.seaFail) { this.toast('O conserto no mar não deu certo. A madeira e a corda se perderam.', 3); return; }
-    const g = this.repairGain(); c.dur = Math.min(c.max, c.dur + g); c.repairs++; c.warned = CANOE.WARN.filter(t => this.canoeFrac < t).length;
+    if (k.sea && (this.rng || Math.random)() < R.seaFail * (1 - 2 * this.sb('navegacao'))) { this.toast('O conserto no mar não deu certo. A madeira e a corda se perderam.', 3); return; }
+    const g = this.repairGain(); c.dur = Math.min(c.max, c.dur + g); c.repairs++; this.gain('navegacao', 8); c.warned = CANOE.WARN.filter(t => this.canoeFrac < t).length;
     this.toast(`Canoa consertada: +${Math.round(g / c.max * 100)}% (agora ${Math.round(this.canoeFrac * 100)}%).${c.built ? '' : ' A madeira velha aguenta cada vez menos.'}`, 3);
   }
   wearCanoe(d) {
-    const c = this.canoe; if (c.broken || d <= 0) return; c.dur = Math.max(0, c.dur - d);
+    const c = this.canoe; if (c.broken || d <= 0) return; d *= 1 - this.sb('navegacao'); c.dur = Math.max(0, c.dur - d);
+    this._rowAcc = (this._rowAcc || 0) + d; if (this._rowAcc >= 150) { this._rowAcc -= 150; this.gain('navegacao', 1); this.mark('remar'); }   // S3
     const n = CANOE.WARN.filter(t => this.canoeFrac < t).length;
     if (n > c.warned) { c.warned = n; const pct = Math.round(CANOE.WARN[n - 1] * 100);
       this.toast(n === CANOE.WARN.length ? `A canoa está se desfazendo (${pct}%)! Volte para a terra ou conserte.` : `A canoa está gasta: ${pct}% restante.`, 3.5); }
@@ -126,7 +127,7 @@ export class CanoeMixin {
   boatAction() {
     const t = this.interaction.target, b = this.boat;
     if (b.sailing) {
-      if (b.disembark(this.player, (x, y) => this.footFree(x, y))) { this.toast('Você desembarcou. A canoa fica ancorada aqui.', 2.5); return true; }
+      if (b.disembark(this.player, (x, y) => this.footFreeOnLand(x, y))) { this.toast('Você desembarcou. A canoa fica ancorada aqui.', 2.5); return true; }
       if (this.canRepair()) { this.openCanoeMenu(true); return true; }
       this.toast('Chegue mais perto da terra para desembarcar.', 2); return true;
     }

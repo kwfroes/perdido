@@ -43,7 +43,7 @@ const ICONS = {
   res: ['.bbb.', 'bbbbb', 'bbbbb', '.bbb.', '..b..'],
 };
 const ICOL = { r: '#e05a4a', o: '#e8913a', g: '#5fae4a', y: '#f2d24a', b: '#7fb7e0' };
-export function drawVitals(ctx, v, x, y, t = 0) {
+export function drawVitals(ctx, v, x, y, t = 0, legends = null, icons = null) {
   const rows = [['hp', v.hp / v.maxHp, '#e05a4a', 0.25], ['hunger', v.hunger / 100, '#e8913a', 0.2], ['energy', v.energy / 100, '#f2d24a', 0.15]];
   if (Number.isFinite(v.res)) rows.push(['res', v.res / 100, '#7fb7e0', 0.2]);
   const W = 54, H = rows.length * 9 + 5;
@@ -53,6 +53,10 @@ export function drawVitals(ctx, v, x, y, t = 0) {
     ICONS[k].forEach((r, yy) => [...r].forEach((c, xx) => { if (c !== '.') { ctx.fillStyle = ICOL[c]; ctx.fillRect(x + 3 + xx, ry + yy, 1, 1); } }));
     ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x + 11, ry + 1, W, 4);
     ctx.fillStyle = blink ? '#ffffff' : col; ctx.fillRect(x + 11, ry + 1, Math.round(W * Math.max(0, Math.min(1, f))), 4);
+    const lg = legends && legends[k], im = lg && icons && icons[k];                 // L1: ícone da lenda ao lado do status
+    if (im && !(lg.frac < 0.1 && Math.sin(t * 6) > 0)) { const ix = x + W + 18, iy = ry - 3;
+      if (lg.ritual) { ctx.fillStyle = '#e8c84a'; ctx.fillRect(ix - 1, iy - 1, im.width + 2, im.height + 2); ctx.fillStyle = 'rgba(24,18,12,0.9)'; ctx.fillRect(ix, iy, im.width, im.height); }
+      ctx.drawImage(im, ix, iy); }
   });
   const tags = []; if (v.tired) tags.push('cansado'); if (v.warm) tags.push('aquecido'); else if (v.sheltered) tags.push('abrigado da chuva'); else if (Number.isFinite(v.res) && v.res <= 0) tags.push('com frio');
   if (tags.length) { ctx.font = '8px monospace'; ctx.fillStyle = '#f2d24a'; ctx.fillText(tags.join(' · '), x + 3, y + H + 8); }
@@ -70,7 +74,7 @@ export function drawCanoeBar(ctx, c, x, y, t = 0) {
 
 export function drawHud(ctx, info) {
   if (info.clock) drawClock(ctx, info.clock, info.vw, info.weather);
-  if (info.vitals) drawVitals(ctx, info.vitals, 4, info.debugLevel > 0 ? 36 : 4, info.time || 0);
+  if (info.vitals) drawVitals(ctx, info.vitals, 4, info.debugLevel > 0 ? 36 : 4, info.time || 0, info.legends, info.legendIcons);
   if (info.light) { const y = (info.debugLevel > 0 ? 36 : 4) + 4 * 9 + 5 + (info.canoe ? 24 : 12); ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(24,18,12,0.75)'; const t = '✦ ' + info.light, w = ctx.measureText(t).width + 6; ctx.fillRect(4, y - 8, w, 11); ctx.fillStyle = '#f2c46a'; ctx.fillText(t, 7, y); }
   if (info.canoe) drawCanoeBar(ctx, info.canoe, 4, (info.debugLevel > 0 ? 36 : 4) + 4 * 9 + 5 + 12, info.time || 0);
   ctx.font = '10px monospace';

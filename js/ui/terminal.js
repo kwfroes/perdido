@@ -55,7 +55,7 @@ export class Terminal {
           'limpar-inventario   reparar   durabilidade',
           'clima <aberto|nublado|chuva|trovoada|auto>   relampago <on|off>',
           'agua <on|off>   personagem <nawa|caua|helena|mateus>',
-          'casa (kits)   bancada (de bolso)   dormir   canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
+          'roca   caca   pesca   casa (kits)   bancada (de bolso)   dormir   canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
           'status   curar   vida <n>   fome <n>   energia <n>   resistencia <n>   (fogueira: dar kit_fogueira)',
           'hora <hh[:mm]>   noite   manha   dia [+n]   estacao <chuvas|estiagem|seca|trovoadas|proxima>',
           'ir <inicio|canoa|ilhota|x y>   onde   limpar   fechar'].join('\n');
@@ -87,6 +87,9 @@ export class Terminal {
       case 'bancada': s.cheatBench = !s.cheatBench; return `bancada de bolso: ${s.cheatBench ? 'ligada (fabrica tudo sem bancada perto)' : 'desligada'}.`;
       case 'dormir': { const b = s.homes.find(h => h.type === 'cama'); if (!b) return 'não há cama.'; s.startSleep(b); return 'dormindo...'; }
       case 'casa': s.give('kit_casa', 1); s.give('kit_cama', 1); s.give('kit_bau', 1); s.give('kit_bancada', 1); s.give('kit_abrigo', 1); return '+ kits de casa, cama, baú, bancada e abrigo.';
+      case 'caca': s.give('adaga', 1); s.give('lanca_pedra', 1); s.give('arco', 1); s.give('flecha_osso', 10); s.ensureDur(); return '+ adaga, lança, arco e 10 flechas.';
+      case 'pesca': s.give('vara', 1); s.give('anzol_osso', 3); s.give('minhoca', 10); s.give('arpao', 1); s.ensureDur(); return '+ vara, 3 anzóis, 10 minhocas e arpão.';
+      case 'roca': s.give('enxada_pedra', 1); s.give('pa_madeira', 1); s.give('maniva', 6); s.give('semente_milho', 6); s.give('cabaca', 2); s.ensureDur(); return '+ enxada, pá, 6 manivas, 6 sementes e 2 cabaças.' + (s.oldFarm ? ` Roça abandonada em ${Math.round(s.oldFarm.x / 32)},${Math.round(s.oldFarm.y / 32)}.` : '');
       case 'canoa': {                                                     // C1: testar o desgaste
         const c = s.canoe, pct = () => `${Math.round(s.canoeFrac * 100)}%`;
         if (!args.length) return `${c.broken && !s.canoeObj && s.boat.state === 'none' ? 'canoa partida' : c.built ? 'canoa nova' : 'canoa achada'}: ${pct()} (${Math.round(c.dur)} de ${c.max} px), consertos ${c.repairs}`;

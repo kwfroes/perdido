@@ -1,0 +1,1294 @@
+{
+  "meta": {
+    "game": "PERDIDO",
+    "version": "1.1-6BC",
+    "seasons": [
+      "chuvas",
+      "estiagem",
+      "seca",
+      "trovoadas"
+    ],
+    "peoples": [
+      "indigena",
+      "ribeirinho",
+      "quilombola"
+    ],
+    "roles": [
+      "lider",
+      "agricultor",
+      "pescador",
+      "cacador",
+      "artesao",
+      "guardiao",
+      "morador",
+      "idoso",
+      "crianca"
+    ],
+    "notes": [
+      "Corrigido para o jogo: amena -> estiagem (nome da 2ª estação no calendário); quartzo_luminoso -> quartzo; lanterna_quartzo -> lanterna; comida_pronta -> tag comida_assada (qualquer comida assada); lealtade -> lealdade.",
+      "Itens novos a criar quando as missões entrarem: peixe_salgado (peixe + sal), madeira_nobre (árvore velha), semente_milho (5C.2), amuleto_vila (6C), ponta_diamante (fim de jogo).",
+      "Condições em texto (triggers.condition) viram regras estruturadas na 6C; o texto fica como referência. Em conflito com o CSV, vale este JSON.",
+      "M06: a lanterna passa a ser trancada até concluir a missão. M08/M09: esmeralda e diamante vão para a caverna grande do continente quando ele existir (6A); até lá ficam nas cavernas grandes da ilha."
+    ]
+  },
+  "ambientDialogues": {
+    "byPeopleAndRole": {
+      "indigena": {
+        "lider": {
+          "default": [
+            "A terra guarda memória e caminho. Quem anda com pressa tropeça na raiz; quem observa vê onde a água abre passagem.",
+            "Nossa maloca não se ergue só de palha e madeira: ela se firma quando cada um cumpre a sua parte na aldeia.",
+            "As pedras que brilham no escuro da caverna não são capricho da terra: guardam força para quem sabe trabalhar o metal."
+          ],
+          "bySeason": {
+            "seca": [
+              "Na seca, a água encolhe e a mata estala sob os pés. Economize energia e nunca saia sem comida na trouxa.",
+              "O sol castiga o descampado, mas abre os vaus baixos. Aproveite para cruzar os rios enquanto o leito está manso."
+            ],
+            "estiagem": [
+              "O vento está bom e a mata respira em paz. É o melhor tempo para firmar laços e explorar longe da margem.",
+              "Quando o céu equilibra sol e sombra, até o trabalho pesado rende o dobro."
+            ],
+            "chuvas": [
+              "A chuva alimenta a roça e enche os igarapés, mas apaga o fogo descuidado. Proteja suas brasas e sua tocha.",
+              "Com o chão encharcado, cada passo cobra mais do corpo. Não force ferramenta cega na madeira molhada."
+            ],
+            "trovoadas": [
+              "Quando o trovão ronca sobre o mar, ninguém lança canoa por teimosia. O oceano não obedece à pressa de ninguém.",
+              "Fique perto do fogo da maloca até a fúria do céu passar. Lá fora, o raio e o frio derrubam até os mais fortes."
+            ]
+          }
+        },
+        "agricultor": {
+          "default": [
+            "A terra boa pede paciência e enxada firme. Se bater com ferramenta gasta, ela cansa você antes da hora.",
+            "Mandioca e milho não gostam de descuido. Cuide do canteiro e ele não deixa ninguém com fome."
+          ],
+          "bySeason": {
+            "seca": [
+              "O chão rachou no sol. Sem rega e cuidado perto da água, o broto sofre antes de firmar raiz.",
+              "Na seca eu trabalho cedo, antes do calor subir e sugar o fôlego todo."
+            ],
+            "estiagem": [
+              "Terra solta e umidade certa: a enxada entra macia e o canteiro agradece.",
+              "É agora que a gente prepara muda boa para aguentar o ano inteiro."
+            ],
+            "chuvas": [
+              "A chuva faz a mandioca crescer forte, mas o barro pesado gruda na ferramenta e cansa o braço.",
+              "Cuide da drenagem em volta da roça para a água parada não apodrecer a raiz."
+            ],
+            "trovoadas": [
+              "Tempestade derruba folha e lava terra solta. Hoje não é dia de abrir canteiro novo, é dia de salvar o que já brotou."
+            ]
+          }
+        },
+        "pescador": {
+          "default": [
+            "De madrugada a água fica calma e o peixe chega mais perto da beira. Depois que o vento sobe, a história muda.",
+            "Não confie em água funda sem saber o que está fazendo. Se a corrente puxa, ela não pergunta se você está cansado."
+          ],
+          "bySeason": {
+            "seca": [
+              "Com o rio mais baixo, o peixe se junta nos poços fundos. É só ter paciência com a linha.",
+              "Na seca a água fica clara demais; se você fizer sombra brusca na margem, o cardume espanta."
+            ],
+            "estiagem": [
+              "Marola leve e água morna: a rede volta cheia sem brigar com a correnteza."
+            ],
+            "chuvas": [
+              "A água turva traz peixe graúdo para a margem, mas a correnteza engana quem entra distraído.",
+              "Chuva fina não atrapalha a pesca, só esfria o corpo se você ficar molhado tempo demais."
+            ],
+            "trovoadas": [
+              "Canoa amarrada e rede recolhida! Água batida com relâmpago é convite para naufrágio."
+            ]
+          }
+        },
+        "cacador": {
+          "default": [
+            "O animal sente o vento e ouve o passo pesado antes mesmo de ver você. O arco exige calma antes de soltar.",
+            "Pegadas no chão e galho partido contam mais que muita conversa. Olhe para o chão antes de avançar."
+          ],
+          "bySeason": {
+            "seca": [
+              "Na seca, toda caça acaba procurando os mesmos olhos d'água. Quem sabe esperar perto da margem não volta de mãos vazias."
+            ],
+            "estiagem": [
+              "No fim da tarde a mata muda de voz. Os bichos de dia recolhem e outros despertam."
+            ],
+            "chuvas": [
+              "A chuva lava o rastro no chão, mas também abafa o som dos seus passos na folhagem."
+            ],
+            "trovoadas": [
+              "Até os bichos se entocam quando o céu desaba. Não vale arriscar o pescoço no meio da mata fechada agora."
+            ]
+          }
+        },
+        "artesao": {
+          "default": [
+            "Madeira verde empena; fibra mal torcida arrebenta na hora do aperto. O segredo está no preparo.",
+            "A ferramenta avisa quando está no fim. Quem ignora o aviso acaba com ela quebrada bem no meio do serviço."
+          ],
+          "bySeason": {
+            "seca": [
+              "Tempo seco é ótimo para curar madeira e torcer fibra, mas o barro da margem fica duro como pedra."
+            ],
+            "estiagem": [
+              "Hoje a bancada rende: nem calor de rachar, nem umidade estragando a cola de resina."
+            ],
+            "chuvas": [
+              "Na chuva eu aproveito para lascar pedra, preparar osso e trançar corda debaixo da cobertura."
+            ],
+            "trovoadas": [
+              "Com esse vento batendo, só dá para trabalhar dentro de casa, perto do fogo."
+            ]
+          }
+        },
+        "guardiao": {
+          "default": [
+            "Quem chega à entrada da vila com calma é bem-vindo. Quem chega correndo sem olhar os arredores assusta até o vento.",
+            "Nas trilhas entre rios, os vaus são nossa passagem segura. Não saia inventando atalho onde a água é funda."
+          ],
+          "bySeason": {
+            "seca": [
+              "Na seca a visibilidade é longa, mas gente cansada e com sede comete erro bobo na trilha."
+            ],
+            "estiagem": [
+              "Ronda tranquila hoje. Aproveite para marcar bem os caminhos antes que o tempo vire."
+            ],
+            "chuvas": [
+              "A lama esconde buraco e raiz escorregadia. Ande firme e mantenha a tocha seca."
+            ],
+            "trovoadas": [
+              "Estou dobrando a vigia na entrada. Se alguém ficou preso fora da aldeia nessa tempestade, vamos precisar agir."
+            ]
+          }
+        }
+      },
+      "ribeirinho": {
+        "lider": {
+          "default": [
+            "Aqui a vida corre junto com a água. Se você entende a maré, o rio e a trilha, já andou metade do caminho.",
+            "A vila cresce quando há troca justa, abrigo firme e gente disposta a ajudar quando o tempo vira."
+          ],
+          "bySeason": {
+            "seca": [
+              "Com a vazante forte, a canoa raspa em banco de areia onde antes passava livre. Leia bem o desenho da água."
+            ],
+            "estiagem": [
+              "Tempo aberto e maré previsível: hoje é dia de mandar canoa para troca na praia grande."
+            ],
+            "chuvas": [
+              "A cheia encobre a beira baixa e muda o ponto de atracar. Amarre bem a corda na palafita."
+            ],
+            "trovoadas": [
+              "Suspenda qualquer travessia de canal agora. Já perdi conta de madeira partida que deu na praia depois de temporal."
+            ]
+          }
+        },
+        "pescador": {
+          "default": [
+            "Sem remo na mão, não tem embarque que dê certo. Parece bobagem até a água começar a levar você.",
+            "Salgar o peixe garante comida quando a pescaria rende bem ou quando o tempo fecha por dias."
+          ],
+          "bySeason": {
+            "seca": [
+              "Na seca o sal seca rápido no pote de barro. É a época certa de fazer reserva para o ano."
+            ],
+            "estiagem": [
+              "Amanhecendo com céu limpo, o rio espelha até nuvem. Melhor hora para jogar tarrafa."
+            ],
+            "chuvas": [
+              "Água barrenta traz surpresa na linha, mas exige braço firme para não perder o remo na correnteza."
+            ],
+            "trovoadas": [
+              "Se ouvir estalo de trovão no horizonte, reme direto para a margem mais próxima. Não tente vencer o vento."
+            ]
+          }
+        },
+        "artesao": {
+          "default": [
+            "Palafita pede madeira bem assentada e amarração firme; água não perdoa gambiarra.",
+            "Com argila, carvão e fogo certo, a gente molda o que precisa para cozinhar, guardar e trabalhar."
+          ],
+          "bySeason": {
+            "seca": [
+              "É na estiagem que a gente reforça os esteios da palafita antes da água subir de novo."
+            ],
+            "estiagem": [
+              "Dia bom para calafetar canoa e preparar remo novo de madeira firme."
+            ],
+            "chuvas": [
+              "A umidade incha a madeira e testa cada nó de corda da vila."
+            ],
+            "trovoadas": [
+              "O vento sacode as tábuas, mas palafita bem travada aguenta o tranco."
+            ]
+          }
+        }
+      },
+      "quilombola": {
+        "lider": {
+          "default": [
+            "Nossa força está na união e no cuidado com o que é nosso. Casa firme, despensa cheia e palavra honrada sustentam a vila.",
+            "Honra não se compra com pressa; se conquista mostrando serviço, lealdade e cuidado com a comunidade."
+          ],
+          "bySeason": {
+            "seca": [
+              "Na seca a terra exige mais suor, mas nossa taipa segura o fresco por dentro e guarda o que colhemos."
+            ],
+            "estiagem": [
+              "Quando o tempo firma, a praça ganha vida e o trabalho na casa de farinha não para."
+            ],
+            "chuvas": [
+              "Chuva boa abençoa a lavoura, mas exige telhado bem batido e lenha seca guardada."
+            ],
+            "trovoadas": [
+              "Ninguém fica desabrigado aqui. Entre, seque a roupa perto do fogão e espere o céu acalmar."
+            ]
+          }
+        },
+        "artesao": {
+          "default": [
+            "Taipa bem feita segura o vento e deixa entrar luz boa de dia. Cada detalhe importa.",
+            "Ferramenta não é eterna: quando a barra afinou demais ou o fio perdeu o corte, é hora de repor ou amolar."
+          ],
+          "bySeason": {
+            "seca": [
+              "O sol forte seca o barro da parede num instante — ótimo para levantar muro, ruim para cavar margem."
+            ],
+            "estiagem": [
+              "Tempo equilibrado para bater barro, queimar carvão e forjar ferro na medida."
+            ],
+            "chuvas": [
+              "Na chuva o barro fresco demora a curar, então focamos no fogo interno e no reparo de ferramentas."
+            ],
+            "trovoadas": [
+              "Dia de fechar as janelas de madeira e cuidar da forja coberta."
+            ]
+          }
+        },
+        "idoso": {
+          "default": [
+            "Os mais velhos guardam o que os mais novos ainda vão viver. Escute quem já passou pelo aperto.",
+            "Descansar bem e comer na hora certa não é preguiça: é jeito de aguentar a caminhada."
+          ],
+          "bySeason": {
+            "seca": [
+              "Beba água, coma antes de a fome apertar e não corra à toa debaixo desse sol."
+            ],
+            "estiagem": [
+              "Esse ventinho manso lembra os tempos bons em que a despensa vivia transbordando."
+            ],
+            "chuvas": [
+              "Os ossos sentem a umidade antes mesmo da primeira gota cair. Proteja o corpo do frio."
+            ],
+            "trovoadas": [
+              "Já vi muitas tempestades passarem por estas bandas. Todas acabam para quem sabe esperar com juízo."
+            ]
+          }
+        }
+      }
+    }
+  },
+  "missions": [
+    {
+      "id": "M01_FIO_MATA",
+      "title": "Fio Firme na Mata",
+      "category": "coleta",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "artesao",
+        "morador"
+      ],
+      "triggers": {
+        "minVillageReputation": 0,
+        "maxActiveSimpleQuests": 3,
+        "condition": "village.stock.rope < 6 || player.firstVisit == true"
+      },
+      "requirements": [
+        {
+          "item": "corda",
+          "qty": 4
+        },
+        {
+          "item": "graveto",
+          "qty": 10
+        }
+      ],
+      "rewards": {
+        "reputation": 10,
+        "villageProsperity": 5,
+        "items": [
+          { "tag": "comida_assada", "qty": 2 }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "As amarrações das cercas e dos cestos estão cedendo. Se você trouxer cordas trançadas e gravetos secos, a gente coloca tudo em ordem.",
+          "Precisamos reforçar os feixes da oficina antes que o trabalho atrase. Pode juntar fibras na mata e trazer cordas prontas?"
+        ],
+        "accept": [
+          "Boa! Lembre que o facão tira bem mais fibra do capim do que as mãos limpas.",
+          "Fico no aguardo. Graveto seco e corda firme nunca sobram por aqui."
+        ],
+        "decline": [
+          "Sem problema. Quando estiver com a mochila mais livre, passe por aqui.",
+          "Tudo bem, sei que a ilha cobra atenção de todo mundo. Volte se mudar de ideia."
+        ],
+        "inProgress": [
+          "Ainda faltam algumas cordas e gravetos. Olhe nos capinzais abertos e perto das sirigueleiras.",
+          "Se tiver madeira sobrando, dá para rachar em gravetos rapidinho."
+        ],
+        "complete": [
+          "Excelente! Essa fibra está bem torcida e vai segurar firme. Pegue isto para a viagem.",
+          "Chegou na hora certa. A vila agradece o cuidado — você já sabe trabalhar com o que a terra dá."
+        ],
+        "seasonIntro": {
+          "seca": "Com esse sol seco o capim quebra fácil, então vai precisar juntar um pouco mais de volume.",
+          "estiagem": "O capim está no ponto ideal para puxar fibra limpa.",
+          "chuvas": "O capim cresceu alto com a chuva, mas seque bem a fibra antes de torcer.",
+          "trovoadas": "Não se arrisque longe da vila enquanto trovoa; junte só o que estiver perto da margem."
+        }
+      }
+    },
+    {
+      "id": "M02_DESPENSA",
+      "title": "Despensa em Dia",
+      "category": "suprimentos",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "lider",
+        "morador"
+      ],
+      "triggers": {
+        "minVillageReputation": 0,
+        "condition": "village.pantryRatio < 0.45"
+      },
+      "requirements": [
+        {
+          "tag": "food_preserved_or_cooked",
+          "qty": 6
+        }
+      ],
+      "rewards": {
+        "reputation": 15,
+        "villageProsperity": 15,
+        "items": [
+          {
+            "item": "sal",
+            "qty": 3
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Nossa despensa baixou mais do que devia e temos crianças e idosos para alimentar. Consegue reforçar nosso estoque de comida?",
+          "Os dias renderam pouco na roça e na pesca. Se você trouxer comida preparada ou conservada, divide o peso com a vila."
+        ],
+        "accept": [
+          "Que alívio ouvir isso. Peixe salgado, carne assada ou colheita firme ajudam demais.",
+          "Contamos com você. Cada porção salva um dia difícil por aqui."
+        ],
+        "decline": [
+          "Entendo, cada um precisa garantir o próprio prato primeiro. Se sobrar, lembre de nós.",
+          "Tudo certo. Vamos esticar o que temos até a próxima maré boa."
+        ],
+        "inProgress": [
+          "A despensa ainda está curta. Se conseguir salgar carne ou peixe, dura bem mais no caminho.",
+          "Qualquer alimento bem conservado já ajuda a fechar a conta."
+        ],
+        "complete": [
+          "Agora sim a vila respira aliviada! Sua ajuda encheu a mesa de todo mundo hoje.",
+          "Palavra cumprida vale ouro aqui. Leve esse sal para conservar suas próprias provisões."
+        ],
+        "seasonIntro": {
+          "seca": "Na estiagem a caça se espalha e a roça rende menos; toda ajuda na despensa vale o dobro.",
+          "estiagem": "Queremos aproveitar o tempo bom para fazer reserva antes que o clima vire.",
+          "chuvas": "A chuva atrapalhou o fogo aberto e atrasou o preparo da comida.",
+          "trovoadas": "Com os barcos presos na margem por causa dos raios, o estoque caiu rápido."
+        }
+      }
+    },
+    {
+      "id": "M03_BARRO_BRASA",
+      "title": "Barro, Lenha e Brasa",
+      "category": "oficio",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "artesao"
+      ],
+      "triggers": {
+        "minVillageReputation": 5,
+        "condition": "player.hasToolTier >= 1"
+      },
+      "requirements": [
+        {
+          "item": "argila",
+          "qty": 6
+        },
+        {
+          "item": "carvao",
+          "qty": 5
+        }
+      ],
+      "rewards": {
+        "reputation": 12,
+        "villageProsperity": 8,
+        "items": [
+          {
+            "item": "barra_ferro",
+            "qty": 1
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "O forno precisa de reparo e o carvão acabou no meio da última queima. Traz argila da margem e carvão da fogueira?",
+          "Sem barro limpo e brasa forte, não sai pote nem metal por aqui. Topa buscar esse material?"
+        ],
+        "accept": [
+          "Ótimo! A argila boa fica bem na beira dos rios e lagos; o carvão sai queimando madeira na fogueira.",
+          "Feito. Com isso eu acendo o forno hoje mesmo."
+        ],
+        "decline": [
+          "Tranquilo, quando tiver pá ou tempo para cavar a margem a gente conversa.",
+          "Sem pressa, o forno espera mais um dia."
+        ],
+        "inProgress": [
+          "Ainda preciso de mais argila e carvão para fechar a fornada.",
+          "Procure nas margens de água doce pela argila e deixe a madeira queimar até virar carvão."
+        ],
+        "complete": [
+          "Barro limpo e carvão de primeira! Toma esta barra de ferro pelo esforço.",
+          "Agora o fogo vai cantar bonito. Você tem mão boa para preparar material."
+        ],
+        "seasonIntro": {
+          "seca": "Na seca a margem endurece, então uma pá ajuda bastante a tirar a argila.",
+          "estiagem": "Dia perfeito para cavar barro e manter a fogueira acesa sem vento forte.",
+          "chuvas": "O barro está macio na margem, mas proteja a fogueira da chuva para não perder o carvão.",
+          "trovoadas": "Guarde o carvão bem seco; com essa tempestade qualquer faísca molhada apaga."
+        }
+      }
+    },
+    {
+      "id": "M04_RESINA_LUZ",
+      "title": "Resina e Luz da Noite",
+      "category": "suprimentos",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "guardiao",
+        "morador"
+      ],
+      "triggers": {
+        "minVillageReputation": 5,
+        "condition": "timeOfDay in ['afternoon', 'evening'] || player.discoveredCaves > 0"
+      },
+      "requirements": [
+        {
+          "item": "resina",
+          "qty": 4
+        },
+        {
+          "item": "tocha",
+          "qty": 2
+        }
+      ],
+      "rewards": {
+        "reputation": 12,
+        "villageProsperity": 6,
+        "items": [
+          {
+            "item": "tocha",
+            "qty": 3
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "A ronda noturna e as entradas escuras exigem fogo firme que não morra no primeiro vento. Consegue resina das árvores altas e algumas tochas?",
+          "Sem resina a chama dura pouco. Se você extrair resina das árvores grandes e montar tochas, reforçamos nossa vigia."
+        ],
+        "accept": [
+          "Certo. Use faca ou machado nas árvores altas para tirar a resina sem estragar o tronco.",
+          "Boa escolha. Luz firme evita metade dos acidentes depois que o sol cai."
+        ],
+        "decline": [
+          "Tudo bem, mas não ande no escuro sem luz própria.",
+          "Quando passar pelas árvores altas da mata, lembre desse pedido."
+        ],
+        "inProgress": [
+          "Ainda faltam resina e tochas prontas. Combine madeira, fibra e resina para acender bem.",
+          "As árvores mais altas da mata costumam guardar boa resina."
+        ],
+        "complete": [
+          "Chama viva e firme! Fique com estas tochas extras para suas próprias andanças.",
+          "Com isso a noite não pega ninguém de surpresa por aqui."
+        ],
+        "seasonIntro": {
+          "seca": "A resina escorre espessa no calor — excelente para queimar devagar.",
+          "estiagem": "Noite fresca pede fogo estável nos pontos de vigia.",
+          "chuvas": "Na chuva só tocha bem embebida em resina aguenta a umidade.",
+          "trovoadas": "Com o céu fechado desse jeito, parece noite em pleno dia. Precisamos dessa luz agora."
+        }
+      }
+    },
+    {
+      "id": "M05_TROCA_MARE",
+      "title": "Troca da Maré",
+      "category": "comercio",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "ribeirinho",
+        "indigena"
+      ],
+      "eligibleRoles": [
+        "pescador",
+        "artesao"
+      ],
+      "triggers": {
+        "condition": "npc.location == 'main_island_beach' && weather in ['clear', 'cloudy']"
+      },
+      "requirements": [
+        {
+          "item": "madeira_nobre",
+          "qty": 3
+        },
+        {
+          "item": "peixe_salgado",
+          "qty": 4
+        }
+      ],
+      "rewards": {
+        "reputation": 14,
+        "items": [
+          {
+            "item": "barra_prata",
+            "qty": 1
+          },
+          {
+            "item": "semente_milho",
+            "qty": 3
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Atravessei o canal de canoa aproveitando o tempo aberto. Se você tiver madeira firme e peixe salgado, troco por prata e sementes da nossa vila!",
+          "Vim fazer escambo na praia antes que o vento mude. Topa fechar uma carga limpa para a volta?"
+        ],
+        "accept": [
+          "Negócio encaminhado! Vou segurar a canoa aqui na areia enquanto você junta a carga.",
+          "Combinado. Só não demore muito caso as nuvens comecem a carregar."
+        ],
+        "decline": [
+          "Faz parte. Vou aproveitar a maré para voltar antes de escurecer.",
+          "Sem problema, na próxima janela de tempo bom eu encosto de novo."
+        ],
+        "inProgress": [
+          "A canoa já está pronta para zarpar assim que você completar a troca.",
+          "Falta pouco para fechar o lote e eu pegar a corrente de volta."
+        ],
+        "complete": [
+          "Troca justa e carga bem amarrada! Leve esta prata e essas sementes — vão render muito para você.",
+          "Assim dá gosto cruzar o mar. Até a próxima viagem!"
+        ],
+        "seasonIntro": {
+          "seca": "Mar liso e vento constante: dá para cruzar o canal quase sem esforço.",
+          "estiagem": "A maré está mansa hoje, perfeita para ir e voltar no mesmo dia.",
+          "chuvas": "Vim entre uma pancada e outra; melhor fecharmos rápido antes da próxima nuvem.",
+          "trovoadas": "Eu nem teria saído se soubesse que o tempo ia fechar assim!"
+        }
+      }
+    },
+    {
+      "id": "M06_QUARTZO_LUZ",
+      "title": "Farol nas Profundezas",
+      "category": "caverna",
+      "repeatable": false,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "artesao",
+        "lider"
+      ],
+      "triggers": {
+        "worldSize": 400,
+        "minVillageReputation": 20,
+        "condition": "player.hasPlatinumPick == true || player.knowsCaves == true"
+      },
+      "requirements": [
+        {
+          "item": "quartzo",
+          "qty": 3
+        }
+      ],
+      "rewards": {
+        "reputation": 20,
+        "villageProsperity": 12,
+        "unlockRecipe": "lanterna",
+        "items": [
+          {
+            "item": "barra_platina",
+            "qty": 1
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Nas cavernas mais fundas existem veios de quartzo que brilham sozinhos no escuro. Se trouxer três cristais inteiros, te ensino a montar uma lanterna que nunca apaga.",
+          "Tocha gasta e apaga na água; o quartzo luminoso guarda luz própria. Tem coragem de buscar nos salões profundos?"
+        ],
+        "accept": [
+          "Leve tochas reservas para achar o caminho e picareta de platina para arrancar o veio sem esfarelar.",
+          "Vai ser uma bela expedição. Quando vir um brilho azulado na rocha escura, achou o lugar."
+        ],
+        "decline": [
+          "Caverna funda não é passeio. Prepare melhor suas ferramentas antes de aceitar.",
+          "Quando tiver picareta à altura da rocha, volte aqui."
+        ],
+        "inProgress": [
+          "O quartzo luminoso só sai nas cavernas médias e grandes com picareta de platina.",
+          "Cuidado com os rios fundos lá dentro — nem sempre há passagem."
+        ],
+        "complete": [
+          "Olha esse brilho puro! Veja como se prende na armação de platina: agora você tem luz eterna.",
+          "Isso muda tudo para quem explora de noite ou entra nas galerias fundas. Mérito todo seu."
+        ],
+        "seasonIntro": {
+          "seca": "Por dentro da caverna o ar é fresco e constante, bom abrigo do calorão de fora.",
+          "estiagem": "Dia tranquilo para ir até a entrada da serra sem gastar energia à toa.",
+          "chuvas": "A chuva lá fora não entra nos salões fundos, mas deixa a boca da caverna escorregadia.",
+          "trovoadas": "Se precisar esperar a tempestade passar, a caverna protege dos raios — só não fique sem luz."
+        }
+      }
+    },
+    {
+      "id": "M07_AMETISTA_FIO",
+      "title": "Fio de Pedra Roxa",
+      "category": "caverna",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "artesao"
+      ],
+      "triggers": {
+        "worldSize": 400,
+        "minVillageReputation": 15,
+        "condition": "player.hasPlatinumPick == true"
+      },
+      "requirements": [
+        {
+          "item": "ametista",
+          "qty": 2
+        }
+      ],
+      "rewards": {
+        "reputation": 18,
+        "repairAllToolsPercent": 40,
+        "items": [
+          {
+            "item": "ametista",
+            "qty": 1
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "A ametista das cavernas serve como pedra de amolar perfeita — devolve vida às ferramentas mais gastas. Traz duas da caverna e eu recupero todo o seu equipamento.",
+          "Metal bom sofre nas pedras duras. Com ametista na bancada, a gente recupera o fio sem precisar fundir tudo do zero."
+        ],
+        "accept": [
+          "Combinado. Procure nas câmaras médias e grandes com a picareta de platina.",
+          "Quando voltar com elas, traga suas ferramentas gastas junto."
+        ],
+        "decline": [
+          "Sem problema, mas não deixe sua melhor picareta quebrar na mão.",
+          "Volte se precisar recuperar equipamento gasto."
+        ],
+        "inProgress": [
+          "Ainda faltam as ametistas. Elas crescem nos bolsões rochosos das cavernas médias e grandes.",
+          "Lembre que só a picareta de platina extrai cristais sem quebrar."
+        ],
+        "complete": [
+          "Perfeitas! Veja como o fio da lâmina volta novo depois de passar na ametista. Fique com uma pedra para usar em campo.",
+          "Serviço limpo! Suas ferramentas ganharam fôlego novo."
+        ],
+        "seasonIntro": {
+          "seca": "Na seca as ferramentas gastam rápido na madeira dura; essa ametista vai salvar seu dia.",
+          "estiagem": "Bom tempo para manutenção de oficina e expedição curta.",
+          "chuvas": "Ferramenta molhada pede cuidado dobrado no fio.",
+          "trovoadas": "Aproveite o abrigo da caverna enquanto busca o cristal."
+        }
+      }
+    },
+    {
+      "id": "M08_ESMERALDA_CONT",
+      "title": "Verde do Continente",
+      "category": "expedicao",
+      "repeatable": false,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "lider"
+      ],
+      "triggers": {
+        "worldSize": 400,
+        "minVillageReputation": 45,
+        "condition": "world.hasSmallContinent == true && player.hasCanoe == true"
+      },
+      "requirements": [
+        {
+          "item": "esmeralda",
+          "qty": 1
+        }
+      ],
+      "rewards": {
+        "reputation": 30,
+        "villageProsperity": 20,
+        "items": [
+          {
+            "item": "barra_ouro",
+            "qty": 2
+          },
+          { "tag": "comida_assada", "qty": 4 }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Além do canal fica o pequeno continente, e na caverna grande de lá nasce a esmeralda verdadeira. Quem traz uma pedra dessas prova que domina o mar e a terra.",
+          "Queremos uma esmeralda do continente como símbolo de aliança e prosperidade da vila. É uma travessia longa — aceita o desafio?"
+        ],
+        "accept": [
+          "Prepare comida, lanterna ou tochas e verifique a durabilidade da picareta antes de embarcar.",
+          "Que os ventos abram seu caminho pelo oceano. Estaremos esperando seu retorno."
+        ],
+        "decline": [
+          "É uma jornada exigente mesmo. Só aceite quando sua canoa e seu equipamento estiverem prontos.",
+          "Respeito quem conhece o próprio limite. Quando estiver preparado, conversamos."
+        ],
+        "inProgress": [
+          "A caverna grande do pequeno continente guarda a esmeralda. Não enfrente o mar aberto em trovoada.",
+          "Leve suprimentos para ida e volta — o continente tem rios e fauna próprios."
+        ],
+        "complete": [
+          "Você atravessou o canal e arrancou o verde vivo das entranhas do continente! Toda a vila celebra seu nome hoje.",
+          "Poucos têm coragem e preparo para voltar inteiros de lá. Esta recompensa é mais que merecida."
+        ],
+        "seasonIntro": {
+          "seca": "É a melhor época para cruzar o mar até o continente sem tempestade súbita.",
+          "estiagem": "Vento favorável nos canais — ótima janela para expedição longa.",
+          "chuvas": "A travessia exige atenção dobrada com o fôlego e a correnteza.",
+          "trovoadas": "Espere a trovoada passar antes de lançar a canoa no mar aberto!"
+        }
+      }
+    },
+    {
+      "id": "M09_DIAMANTE_FIM",
+      "title": "Rastro de Diamante",
+      "category": "fim_de_jogo",
+      "repeatable": false,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "lider"
+      ],
+      "triggers": {
+        "worldSize": 400,
+        "minVillageReputation": 75,
+        "completedQuests": [
+          "M08_ESMERALDA_CONT"
+        ]
+      },
+      "requirements": [
+        {
+          "item": "diamante",
+          "qty": 1
+        }
+      ],
+      "rewards": {
+        "reputation": 35,
+        "unlockRecipe": "ponta_diamante",
+        "items": [
+          {
+            "item": "barra_platina",
+            "qty": 2
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "No ponto mais profundo da grande caverna do continente existe um cristal duro como nada neste mundo: o diamante. Traga um e ensinaremos a reforçar a platina com ponta de diamante.",
+          "Esta é a prova máxima de quem conquistou cada segredo deste arquipélago. Vai encarar o fundo da grande caverna?"
+        ],
+        "accept": [
+          "Vá com tudo o que aprendeu: luz perpétua, comida conservada e ferramenta impecável.",
+          "Quando você voltar com essa pedra, ninguém mais duvidará da sua maestria."
+        ],
+        "decline": [
+          "Não há vergonha em se preparar mais um pouco para o desafio mais fundo do mundo.",
+          "Quando estiver pronto para o último passo, estarei aqui."
+        ],
+        "inProgress": [
+          "O diamante é raro e fica bem encravado na rocha da caverna grande do continente.",
+          "Não desista na primeira câmara; explore as galerias mais fundas."
+        ],
+        "complete": [
+          "Inacreditável... puro, claro e indestrutível! Com a ponta de diamante, suas ferramentas de platina nunca mais serão as mesmas.",
+          "Você entrou como náufrago perdido e hoje caminha como mestre destas terras."
+        ],
+        "seasonIntro": {
+          "seca": "Aproveite o tempo firme para a travessia e leve água e comida extras.",
+          "estiagem": "O horizonte está limpo — hora ideal para a grande jornada.",
+          "chuvas": "Escolha bem o momento de cruzar o mar; dentro da caverna o tempo não muda.",
+          "trovoadas": "Aguarde a calmaria antes de zarpar."
+        }
+      }
+    },
+    {
+      "id": "M10_CRIANCA_PERDIDA",
+      "title": "O Pequeno que Seguiu o Rastro",
+      "category": "resgate",
+      "repeatable": true,
+      "isMajorVillageEvent": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "morador",
+        "idoso"
+      ],
+      "triggers": {
+        "villageActiveCrises": 0,
+        "cooldownDays": 4,
+        "condition": "village.childrenCount > 0"
+      },
+      "requirements": [
+        {
+          "escortTarget": "lost_child",
+          "destination": "village_plaza",
+          "avoidDeepWater": true
+        }
+      ],
+      "rewards": {
+        "reputation": 25,
+        "villageProsperity": 15,
+        "items": [
+          { "tag": "comida_assada", "qty": 3 },
+          {
+            "item": "corda",
+            "qty": 2
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Por favor, nos ajude! Uma das crianças saiu seguindo um bicho pela borda da mata e não voltou até agora!",
+          "Estamos desesperados — o pequeno sumiu da praça faz horas. Você conhece bem as trilhas, pode buscá-lo?"
+        ],
+        "accept": [
+          "Obrigada! Quando encontrá-lo, guie devagar até a praça e não atravesse água funda com ele.",
+          "Que alívio! Procure perto das clareiras, frutíferas ou margens rasas."
+        ],
+        "decline": [
+          "Por favor, se mudar de ideia volte correndo — cada minuto conta!",
+          "Vamos continuar procurando por perto, mas precisamos de alguém que conheça o mato."
+        ],
+        "inProgress": [
+          "Achou o pequeno? Ele segue você de perto se você caminhar com calma sem entrar em rio fundo.",
+          "Olhe perto das trilhas e dos vaus — crianças sempre seguem caminhos abertos."
+        ],
+        "complete": [
+          "Meu filho! Está são e salvo! Nunca vamos esquecer o que você fez pela nossa família!",
+          "A vila inteira agradece. Você trouxe paz de volta para dentro de casa."
+        ],
+        "childFound": [
+          "Eu só queria ver onde o passarinho ia... mas a trilha ficou toda igual! Me leva de volta?",
+          "Ainda bem que você apareceu! Prometo que ando bem pertinho de você até a praça."
+        ],
+        "seasonIntro": {
+          "seca": "Com esse calor forte, ele pode ter ido procurar água ou sombra de sirigueleira.",
+          "estiagem": "A mata está aberta, então os rastros devem estar fáceis de seguir.",
+          "chuvas": "A chuva está apagando as pegadas! Precisamos achá-lo antes que escureça.",
+          "trovoadas": "Com esses raios caindo, ele deve estar assustado e escondido embaixo de alguma pedra ou árvore!"
+        }
+      }
+    },
+    {
+      "id": "M11_BEBE_COLO",
+      "title": "Colo Seguro",
+      "category": "resgate",
+      "repeatable": true,
+      "isMajorVillageEvent": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "guardiao",
+        "morador"
+      ],
+      "triggers": {
+        "villageActiveCrises": 0,
+        "cooldownDays": 5,
+        "condition": "village.babiesCount > 0"
+      },
+      "requirements": [
+        {
+          "carryTarget": "stranded_baby",
+          "destination": "village_plaza",
+          "restrictions": [
+            "no_sprint",
+            "no_heavy_tools"
+          ]
+        }
+      ],
+      "rewards": {
+        "reputation": 35,
+        "villageProsperity": 20,
+        "items": [
+          {
+            "item": "amuleto_vila",
+            "qty": 1
+          },
+          { "tag": "comida_assada", "qty": 3 }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Houve um acidente no acampamento avançado e um bebê ficou isolado com segurança num abrigo improvisado. Precisamos de alguém firme para trazê-lo no colo!",
+          "Carregar um bebê exige passo seguro: sem correr e sem carregar peso bruto. Você assume essa responsabilidade?"
+        ],
+        "accept": [
+          "Planeje o caminho antes de pegá-lo no colo — lá não dá para correr nem usar ferramenta pesada.",
+          "Confiamos a vida mais preciosa da vila aos seus braços. Vá com cuidado."
+        ],
+        "decline": [
+          "É uma missão delicada demais para fazer sem certeza. Avise se puder ir.",
+          "Vamos organizar uma escolta dupla se você não puder agora."
+        ],
+        "inProgress": [
+          "Mantenha o passo firme e evite lugares perigosos enquanto estiver com o bebê no colo.",
+          "A vila inteira está na praça esperando sua chegada."
+        ],
+        "complete": [
+          "Está dormindo tranquilo e aquecido! Você carregou o futuro da nossa vila nos braços.",
+          "Não há palavra que pague isso. Nossa casa sempre será seu abrigo."
+        ],
+        "seasonIntro": {
+          "seca": "Proteja-o do sol forte no caminho de volta e não force o passo.",
+          "estiagem": "O clima calmo ajuda na travessia de retorno.",
+          "chuvas": "Cubra bem o pequeno da chuva para que o frio não o alcance.",
+          "trovoadas": "Trovoada e vento gelado são perigosos demais — traga-o para o abrigo o quanto antes!"
+        }
+      }
+    },
+    {
+      "id": "M12_CANOA_PERDIDA",
+      "title": "Canoa Fora do Rumo",
+      "category": "resgate",
+      "repeatable": true,
+      "isMajorVillageEvent": true,
+      "eligiblePeoples": [
+        "ribeirinho",
+        "indigena"
+      ],
+      "eligibleRoles": [
+        "lider",
+        "pescador"
+      ],
+      "triggers": {
+        "worldSize": 400,
+        "villageActiveCrises": 0,
+        "cooldownDays": 4,
+        "condition": "player.hasCanoe == true"
+      },
+      "requirements": [
+        {
+          "findTarget": "lost_traveler_npc",
+          "action": "guide_or_deliver_paddle_supplies"
+        }
+      ],
+      "rewards": {
+        "reputation": 22,
+        "villageProsperity": 12,
+        "items": [
+          {
+            "item": "barra_ferro",
+            "qty": 1
+          },
+          {
+            "item": "peixe_salgado",
+            "qty": 3
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Nosso pescador saiu para trocar na ilha principal, mas a correnteza e a cerração mudaram o rumo dele. Deve ter encostado numa ilhota ou ponta errada.",
+          "Você conhece bem esses canais de canoa. Pode procurar nosso viajante perdido e ajudá-lo a voltar?"
+        ],
+        "accept": [
+          "Olhe nas praias das ilhotas e nas pontas do continente. Leve comida caso ele esteja sem provisões.",
+          "Obrigado! Sem ele a pesca da vila fica desfalcada."
+        ],
+        "decline": [
+          "Tudo bem, vamos vigiar o horizonte daqui caso ele ache o caminho sozinho.",
+          "Se for remar pelas ilhotas hoje, fique de olho por nós."
+        ],
+        "inProgress": [
+          "Ainda nenhum sinal da canoa dele no nosso trapiche. Verifique as ilhotas vizinhas.",
+          "Com neblina ou vento cruzado, é fácil errar a entrada do canal."
+        ],
+        "complete": [
+          "Ele acabou de encostar a canoa no porto! Disse que sem sua ajuda ainda estaria rodando em círculos.",
+          "Mais um dos nossos de volta ao trabalho. Muito obrigado!"
+        ],
+        "npcFound": [
+          "Eu juro que saí no rumo certo... até a correnteza trocar o mapa da minha cabeça! Obrigado por me achar!",
+          "Que sorte ver outra canoa! Agora com a direção certa eu volto direto para a vila."
+        ],
+        "seasonIntro": {
+          "seca": "Com a maré baixa ele pode ter encalhado perto de alguma ilhota.",
+          "estiagem": "Visibilidade boa hoje — deve ser rápido localizá-lo na praia.",
+          "chuvas": "A chuva fechou a vista no meio do canal e tirou ele da rota.",
+          "trovoadas": "Antes de a tempestade piorar ele saiu do rumo; tomara que tenha achado praia firme."
+        }
+      }
+    },
+    {
+      "id": "M13_NAUFRAGIO",
+      "title": "Restos na Tempestade",
+      "category": "crise",
+      "repeatable": true,
+      "isMajorVillageEvent": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "pescador",
+        "guardiao",
+        "lider"
+      ],
+      "triggers": {
+        "worldSize": 400,
+        "villageActiveCrises": 0,
+        "condition": "recentThunderstormDuringNpcVoyage == true"
+      },
+      "requirements": [
+        {
+          "inspect": "canoe_wreckage"
+        },
+        {
+          "rescueTarget": "castaway_npc",
+          "bringFoodOrCloth": true
+        }
+      ],
+      "rewards": {
+        "reputation": 30,
+        "villageProsperity": 15,
+        "items": [
+          {
+            "item": "barra_prata",
+            "qty": 1
+          },
+          {
+            "item": "corda",
+            "qty": 3
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "A trovoada pegou nossa canoa no meio da travessia! Apareceram tábuas quebradas na correnteza e nosso companheiro ainda não voltou!",
+          "Há sinais de naufrágio perto das ilhotas. Procure os destroços na areia — onde a madeira encosta, o náufrago deve estar!"
+        ],
+        "accept": [
+          "Vá depressa! Os destroços dão madeira e corda, mas o mais importante é trazer nosso companheiro vivo.",
+          "Leve comida pronta para recuperar as forças dele assim que o encontrar."
+        ],
+        "decline": [
+          "Não podemos perder tempo — se mudar de ideia, reme imediatamente para as ilhotas!",
+          "Vou tentar reunir gente aqui, mas não temos outra canoa pronta agora."
+        ],
+        "inProgress": [
+          "Procure tábuas partidas e pedaços de canoa na areia das praias e ilhotas.",
+          "O náufrago deve estar exausto perto de onde a corrente jogou os destroços."
+        ],
+        "complete": [
+          "Você arrancou ele das garras do mar! Toda a comunidade está em dívida com você.",
+          "Sobreviveu à tempestade graças à sua coragem. Pegue isto em sinal de gratidão."
+        ],
+        "castawayFound": [
+          "O céu virou do avesso no meio do caminho... a canoa partiu e eu só agarrei uma tábua até dar na areia...",
+          "Ainda bem que você seguiu os destroços. Achei que ninguém ia me achar aqui."
+        ],
+        "seasonIntro": {
+          "seca": "Mesmo depois do temporal passageiro, o sol forte agora castiga quem está caído na praia.",
+          "estiagem": "O mar acalmou depois da tormenta — é a janela perfeita para o resgate.",
+          "chuvas": "A chuva fria não dá trégua para quem está encharcado na areia.",
+          "trovoadas": "O mar ainda está agitado pelos raios; tenha cuidado máximo na canoa!"
+        }
+      }
+    },
+    {
+      "id": "M14_PASSAGEM_FECHADA",
+      "title": "Passagem Fechada",
+      "category": "exploracao",
+      "repeatable": true,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "guardiao",
+        "artesao"
+      ],
+      "triggers": {
+        "minVillageReputation": 10,
+        "condition": "world.hasBlockedShortcutOrCave == true"
+      },
+      "requirements": [
+        {
+          "clearObstacle": "collapsed_rocks_or_old_roots"
+        }
+      ],
+      "rewards": {
+        "reputation": 15,
+        "villageProsperity": 8,
+        "items": [
+          {
+            "item": "pedra_lascada",
+            "qty": 4
+          },
+          {
+            "item": "madeira",
+            "qty": 4
+          }
+        ]
+      },
+      "dialogues": {
+        "offer": [
+          "Um desmoronamento e raízes grossas fecharam uma passagem importante perto da nossa área de coleta. Você tem ferramenta para abrir caminho?",
+          "Sem limpar aquela obstrução, nossos moradores precisam dar uma volta enorme. Pode desobstruir a passagem?"
+        ],
+        "accept": [
+          "Use a ferramenta certa para o material — forçar ferramenta errada só quebra o cabo.",
+          "Quando o caminho estiver livre, avise aqui."
+        ],
+        "decline": [
+          "Tudo bem, quando tiver machado ou picareta mais forte a gente resolve.",
+          "Por enquanto seguimos pelo desvio mais longo."
+        ],
+        "inProgress": [
+          "A passagem ainda está bloqueada. Veja se precisa de picareta para pedra ou machado para tronco velho.",
+          "Se o trecho for escuro, leve tocha acesa."
+        ],
+        "complete": [
+          "Caminho livre outra vez! Agora todo mundo passa com segurança e economia de tempo.",
+          "Trabalho limpo e firme. Toma esses materiais que sobraram da limpeza."
+        ],
+        "seasonIntro": {
+          "seca": "Galhos secos e pedras soltas caíram na trilha com o vento da estiagem.",
+          "estiagem": "Bom dia para trabalhar pesado sem o calor ou a lama atrapalhando.",
+          "chuvas": "A enxurrada deslocou pedras e barro bem na boca da passagem.",
+          "trovoadas": "Um raio partiu árvore velha atravessando o caminho."
+        }
+      }
+    },
+    {
+      "id": "M15_SELO_HONRA",
+      "title": "Selo de Honra da Vila",
+      "category": "marco_final",
+      "repeatable": false,
+      "eligiblePeoples": [
+        "indigena",
+        "ribeirinho",
+        "quilombola"
+      ],
+      "eligibleRoles": [
+        "lider"
+      ],
+      "triggers": {
+        "minVillageReputation": 100,
+        "minCompletedVillageQuests": 3
+      },
+      "requirements": [
+        {
+          "ceremonyTalkWithLeader": true
+        }
+      ],
+      "rewards": {
+        "reputation": 100,
+        "unlockBuildingTier": 4,
+        "titleGranted": "Amigo Honrado da Vila"
+      },
+      "dialogues": {
+        "offer": [
+          "Você alimentou nossa mesa, resgatou os nossos do perigo e honrou cada palavra dada. Hoje a vila te reconhece como um dos seus.",
+          "Não há mais prova a pedir. Venha até o centro da praça receber o direito de erguer uma casa de honra."
+        ],
+        "accept": [
+          "Toda a comunidade se reuniu para este momento.",
+          "Ouça o que este povo tem a dizer sobre tudo o que você construiu conosco."
+        ],
+        "decline": [
+          "A praça continuará esperando quando você estiver pronto para a cerimônia.",
+          "Sem pressa — essa honra já é sua por mérito."
+        ],
+        "inProgress": [
+          "Fale comigo no centro da vila para concluirmos a cerimônia."
+        ],
+        "complete": [
+          "Está selado! A partir de hoje você tem o direito de erguer uma construção de Nível 4 — símbolo máximo de respeito e liderança entre nós.",
+          "Onde quer que sua canoa ou seus passos levem você, esta vila sempre terá fogo aceso e porta aberta para você."
+        ],
+        "seasonIntro": {
+          "seca": "Sob o céu aberto da estiagem, toda a vila se junta em volta da praça.",
+          "estiagem": "A brisa mansa acompanha a celebração mais importante da nossa comunidade.",
+          "chuvas": "Nem a chuva impede a vila inteira de celebrar quem nunca nos abandonou.",
+          "trovoadas": "Mesmo com o trovão lá fora, aqui dentro o fogo e a união iluminam tudo."
+        }
+      }
+    }
+  ]
+}

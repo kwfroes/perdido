@@ -1,0 +1,2 @@
+// GERADO por tools/build_house_styles.py: não edite à mão.
+export const HOUSE_SPRITES = {"oca_1": [122, 135], "oca_2": [122, 135], "oca_3": [122, 135], "oca_4": [122, 135], "palafita_1": [126, 136], "palafita_2": [126, 136], "palafita_3": [126, 136], "palafita_4": [126, 136], "fogao": [42, 30], "fogao_0": [42, 30], "fogao_1": [42, 30], "fogao_2": [42, 30], "fogao_3": [42, 30], "rede": [60, 31], "rede_ocupada": [60, 31], "jirau": [44, 31], "talha": [26, 27], "luz_janela": [40, 25], "luz_porta": [44, 42]};

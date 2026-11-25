@@ -8,7 +8,7 @@ import { Vitals } from '../../js/systems/vitals.js';
 const R = []; const ok = (n, c, e = '') => R.push([c, n, e]);
 const P = G.player, V = G.vitals, inv = G.inventory;
 const fresh = (o = {}) => new Session({ world: G.world, assets: G.assets, renderer: G.renderer, input: G.input, onCopy: async () => {}, ...o });
-step(3); G.terminal.run('clima aberto');
+step(3); G.gain = () => null; G.mark = () => {}; G.terminal.run('clima aberto');   // S3: XP isolada (os bônus de nível mudariam as contas deste teste)
 
 // lugar aberto
 const free = (x, y) => [[0, 0], [60, 0], [-60, 0], [0, 50], [0, -40], [40, 40], [-40, 40]].every(([dx, dy]) => G.footFree(x + dx, y + dy) && G.footFreeOnLand(x + dx, y + dy));
@@ -108,11 +108,11 @@ await shot('fogo_hud_resistencia');
   S2.terminal.dispose(); S3.terminal.dispose(); }
 
 // ---- toque: Colocar, ✓ e ✕ ----
-G.terminal.run('manha'); G.touchMode = true; G.items.kit_fogueira = 1; P.x = spot[0] + 120; P.y = spot[1]; P.facing = 'down';
+G.menu.close(); G.terminal.run('manha'); G.touchMode = true; G.items.kit_fogueira = 1; P.x = spot[0] + 120; P.y = spot[1]; P.facing = 'down';
 if (!G.footFreeOnLand(P.x, P.y)) { P.x = spot[0] - 120; }
 inv.open = true; inv.tab = 'items'; inv.sel = inv.entries(G.items).findIndex(([k]) => k === 'kit_fogueira'); step(1);
 const mid = (r) => [r.x + r.w / 2, r.y + r.h / 2];
-ok('toque: botão "Colocar" na mochila', !!inv.hits.eat); G.tapAt(...mid(inv.hits.eat)); step(2);
+ok('toque: botão "Colocar" na mochila', !!inv.hits.eat); G.tapAt(...mid(inv.hits.eat)); step(2); 
 ok('toque: entra no modo de colocar com ✓ e ✕', !!G.placing && G.placeHits && G.placeHits.ok && G.placeHits.cancel);
 await shot('fogo_toque');
 G.tapAt(...mid(G.placeHits.cancel)); step(1); ok('✕ cancela', !G.placing && G.items.kit_fogueira === 1);

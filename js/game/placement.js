@@ -1,3 +1,4 @@
+import { INSIDE_OK, STYLES } from './houseIn.js';
 // R1 — Estruturas colocáveis (fogueira, forno, canoa nova; depois abrigo, cama, baú e bancada): usar item, prévia, validação e criação.
 // Métodos da partida (Session) separados por assunto. São instalados no protótipo da Session por js/game/session.js
 // (installMixins): dentro deles, `this` continua sendo a partida — o comportamento é o mesmo de antes da divisão.
@@ -20,23 +21,35 @@ export class PlacementMixin {
   }
   startPlacing(k) {
     if (this.boat.sailing) { this.toast('Desembarque para montar.', 2); return false; }
-    if (this.cave && ITEMS[k].place !== 'torch_wall') { this.toast('Aqui dentro não dá: pouco espaço e pouco ar. Só tochas fixas.', 3); return false; }
+    if (this.player.swimming) { this.toast('Nadando não dá para montar nada.', 2); return false; }
+    if (this.cave && this.cave.isHouse) { const t = ITEMS[k].place, ok = INSIDE_OK.has(t) || (t === 'fogueira' && STYLES[this.cave.style].fireInside);
+      if (!ok) { this.toast(t === 'fogueira' ? 'Fogueira dentro de casa só na oca. Aqui, use um fogão de barro.' : 'Isso não cabe dentro de casa.', 3); return false; } }
+    else if (this.cave && ITEMS[k].place !== 'torch_wall') { this.toast('Aqui dentro não dá: pouco espaço e pouco ar. Só tochas fixas.', 3); return false; }
     this.inventory.open = false; this.placing = { item: k, type: ITEMS[k].place, x: this.player.x, y: this.player.y, ok: false, why: '' }; this.placeTrack();
     this.toast(this.touchMode ? 'Escolha o lugar e toque em ✓.' : 'Escolha o lugar: E coloca, Esc cancela.', 3); return true;
   }
   // posição da prévia: logo à frente do jogador
   placeTrack() {
     const pl = this.placing, p = this.player, [fx, fy] = p.facingVec;
-    const k = pl.type === 'canoe' ? 1.8 : pl.type === 'casa_1' ? 2.6 : pl.type === 'abrigo' ? 1.2 : 1; pl.x = Math.round(p.x + fx * 30 * k); pl.y = Math.round(p.y + fy * 22 * k + (fy >= 0 ? 8 : -2));
+    const k = pl.type === 'canoe' ? 1.8 : /^(casa_1|oca_1|palafita_1)$/.test(pl.type) ? 2.6 : pl.type === 'abrigo' ? 1.2 : 1; pl.x = Math.round(p.x + fx * 30 * k); pl.y = Math.round(p.y + fy * 22 * k + (fy >= 0 ? 8 : -2));
     if (pl.type === 'abrigo') { const f = this.fires.list.find(f => Math.hypot(f.x - pl.x, f.y - pl.y) < 48); if (f) { pl.x = f.x; pl.y = f.y + 8; } }   // 5B: encaixa em cima da fogueira
     const r = this.canPlace(pl.type, pl.x, pl.y); pl.ok = r.ok; pl.why = r.why;
   }
   canPlace(type, x, y) {
     if (type === 'abrigo') return this.canPlaceAbrigo(x, y);
+    if (/^(casa_1|oca_1|palafita_1)$/.test(type) && !this.cave) {           // 5C.2: base da casa só em terreno limpo
+      const b = this.houseBlockers(x, y); if (this.placing) this.placing.blockers = b;
+      if (b.length) return { ok: false, why: this.blockerSummary(b) };
+    }
+    if (type === 'palafita_1') {                                              // palafita: só na beira da água (até 3 tiles)
+      const tx = Math.floor(x / TS), ty = Math.floor(y / TS); let near = false;
+      for (let dy = -3; dy <= 4 && !near; dy++) for (let dx = -4; dx <= 4; dx++) if (this.world.at(tx + dx, ty + dy) === 3) { near = true; break; }
+      if (!near || this.cave) return { ok: false, why: 'A palafita fica na beira de rio, lago ou mar.' };
+    }
     const c = OBJECT_DEFS[type].collider, x0 = x - c.w / 2, y0 = y - c.h, x1 = x + c.w / 2, y1 = y;
     for (const [px, py] of [[x0, y0], [x1, y0], [x0, y1 - 1], [x1, y1 - 1], [x, y - c.h / 2]]) {
       if (px <= 0 || py <= 0 || px >= this.area.W * TS || py >= this.area.H * TS || this.area.at(Math.floor(px / TS), Math.floor(py / TS)) === 3) return { ok: false, why: 'Não dá para montar na água.' };
-      if (this.area.at(Math.floor(px / TS), Math.floor(py / TS)) === 4) return { ok: false, why: 'Tem rocha no caminho.' };
+      if (this.area.at(Math.floor(px / TS), Math.floor(py / TS)) === 4) return { ok: false, why: this.cave && this.cave.isHouse ? 'Encostado demais na parede.' : 'Tem rocha no caminho.' };
     }
     for (const r of this.collision.query(x0, y0, x1, y1)) if (r.w && x0 < r.x + r.w && x1 > r.x && y0 < r.y + r.h && y1 > r.y) return { ok: false, why: 'Tem alguma coisa no caminho.' };
     const f = this.player.footBox; if (x0 < f.x + f.w && x1 > f.x && y0 < f.y + f.h && y1 > f.y) return { ok: false, why: 'Afaste-se um pouco.' };
@@ -61,8 +74,9 @@ export class PlacementMixin {
   placeStep(act) {
     const pl = this.placing; if (!act) return;
     if (!pl.ok) { this.toast(pl.why || 'Não dá para montar aqui.', 1.8); return; }
-    this.items[pl.item]--; if (!this.items[pl.item]) delete this.items[pl.item];
-    if (pl.type === 'fogueira') { const f = this.fires.add(pl.x, pl.y, FIRE.WOOD_MIN); this.attachFire(f); }   // o kit já traz 1 madeira
+    this.items[pl.item]--; if (!this.items[pl.item]) delete this.items[pl.item]; if (!/^casa|^cama|^bau|^bancada|^abrigo/.test(pl.type)) this.gain('construcao', 10);
+    if (pl.type === 'fogueira' || pl.type === 'fogao') { const f = this.fires.add(pl.x, pl.y, FIRE.WOOD_MIN); f.kind = pl.type; if (this.cave && this.cave.isHouse) f.scene = this.cave.id; this.attachFire(f);
+      if (pl.type === 'fogao') { this.placing = null; this.interaction.target = null; this.toast('Fogão montado. Põe lenha e acende (E). A chuva não apaga.', 2.8); return; } }   // o kit já traz 1 madeira
     else if (pl.type === 'forno') { const f = this.furnaces.add(pl.x, pl.y); this.attachFurnace(f); }
     else if (pl.type === 'canoe') {                                                // a canoa antiga (se houver) é desmontada
       const old = !!this.canoeObj || this.boat.state !== 'none'; this.hideCanoe(); this.canoeObj = null; this.boat.state = 'none';
@@ -79,6 +93,10 @@ export class PlacementMixin {
     this.toast(pl.type === 'forno' ? 'Forno montado. Coloque 2 minérios e 1 carvão (E).' : 'Fogueira montada. Chegue perto e acenda (E).', 2.8);
   }
   drawPlacing(ctx) {
+    if (this.placing && this.placing.blockers && this.placing.blockers.length && !this.placing.ok) {   // contorno no que atrapalha
+      ctx.strokeStyle = 'rgba(240,96,79,0.9)'; ctx.lineWidth = 1;
+      for (const o of this.placing.blockers) { const r = o.collider || o.hit || { x: o.x - 8, y: o.y - 8, w: 16, h: 8 }; ctx.strokeRect(Math.round(r.x) - 1.5, Math.round(r.y) - 1.5, r.w + 3, r.h + 3); }
+      const f = this.houseFootprint(this.placing.x, this.placing.y); ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(255,220,160,0.6)'; ctx.strokeRect(f.x0 + 0.5, f.y0 + 0.5, f.x1 - f.x0, f.y1 - f.y0); ctx.setLineDash([]); }
     const pl = this.placing; if (!pl) return; const img = this.assets[pl.type], c = OBJECT_DEFS[pl.type].collider || { w: 84, h: 6 };
     ctx.fillStyle = pl.ok ? 'rgba(90,220,110,0.35)' : 'rgba(230,70,60,0.4)'; ctx.fillRect(pl.x - c.w / 2 - 2, pl.y - c.h - 1, c.w + 4, c.h + 3);
     ctx.globalAlpha = 0.6; ctx.drawImage(img, Math.round(pl.x - img.width / 2), Math.round(pl.y - img.height)); ctx.globalAlpha = 1;

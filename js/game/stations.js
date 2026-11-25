@@ -5,16 +5,18 @@ const BIG_TREES = { tree_giant: 52, tree_01: 40, tree_mature: 36, tree_bushy: 34
 // (installMixins): dentro deles, `this` continua sendo a partida — o comportamento é o mesmo de antes da divisão.
 import { WATER_KIND as WK, TILE as TS } from '../world/constants.js';
 import { FIRE } from '../systems/fire.js';
-import { SMELT } from '../data/items.js';
+import { SMELT, FISH } from '../data/items.js';
 import { TERRAIN as TRN } from '../world/constants.js';
 import { ROAST } from '../data/items.js';
 import { ITEMS } from '../data/items.js';
 
 export class StationsMixin {
   // ---- 4d.1: fogueira ----
-  attachFire(f) { f.obj = this.addObject({ type: 'fogueira', x: f.x, y: f.y }, `fogueira:${f.id}`); f.obj.fire = f; f.obj._frame = null; return f.obj; }
+  attachFire(f) { f.obj = this.addObject({ type: f.kind || 'fogueira', x: f.x, y: f.y }, `fogueira:${f.id}`); f.obj.fire = f; f.obj._frame = null; return f.obj; }
   // S2: ambiente para a resistência
   envFor() {
+    if (this.cave && this.cave.isHouse) { const p = this.player, w = this.fires.litNear(p.x, p.y, 999, this.cave.id); this.vitals.warm = w; this.vitals.sheltered = false;   // casa: protege de tudo; o fogo de dentro esquenta o cômodo todo
+      return { night: false, rain: false, storm: false, dry: false, fire: w, home: true }; }
     if (this.cave) { this.vitals.warm = false; return { night: false, rain: false, storm: false, dry: false, fire: false }; }   // 5A: a caverna abriga do tempo
     const w = this.weather.now, heavy = this.fires.heavyRain(w), p = this.player;
     const roof = this.shelterAt(p.x, p.y);                                          // 5B: abrigo e casa seguram chuva e trovoada
@@ -40,6 +42,8 @@ export class StationsMixin {
     if (coal) o.push({ op: 'charcoal', label: 'Pôr carvão', hint: `carvão: ${coal}`, disabled: f.fuel > FIRE.MAX_FUEL - FIRE.COAL_MIN });
     if (f.lit) for (const k of Object.keys(ROAST)) if (this.items[k]) o.push({ op: 'roast', item: k, label: `Assar ${ITEMS[k].label.toLowerCase().replace('cacho de ', '')}`, hint: `tem ${this.items[k]}` });
     if (f.coal > 0) o.push({ op: 'coal', label: `Pegar carvão (${f.coal})` });
+    if (f.lit && this.items.pote_agua && !f.saltLeft && !f.salt) o.push({ op: 'boil', label: 'Ferver água do mar', hint: '~2 h: 2 de sal' });   // 5C.1
+    if (f.salt > 0) o.push({ op: 'takeSalt', label: `Pegar sal (${f.salt})` });
     return o;
   }
   fireActionFor(f) {
@@ -52,12 +56,14 @@ export class StationsMixin {
   fireAct(f, a) {
     const hrs = (m) => (m / 60).toFixed(1).replace('.', ',').replace(',0', '');
     if (a.op === 'coal') { this.give('carvao', f.coal); this.toast(`+${f.coal} carvão  (total ${this.items.carvao})`, 2); f.coal = 0; }
-    else if (a.op === 'light') { f.lit = true; f.used = true; this.toast(`Você acendeu a fogueira. Lenha para ~${hrs(f.fuel)} h.`, 2.5); }
-    else if (a.op === 'wood') { this.items.madeira--; if (!this.items.madeira) delete this.items.madeira; f.fuel = Math.min(FIRE.MAX_FUEL, f.fuel + FIRE.WOOD_MIN);
+    else if (a.op === 'light') { f.lit = true; f.used = true; this.gain('fogo', 5); this.mark('fogueira'); this.toast(`Você acendeu ${f.kind === 'fogao' ? 'o fogão' : 'a fogueira'}. Lenha para ~${hrs(f.fuel)} h.`, 2.5); }
+    else if (a.op === 'wood') { this.items.madeira--; if (!this.items.madeira) delete this.items.madeira; f.fuel = Math.min(FIRE.MAX_FUEL, f.fuel + Math.round(FIRE.WOOD_MIN * (1 + this.sb('fogo')))); this.gain('fogo', 1);
       this.toast(`Lenha na fogueira: ~${hrs(f.fuel)} h.${f.lit ? '' : ' E: acender.'}`, 2.2); }
-    else if (a.op === 'charcoal') { this.items.carvao--; if (!this.items.carvao) delete this.items.carvao; f.fuel = Math.min(FIRE.MAX_FUEL, f.fuel + FIRE.COAL_MIN); f.noCoal += FIRE.COAL_MIN;
+    else if (a.op === 'boil') { this.items.pote_agua--; if (!this.items.pote_agua) delete this.items.pote_agua; f.saltLeft = FISH.SALT_MIN; this.gain('fogo', 3); this.toast('O pote está no fogo. Mantenha a fogueira acesa (~2 h).', 2.8); }
+    else if (a.op === 'takeSalt') { this.give('sal', f.salt); this.toast(`+${f.salt} sal  (total ${this.items.sal})`, 2); f.salt = 0; }
+    else if (a.op === 'charcoal') { this.items.carvao--; if (!this.items.carvao) delete this.items.carvao; f.fuel = Math.min(FIRE.MAX_FUEL, f.fuel + Math.round(FIRE.COAL_MIN * (1 + this.sb('fogo')))); f.noCoal += FIRE.COAL_MIN; this.gain('fogo', 1);
       this.toast(`Carvão na fogueira: ~${hrs(f.fuel)} h.${f.lit ? '' : ' E: acender.'}`, 2.2); }
-    else if (a.op === 'roast') { const k = a.item, out = ROAST[k]; this.items[k]--; if (!this.items[k]) delete this.items[k]; this.give(out, 1);
+    else if (a.op === 'roast') { const k = a.item, out = ROAST[k]; this.gain('fogo', 3); this.items[k]--; if (!this.items[k]) delete this.items[k]; this.give(out, 1);
       this.toast(`Assou: ${ITEMS[out].label.toLowerCase()}  (total ${this.items[out]})`, 2); }
     else if (a.op === 'rain') this.toast('Chove forte demais para acender. Espere a chuva passar.', 2.5);
     else if (a.op === 'need') this.toast('Sem lenha. Traga madeira para acender.', 2.5);
@@ -88,10 +94,10 @@ export class StationsMixin {
     return { kind: 'furnace', op: 'need', label: 'Forno (2 minérios + 1 carvão)' };
   }
   furnaceAct(f, a) {
-    if (a.op === 'take') { const got = Object.entries(f.out); for (const [k, n] of got) this.give(k, n); f.out = {};
+    if (a.op === 'take') { const got = Object.entries(f.out); for (const [k, n] of got) { this.give(k, n); this.gain('fogo', 3 * n); if (k === 'barra_ferro') this.mark('ferro'); } f.out = {};
       this.toast(`+ ${got.map(([k, n]) => `${n} ${ITEMS[k].label.toLowerCase()}`).join(', ')}`, 2.2); return; }
     if (a.op === 'load') {
-      for (const [k, q] of Object.entries(a.smelt.needs)) { this.items[k] -= q; if (!this.items[k]) delete this.items[k]; }
+      for (const [k, q] of Object.entries(a.smelt.needs)) { this.items[k] -= q; if (!this.items[k]) delete this.items[k]; } this.gain('fogo', 4);
       if (!f.queue.length) f.left = SMELT.recipes[a.smelt.item].minutes; f.queue.push(a.smelt.item);
       const h = SMELT.recipes[a.smelt.item].minutes / 60;
       this.toast(`Fundindo ${ITEMS[a.smelt.item].label.toLowerCase()}: ${String(h).replace('.', ',')} h de jogo (${f.queue.length} na fila).`, 2.5); return;

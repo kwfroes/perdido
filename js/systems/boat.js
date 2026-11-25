@@ -85,8 +85,9 @@ export class Boat {
       this.animT += dt;
     }
     // correnteza: em rio, a água empurra a canoa no sentido do fluxo
-    const w = this.world, i = Math.floor(this.y / T) * w.W + Math.floor(this.x / T), f = w.flow ? w.flow[i] : 0;
-    if (f) { vx += FLOW[f - 1][0] * CONFIG.BOAT_CURRENT; vy += FLOW[f - 1][1] * CONFIG.BOAT_CURRENT; }
+    if (this.currentAt) { const [cx, cy] = this.currentAt(this.x, this.y); vx += cx; vy += cy; }      // correnteza nova (força varia por ponto e tempo)
+    else { const w = this.world, i = Math.floor(this.y / T) * w.W + Math.floor(this.x / T), f = w.flow ? w.flow[i] : 0;
+      if (f) { vx += FLOW[f - 1][0] * CONFIG.BOAT_CURRENT; vy += FLOW[f - 1][1] * CONFIG.BOAT_CURRENT; } }
     const nx = this.x + vx * dt, ny = this.y + vy * dt;
     if (this.fits(nx, this.y)) this.x = nx;                       // eixo a eixo: desliza ao longo da costa
     if (this.fits(this.x, ny)) this.y = ny;

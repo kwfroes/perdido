@@ -107,5 +107,6 @@ export const ANIMALS = {
 export const FAUNA_PROPS = {
   jabuti_nest: { sheet: 'jabuti_f', frame: 'nest', label: 'Ninho de jabuti', text: 'Ovos brancos e redondos enterrados pela metade na terra revirada. Um jabuti fez o ninho aqui.' },
   cururu_eggs: { sheet: 'girino', frame: 'eggs', label: 'Ovos de sapo', text: 'Um cordão gelatinoso cheio de pontinhos pretos: ovos de sapo-cururu.' },
+  owl_egg: { sheet: 'coruja', frame: 'egg', label: 'Ovo de coruja', text: 'Um ovo branco e redondo caído no pé do poleiro.' },
   owl_pellet: { sheet: 'coruja', frame: 'pellet', label: 'Bolota de pelos', text: 'Uma bolota de pelos com ossinhos dentro. Uma coruja mora por perto.' },
 };

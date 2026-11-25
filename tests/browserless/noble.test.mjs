@@ -64,7 +64,7 @@ if (plat2) { face(plat2); ok('com as duas picaretas, usa a de platina (3 golpes)
   ok('picareta de platina tira MINÉRIO (não lascas)', G.items.minerio_platina === 4 && !G.items.lasca_platina); }
 const rock = G.objects.find(o => o.type === 'rock_m' && reach(o)); face(rock); tap('KeyE'); step(25);
 ok('pedra média cai num golpe com picareta de platina', G.objects.find(o => o.id === rock.id).type === 'rock_m_rubble');
-const tree = G.objects.find(o => o.type === 'tree_tall' && reach(o)) || G.objects.find(o => o.type === 'tree_young' && reach(o));
+const tree = G.objects.find(o => o.type === 'tree_young' && reach(o)) || G.objects.find(o => o.type === 'tree_mature' && reach(o));
 if (tree) { face(tree); tap('KeyE'); step(25); ok('árvore cai num golpe com machado de platina', G.objects.find(o => o.id === tree.id).type === 'tree_stump'); }
 const prata = G.objects.find(o => o.type === 'ore_prata' && reach(o));
 if (prata) { face(prata); hitAll(prata, 2); ok('prata com picareta de platina: 2 golpes, 1 minério', G.items.minerio_prata === 1); }

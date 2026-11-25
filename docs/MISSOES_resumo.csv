@@ -1,0 +1,16 @@
+﻿ID da Missão;Categoria;Povo / Classe Emissora;Condição de Gatilho (triggers);Variação por Estação (seasonVariants);Recompensa Principal
+M01_FIO_MATA;Coleta;Todos / Artesão, Morador;village_known == true, estoque de corda/fibra baixo;"Seca: capim seco rende menos, exige mais volume; Chuvas: capim cresce rápido perto da água";Cordas + relação +10
+M02_DESPENSA;Suprimentos;Todos / Líder, Morador;village_pantry < 40% ou evento de escassez;"Seca: foco em raízes/carne salgada; Trovoadas: foco em estoque fechado sem sair da vila";Prosperidade +15, comida pronta
+M03_BARRO_BRASA;Ofício;Todos / Artesão;Jogador possui picareta/pá ou fogueira/forno;"Chuvas: argila fácil na margem, lenha úmida; Seca: margem dura, queima rápida";Receita/barras de ferro + relação +12
+M04_RESINA_LUZ;Suprimentos;Indígena, Quilombola / Guardião;time_of_day == 'evening' ou caverna descoberta;"Trovoadas: urgência máxima (noite fechada); Seca: resina escorre mais espessa";Tochas x4 + relação +10
+M05_TROCA_MARE;Comércio;Ribeirinho / Pescador (praia);weather in ['clear', 'cloudy'], barco atracado na principal;"Seca: troca sal e peixe seco; Chuvas: troca sementes e barro";Itens de outras ilhas + relação +12
+M06_QUARTZO_LUZ;Caverna (400x400);Indígena, Ribeirinho / Artesão;world_size == 400, has_iron_or_platinum == true;"Trovoadas: abrigo ideal dentro da caverna; Seca: caverna fresca alivia desgaste";Peças de lanterna de quartzo + relação +20
+M07_AMETISTA_FIO;Caverna (400x400);Todos / Artesão;world_size == 400, ferramenta gasta < 40% no inventário;"Seca: pedras mais secas/quebradiças; Chuvas: gotejamento exige tocha protegida";Ametista (pedra de amolar) + reparo
+M08_ESMERALDA_CONT;Expedição (400x400);Todos / Líder;world_size == 400, has_canoe == true, has_platinum_pick == true;"Seca: mar calmo para travessia longa; Trovoadas: risco alto de naufrágio no canal";Esmeralda + prestígio +30
+M09_DIAMANTE_FIM;Fim de Jogo (400x400);Todos / Líder;village_reputation >= 80, M08 concluída;Todas: condição extrema no fundo da caverna grande;Ponta de diamante + honra máxima
+M10_CRIANCA_PERDIDA;Resgate (6C);Todos / Morador;Evento ativo < 1 na vila, weather != 'thunderstorm';"Chuvas: pegadas somem rápido; Seca: criança perto de lago/rio buscando água";Relação +25, prosperidade +15
+M11_BEBE_COLO;Resgate (6C);Todos / Guardião, Morador;Evento crítico de vila, exige retorno a pé/canoa sem correr;"Trovoadas: hipotermia/resistência cai rápido se demorar; Seca: exige hidratação/pausa";Relação +35, item raro de família
+M12_CANOA_PERDIDA;Resgate (6D);Ribeirinho, Indígena / Líder;NPC viajante desviou de rota em neblina/vento;"Chuvas: correnteza forte nos canais; Seca: bancos de areia e ilhotas expostas";Retorno do NPC + ferramentas
+M13_NAUFRAGIO;Crise (6D);Todos / Pescador, Guardião;Ocorreu thunderstorm durante viagem de NPC;"Trovoadas/Pós-Trovoada: destroços frescos na praia; Seca: busca urgente por insolação";Madeira/corda do destroço + relação +30
+M14_PASSAGEM_FECHADA;Exploração;Todos / Guardião, Artesão;Bloqueio ativo (rocha, tronco velho ou galeria escura);"Chuvas: desmoronamento de barro/pedra; Seca: galhos secos bloqueando trilha";Acesso liberado + recurso oculto
+M15_SELO_HONRA;Marco Final;Todos / Líder;village_reputation >= 100, 3+ missões da vila concluídas;Todas: cerimônia na praça da vila com todos os moradores;Desbloqueia Casa Nível 4 (honra)

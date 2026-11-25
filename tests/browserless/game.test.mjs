@@ -50,8 +50,8 @@ const tryEnter = (kind, label) => {
   for (let i = 0; i < banks.length && trials < 22; i += stride) { const [x, y, dx, dy] = banks[i], sx = x * T + 16, sy = y * T + 20; if (!free(sx, sy)) continue; trials++;
     place(sx, sy); const k = key4[dx + ',' + dy]; fire('keydown', k); for (let s = 0; s < 54; s++) step(1, s % 3 === 0 ? 100 : 16.7); fire('keyup', k); step(2);
     const tx = Math.floor(P.x / T), ty = Math.floor((P.y - 1) / T);
-    if (W.terrain[ty * W.W + tx] === TR.WATER && [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([a2, b2]) => W.terrain[(ty + b2) * W.W + tx + a2] === TR.WATER)) leaks++; }
-  ok(`${label}: ${trials} tentativas de entrar (quadros de 16 ms e de 100 ms) sem passar da espuma`, trials >= 10 && leaks === 0, `${leaks} de ${trials}`);
+    if (G.waterDepthAt(P.x, P.y) >= 6) leaks++; }   // S4: dá para entrar e nadar até o 5º bloco; o fundo (6+) não
+  ok(`${label}: ${trials} tentativas de entrar (quadros de 16 ms e de 100 ms) sem chegar ao fundo`, trials >= 10 && leaks === 0, `${leaks} de ${trials}`);
 };
 tryEnter(WK.SEA, 'mar'); tryEnter(WK.RIVER, 'rio fundo'); tryEnter(WK.LAKE, 'lago');
 
