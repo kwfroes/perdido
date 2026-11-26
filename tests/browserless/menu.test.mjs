@@ -18,7 +18,7 @@ const F2 = async () => { fire('keydown', 'F2'); fire('keyup', 'F2'); return unti
 const SEEDRE = /^[A-HJ-KM-NP-Z2-9]{4}-[A-HJ-KM-NP-Z2-9]{4}$/;
 
 ok('o menu aparece ao abrir', await until(menuShown));
-ok('semente inicial aleatória XXXX-XXXX, tamanho G, sem erro nem aviso', SEEDRE.test(input.value) && curSize() === 'G' && err.hidden === true && note.hidden === true, input.value);
+ok('semente inicial aleatória XXXX-XXXX, tamanho E (400x400 é o principal), sem erro nem aviso', SEEDRE.test(input.value) && curSize() === 'E' && err.hidden === true && note.hidden === true, input.value);
 
 // ---- validações do campo ----
 input.value = '   '; click(dom['btn-play']); await sleep(20);

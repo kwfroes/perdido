@@ -11,7 +11,8 @@ export const SUPPORTED_VERSIONS = [1, 2];
 export const SIZES_BY_VERSION = { 1: { P: 100, M: 150, G: 200 }, 2: { G: 200, E: 400 } };
 export const SIZES = SIZES_BY_VERSION[1];           // tamanhos do gerador v1 (congelado)
 export const SIZE_LABELS = { G: 'Grande (200×200)', E: 'Enorme (400×400)' };
-export const DEFAULT_SIZE = 'G';
+export const DEFAULT_SIZE = 'G';             // lido de códigos SEM tamanho (mantém o mundo de quem já tinha a semente)
+export const MENU_DEFAULT_SIZE = 'E';        // padrão do menu de Novo jogo: o 400x400 é a versão principal; o 200x200 não recebe mais novidades
 
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // sem I, L, O, 0, 1 (evita confusão ao copiar)
 

@@ -1,3 +1,4 @@
+import { NPC_SPRITES } from '../data/npcSprites.js';
 import { HUNT_SPRITES } from '../data/huntSprites.js';
 import { CAVE_SPRITES } from '../data/caveSprites.js';
 import { canoePalette, wornVariants } from './wear.js';
@@ -26,6 +27,8 @@ for (const [k, it] of Object.entries(ITEMS)) FILES[`icon_${k}`] = it.icon;
 FILES.trouxa_glow = 'assets/environment/trouxa_glow.png';
 for (const k of HUNT_SPRITES) FILES[k] = `assets/fish/${k}.png`;   // 5C.1
 FILES.farm_terra = 'assets/farm/terra.png';   // 5C.2
+for (const k of Object.keys(NPC_SPRITES.sheets)) FILES[`npc_${k}`] = `assets/npcs/${k}.png`;   // 6B
+for (const st of ['indigena', 'quilombola', 'ribeirinho']) for (const k of ['piso0', 'piso1', 'piso2', 'piso3', 'guarda']) FILES[`up_${st}_${k}`] = `assets/home/up_${st}_${k}.png`;   // andar de cima
 for (const k of ['in_indigena', 'in_ribeirinho', 'in_quilombola', 'luz_janela', 'luz_porta', 'fogao_0', 'fogao_1', 'fogao_2', 'fogao_3', 'rede_ocupada']) FILES[k] = `assets/home/${k}.png`;   // casa por dentro
 for (const k of ['res', 'hp', 'energy', 'hunger', 'lung']) FILES[`lenda_${k}`] = `assets/icons/lenda_${k}.png`;   // L1
 // 5A: cavernas (chão, paredes, morcegos, tochas)

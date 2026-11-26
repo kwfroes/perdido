@@ -18,8 +18,8 @@ G.player.setCharacter('female');
 G.placeHome('oca_1', S[0], S[1]); const O = G.homes.find(h => h.type === 'oca_1');
 P.x = O.x; P.y = O.y + 26; P.facing = 'up'; step(4); ok('oca: "Curvar a armação (2/4)"', O.obj.actionLabel === 'Curvar a armação (2/4)', O.obj.actionLabel);
 finish(O); step(2); ok('oca pronta depois de 3 etapas', O.type === 'oca_4');
-P.x = O.x; P.y = O.y + 26; P.facing = 'up'; step(4); ok('oca pronta: "Entrar na oca"', O.obj.actionLabel === 'Entrar na oca', O.obj.actionLabel);
-const overObjs = G.objects; tap('KeyE'); step(3);
+P.x = O.x; P.y = O.y + 26; P.facing = 'up'; step(4); ok('oca pronta: menu da casa ("Casa (nível 1)…")', O.obj.actionLabel === 'Casa (nível 1)…', O.obj.actionLabel);
+const overObjs = G.objects; tap('KeyE'); step(1); ok('menu: Entrar', G.menu.open && G.menu.opts[0].label === 'Entrar'); tap('Digit1'); step(3);
 ok('entrou: cena da casa (estilo indígena), relógio continua', G.cave && G.cave.isHouse && G.cave.style === 'indigena' && G.objects !== overObjs);
 await shot('casa_oca_dentro');
 // ---- dentro: clima, montar, fogueira só na oca ----

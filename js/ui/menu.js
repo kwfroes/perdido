@@ -1,7 +1,7 @@
 import { CHARACTERS } from '../data/characters.js';
 import { CONFIG } from '../core/config.js';
 import { hasCharSelect, runCharSelect } from './charsel.js';
-import { parseCode, randomSeedText, formatCode, DEFAULT_SIZE, GENERATOR_VERSION, SIZES_BY_VERSION, FULL_CODE_RE } from '../world/seed.js';
+import { parseCode, randomSeedText, formatCode, DEFAULT_SIZE, MENU_DEFAULT_SIZE, GENERATOR_VERSION, SIZES_BY_VERSION, FULL_CODE_RE } from '../world/seed.js';
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'perdido.ultimo';
@@ -65,8 +65,14 @@ export function runMenu(opts = {}) {
     const menu = $('menu'), input = $('seed-input'), err = $('seed-error'), note = $('seed-note');
     const radios = [...document.querySelectorAll('input[name=size]')];
     let character = loadChar() || CONFIG.PLAYER.DEFAULT;                 // último escolhido (a escolha é na tela seguinte)
-    const getSize = () => (radios.find(r => r.checked) || {}).value || DEFAULT_SIZE;
-    const setSize = (v) => radios.forEach(r => { r.checked = r.value === v; });   // v inexistente = nenhum marcado
+    const getSize = () => (radios.find(r => r.checked) || {}).value || MENU_DEFAULT_SIZE;
+    let afterSize = () => {};
+    const setSize = (v) => { radios.forEach(r => { r.checked = r.value === v; }); afterSize(); };   // v inexistente = nenhum marcado
+    const sizeNote = document.getElementById('size-note'), E_TEXT = sizeNote ? sizeNote.textContent : '';
+    const updateSizeNote = () => { if (!sizeNote) return; const g = getSize() === 'G';
+      sizeNote.textContent = g ? 'Atenção: o 200×200 não está sendo atualizado por enquanto. Ele não tem cavernas, ilhas de vila, roça abandonada nem ruínas. Para a versão completa do jogo, escolha o Enorme.' : E_TEXT;
+      if (sizeNote.classList) sizeNote.classList.toggle('warn', g); };
+    afterSize = updateSizeNote; radios.forEach(r => r.addEventListener('change', updateSizeNote));
     const showError = (t) => { err.textContent = t; err.hidden = !t; };
     const showNote = (t) => { if (note) { note.textContent = t; note.hidden = !t; } };
 
@@ -82,8 +88,9 @@ export function runMenu(opts = {}) {
     const hashParsed = fromHash ? parseCode(fromHash) : null;
     if (hashParsed && hashParsed.ok) showCode(hashParsed.code);
     else if (last && last.seed && last.size && CURRENT_SIZES[last.size]) { input.value = last.seed; setSize(last.size); showNote(''); }
-    else { input.value = randomSeedText(); setSize(DEFAULT_SIZE); showNote(''); }
+    else { input.value = randomSeedText(); setSize(MENU_DEFAULT_SIZE); showNote(''); }
 
+    updateSizeNote();
     const play = () => {
       const r = parseCode(input.value, getSize());
       if (!r.ok) { showError(r.error); input.focus(); return; }
@@ -102,7 +109,7 @@ export function runMenu(opts = {}) {
         if (ch) go(ch); else { menu.hidden = false; input.focus(); }
       });
     };
-    const random = () => { input.value = randomSeedText(); setSize(getSize() in CURRENT_SIZES ? getSize() : DEFAULT_SIZE); showNote(''); showError(''); };
+    const random = () => { input.value = randomSeedText(); setSize(getSize() in CURRENT_SIZES ? getSize() : MENU_DEFAULT_SIZE); showNote(''); showError(''); };
     const onKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); play(); } };
     // Ao colar (ou sair do campo) com um código completo: ajusta os controles. Não mexe enquanto o jogador digita.
     const normalize = () => {

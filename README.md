@@ -2,6 +2,16 @@
 Jogo top-down pixel art (tile 32 px) em HTML/CSS/JS + Canvas 2D. O mundo é uma ilha **gerada por semente**, com relevo,
 rios que realmente descem até o mar, lagos, trilhas e vegetação por bioma.
 
+## Estado do projeto
+- **Andamento, decisões e próximos passos:** `docs/ROADMAP.md` (é o único roadmap; o README só resume).
+- **Já tem:** ilha por semente (200x200 e 400x400) com rios, lagos, ilhotas e **ilhas de vila**; estações, clima, dia e noite
+  (1 dia de jogo = 12 min reais); sobrevivência (vida, fome, energia, resistência, morte com trouxa); ferramentas de pedra a platina;
+  fogo, forno, sal; canoa; cavernas; casa em 3 estilos e 3 níveis com interior; XP e Diário; lendas; caça, pesca e roça;
+  natação e correnteza; **moradores nas vilas** com rotina semanal (6B-A, já com as correções do relatório 6B-A3).
+- **Próxima etapa:** 6B-B (clima nas rotinas, ferramentas na mão, casas das vilas por dentro, despensa). Já pronta: mochila em 3 colunas (categorias, grade com rolagem e card do item; tecla **Q** troca a categoria) e o **minimapa com GPS** (tecla **G**; marque o destino no mapa **F4** com o mouse, o toque ou as setas + E).
+- **Outros documentos:** `docs/POVOS_E_CASAS.md` (povos, NPCs, casas e prompts de arte), `docs/MISSOES.json` (missões da 6C),
+  `docs/FERRAMENTAS_E_TIERS.md`, `docs/MUNDO_VILAS_CAVERNAS.md`, `docs/GERADOR_V2.md`, `docs/MOBILE.md`.
+
 ## Rodar localmente
 Módulos ES não funcionam via file://. Use o Live Server do VS Code, ou na pasta do projeto:
 
@@ -32,7 +42,7 @@ Ao abrir, o menu pede uma semente (texto livre ou o botão Aleatória) e o taman
 Relevo por ruído -> ilha -> **drenagem real** (a água escorre pelo relevo; rios nascem onde drena área suficiente, juntam-se e
 chegam ao mar ou a um lago; lagos são as depressões do terreno, com tamanho limitado) -> areia -> clareiras -> início longe da água ->
 6 (200x200) ou 12 (400x400) lugares a descobrir ligados por trilhas (A*) -> vegetação por bioma, umidade e **densidade regional**.
-- **Rios de 3 a 6 tiles** de largura (mais largos perto da foz). Barram o personagem.
+- **Rios de 3 a 6 tiles** de largura (mais largos perto da foz). Dá para atravessar a nado (S4), contra a correnteza.
 - **Vaus**: raros trechos rasos de 2 tiles (com 3 tiles de transição nas pontas) que se atravessam a pé, com água na cintura: o personagem
   fica mais lento, não corre, e é desenhado com as pernas cobertas de água. Cada vau é validado ao ser criado (só fica se houver caminho a pé
   entre as duas margens). As trilhas atravessam rios apenas pelos vaus.

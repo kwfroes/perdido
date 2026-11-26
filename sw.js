@@ -5,7 +5,7 @@
 // Se algo "travar" numa versão velha: aumente VERSION e publique (o cache antigo é apagado).
 // A1: a navegação é pedida com fetch(req) PURO — passar opções (ex.: { cache }) num pedido de navegação faz o Chrome recusar,
 //     e o app instalado não abria.
-const VERSION = 'perdido-v3';
+const VERSION = 'perdido-v2';
 const CODE = /\.(?:html|js|mjs|css|json|webmanifest)$/i;
 
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['./', './jogar.html', './manifest.webmanifest']).catch(() => {}))); });

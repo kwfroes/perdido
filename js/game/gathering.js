@@ -1,3 +1,5 @@
+import { houseLevel } from './houseIn.js';
+const STUMP_OF = { tree_young: 'tree_stump_s', tree_tall: 'tree_stump_s', tree_sapling: 'tree_stump_s', tree_bushy: 'tree_stump_m', tree_mature: 'tree_stump_m', siri_4: 'tree_stump_m' };
 import { ROAST } from '../data/items.js';
 // R1 — Coleta: colher, pegar, cortar, minerar, desgaste das ferramentas, golpe; comer, morrer e trouxas (S1).
 // Métodos da partida (Session) separados por assunto. São instalados no protótipo da Session por js/game/session.js
@@ -5,7 +7,7 @@ import { ROAST } from '../data/items.js';
 import { fruitWindow } from '../data/calendar.js';
 import { SWING_SPRITES } from '../data/swingSprites.js';
 import { BUSH_YIELD, LEAF_YIELD } from '../data/items.js';
-import { GEM_YIELD, RESIN_TREES, LEAVES, LEAF_MACHETE_BONUS } from '../data/items.js';
+import { GEM_YIELD, RESIN_TREES, LEAVES, LEAF_MACHETE_BONUS, RUIN_LOOT } from '../data/items.js';
 import { treeHash } from '../data/calendar.js';
 import { ITEMS, HARVEST, oreInfo, targetKind, bestTool, neededTools, ROCK_YIELD, TREES, LOG_YIELD, ORE_YIELD, TOOL_LABEL, TOOL_ITEM, DURABILITY, wearFor } from '../data/items.js';
 
@@ -74,7 +76,7 @@ export class GatheringMixin {
     if (t.type === 'trouxa') return { kind: 'bundle', label: 'Pegar a trouxa' };
     if (t.home) return this.homeActionFor(t);
     if (t.plot) return this.plotActionFor(t);                                                  // 5C.2: roça
-    if (t.type === 'tree_stump' && this.bestOf([['pa_ferro', 'spade_iron'], ['pa_madeira', 'spade_wood']])) return this.stumpActionFor(t);
+    if (/^tree_stump/.test(t.type) && this.bestOf([['pa_ferro', 'spade_iron'], ['pa_madeira', 'spade_wood']])) return this.stumpActionFor(t);
     if (t.type === 'roca_mand_silv') { const r = this.leafOk(t); return r.ok ? { kind: 'maniva', label: 'Tirar manivas' } : { kind: 'leafInfo', why: 'Já tirei as ramas boas. Volte em uns dias.', label: 'Mandioca silvestre' }; }
     if (t.caveId !== undefined) return { kind: 'cave', label: 'Entrar na caverna' };
     if (this.cave && !this.cave.isHouse && !t.isExit && t.type !== 'trouxa' && !this.litAt(t.x, t.y - 6)) return { kind: 'dark', label: 'Escuro demais' };   // 5A: no escuro não se vê o que é
@@ -88,6 +90,8 @@ export class GatheringMixin {
     if (t.type === 'wreck_hull') return { kind: 'pick', item: 'madeira', n: 4, label: 'Desmontar a canoa (madeira)' };
     if ((t.type === 'fogueira' || t.type === 'fogao') && t.fire) return this.fireActionFor(t.fire);
     if (t.isHouseDoor) return { kind: 'exitHouse', label: 'Sair de casa' };
+    if (t.isStair) return { kind: 'stair', dir: t.isStair, label: t.isStair === 'up' ? 'Subir a escada' : 'Descer a escada' };
+    if (t.ruin) return this.delta.removed.has(`saque:${t.id}`) ? null : { kind: 'ruin', label: 'Revirar a ruína' };
     if (t.type === 'forno' && t.furnace) return this.furnaceActionFor(t.furnace);
     if (/^clay_\d$/.test(t.type)) return { kind: 'clay', label: 'Pegar argila' };
     if (t.species && HARVEST[t.species] && t.fruit === 'ripe' && t.fruitN && (t.species !== 'siri' || t.viewType === 'siri_4')) return { kind: 'harvest', label: HARVEST[t.species].verb };
@@ -143,6 +147,9 @@ export class GatheringMixin {
     if (a.kind === 'cave') { this.enterCave(t.caveId); return true; }
     if (a.kind === 'exitCave') { this.leaveCave(); return true; }
     if (a.kind === 'exitHouse') { this.leaveHouse(); return true; }
+    if (a.kind === 'stair') return this.useStair(a.dir);
+    if (a.kind === 'ruin') { this.delta.removed.add(`saque:${t.id}`); const got = {}; for (const [k, [a0, a1]] of Object.entries(RUIN_LOOT)) { const n = a0 + Math.floor(this.rand() * (a1 - a0 + 1)); if (n > 0) { got[k] = n; this.give(k, n); } }
+      this.gain('exploracao', 10); this.toast('Revirou a ruína: ' + Object.entries(got).map(([k, n]) => `${n} ${ITEMS[k].label.toLowerCase()}`).join(', ') + '.', 3.5); return true; }
     if (a.kind === 'menu' && a.what === 'fire') { const f = t.fire; this.menu.show('Fogueira', this.fireOptions(f).map(o => ({ ...o, run: () => this.fireAct(f, o) }))); return true; }
     if (a.kind === 'menu' && a.what === 'furnace') { const f = t.furnace; this.menu.show('Forno de argila', this.furnaceOptions(f).map(o => ({ ...o, run: () => this.furnaceAct(f, o) }))); return true; }
     if (a.kind === 'fire') { this.fireAct(t.fire, a); return true; }
@@ -173,7 +180,7 @@ export class GatheringMixin {
   }
   // ---- S1: comer, morrer, trouxa ----
   eatSelected() {
-    const list = this.inventory.entries(this.items), cur = list[this.inventory.sel]; if (!cur) return false;
+    const list = this.inventory.listFor(this.items), cur = list[this.inventory.sel]; if (!cur) return false;   // lista da categoria atual
     const k = cur[0], food = ITEMS[k].food; if (!food) return false;
     const salted = food.hp >= 0 && Object.values(ROAST).includes(k) && this.items.sal > 0;   // 5C.1: comida assada com sal rende +20%
     const g = this.vitals.eat(salted ? { ...food, hunger: food.hunger * 1.2 } : food); if (!g) { this.toast('Você está satisfeito.', 1.8); return false; }
@@ -210,7 +217,7 @@ export class GatheringMixin {
     this.vitals.respawn(); this.inventory.open = false; this.dialog.close && this.dialog.close();
     this.camera.snapTo(...this.camTarget(), this.renderer.width, this.renderer.height);
     this.deaths = (this.deaths || 0) + 1;
-    if (bedHouse) this.enterHouse(bedHouse, { x: this.bed.x, y: this.bed.y });
+    if (bedHouse) { this.enterHouse(bedHouse, this.bed.upper ? null : { x: this.bed.x, y: this.bed.y }); if (this.bed.upper && houseLevel(bedHouse.type) >= 3) { this.useStair('up'); this.player.x = this.bed.x; this.player.y = this.bed.y; } }
     this.dialog.show('Você desmaiou...', (opts.text ? opts.text + ' ' : '') + (keys.length ? `${bed ? 'Acordou na sua cama' : 'Acordou no lugar onde chegou à ilha'}. Suas coisas ficaram numa trouxa ${where}.` : (bed ? 'Acordou na sua cama.' : 'Acordou no lugar onde chegou à ilha.')));
   }
   pickBundle(t) {
@@ -255,11 +262,13 @@ export class GatheringMixin {
       this.toast(`+${k} ${ITEMS[item].label.toLowerCase()}  (total ${this.items[item]})`, 2.5);
     } else if (target === 'tree' || target === 'tree_giant') {
       const log = wf.wrong ? 'log_m' : TREES[t.type], side = this.player.x < t.x ? 1 : -1;      // ferramenta errada: tora menor
-      const rs = RESIN_TREES[t.type] || 0; if (rs) this.give('resina', rs); if (target !== 'bush') this.mark('arvore');             // 5A: árvore alta dá resina
-      this.changeObject(t, 'tree_stump');
+      const rs = RESIN_TREES[t.type] || 0; if (rs) this.give('resina', rs);
+      const nob = t.type === 'tree_giant' ? 2 : 0; if (nob) this.give('madeira_nobre', nob);   // Casas e vilas: cerne da árvore velha
+      if (target !== 'bush') this.mark('arvore');             // 5A: árvore alta dá resina
+      this.changeObject(t, STUMP_OF[t.type] || 'tree_stump');   // toco do tamanho do tronco (árvore fina não deixa toco grosso)
       const spec = { type: log, x: Math.round(t.x + side * 36), y: Math.round(t.y + 6), flip: side < 0 };
       spec.id = `+${spec.type}:${spec.x}:${spec.y}`; this.delta.add(spec); this.addObject(spec, spec.id);
-      this.toast(`A árvore caiu! Pegue a tora (+${LOG_YIELD[log]} madeira).${rs ? ` +${rs} resina.` : ''}`, 3);
+      this.toast(`A árvore caiu! Pegue a tora (+${LOG_YIELD[log]} madeira).${rs ? ` +${rs} resina.` : ''}${nob ? ` +${nob} madeira nobre.` : ''}`, 3);
     } else {
       const mineral = oreInfo(t.type).mineral, big = target === 'ore_big' || target === 'ore_platina_big';
       const chips = mineral === 'platina' && best.tool !== 'plat_pickaxe';          // 4e: picareta de ferro só arranca LASCAS de platina

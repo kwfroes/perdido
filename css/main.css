@@ -171,3 +171,5 @@ html.touch #charsel, html.touch #charsel * { touch-action: pan-y; }
 #menu .hint { margin-top: 12px; }
 #menu .slots .hint.small { margin-top: 4px; }
 @media (max-width: 700px) { #menu .cols { grid-template-columns: 1fr; } #menu .col-new > label.newgame { margin-top: 12px; } }
+
+#menu .hint.warn { color: #ffcf8a; border-left: 3px solid #e8913a; padding-left: 8px; }

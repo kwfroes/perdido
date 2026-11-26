@@ -150,11 +150,23 @@ export class HuntMixin {
       this._shadowT = 2; const F = this.fauna.fields;
       for (let k = 0; k < 10; k++) { const x = p.x + (this.rand() - 0.5) * 520, y = p.y + (this.rand() - 0.5) * 300, tx = Math.floor(x / TS), ty = Math.floor(y / TS);
         if (tx < 1 || ty < 1 || tx >= W.W - 1 || ty >= W.H - 1) continue; const i = ty * W.W + tx;
-        if (W.terrain[i] === TR.WATER && F && F.dLand[i] <= 1) { const kind = W.waterKind[i]; this.shadows.push({ x: Math.round(x), y: Math.round(y), kind, life: 18 + this.rand() * 10, vx: (this.rand() - 0.5) * 10, vy: (this.rand() - 0.5) * 6 }); break; } }
+        if (this.shadowFits(x, y) && F && F.dLand[i] <= 3) { const kind = W.waterKind[i]; this.shadows.push({ x: Math.round(x), y: Math.round(y), kind, life: 18 + this.rand() * 10, vx: (this.rand() - 0.5) * 10, vy: (this.rand() - 0.5) * 6 }); break; } }
     }
     for (const s of this.shadows) { const nx = s.x + s.vx * dt, ny = s.y + s.vy * dt, i = Math.floor(ny / TS) * W.W + Math.floor(nx / TS);
-      if (W.terrain[i] === TR.WATER) { s.x = nx; s.y = ny; } else { s.vx = -s.vx; s.vy = -s.vy; } }
+      if (this.shadowFits(nx, ny)) { s.x = nx; s.y = ny; } else { s.vx = -s.vx; s.vy = -s.vy; } }
   }
+  // abelhas de uruçu: pontinhos que voam em voltas em torno da colmeia ocupada (só de dia, sem chuva forte)
+  drawBees(ctx, camX, camY, vw, vh) {
+    if (this.cave || this.clock.isNight || this.fires.heavyRain(this.weather.now)) return; const t = this.time;
+    for (const o of this.objects) { if (o.type !== 'hive_busy' || o.x < camX - 40 || o.x > camX + vw + 40 || o.y < camY - 20 || o.y > camY + vh + 60) continue;
+      for (let i = 0; i < 5; i++) { const ph = i * 1.9 + o.x * 0.013, r = 9 + (i % 3) * 5 + 3 * Math.sin(t * 0.9 + ph), a = t * (1.6 + i * 0.35) + ph;
+        const bx = o.x + Math.cos(a) * r + Math.sin(t * 4 + i) * 1.2, by = o.y - 17 + Math.sin(a * 1.3) * r * 0.5 + Math.cos(t * 5 + i) * 1;
+        ctx.fillStyle = '#2a2018'; ctx.fillRect(Math.round(bx), Math.round(by), 2, 1); ctx.fillStyle = '#e8c84a'; ctx.fillRect(Math.round(bx) + 1, Math.round(by), 1, 1);   // corpo
+        ctx.fillStyle = 'rgba(235,245,255,0.75)'; if (Math.floor(t * 30 + i) % 2) ctx.fillRect(Math.round(bx), Math.round(by) - 1, 1, 1); else ctx.fillRect(Math.round(bx) + 1, Math.round(by) - 1, 1, 1); } } }
+  // a sombra é desenhada centrada e tem até ~40x16 px: só vale onde o retângulo inteiro (com folga) é água
+  shadowFits(x, y) { const W = this.world, hw = 24, hh = 12;
+    for (const [dx, dy] of [[-hw, -hh], [hw, -hh], [-hw, hh], [hw, hh], [0, 0], [-hw, 0], [hw, 0], [0, -hh], [0, hh]]) { const tx = Math.floor((x + dx) / TS), ty = Math.floor((y + dy) / TS);
+      if (tx < 0 || ty < 0 || tx >= W.W || ty >= W.H || W.terrain[ty * W.W + tx] !== TR.WATER) return false; } return true; }
   drawGroundLife(ctx) {
     const a = this.assets;
     for (const s of this.shadows) { const im = a[s.kind === WK.SEA ? 'sombra_mar' : s.kind === WK.LAKE ? 'sombra_lago' : 'sombra_rio']; if (!im) continue;

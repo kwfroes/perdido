@@ -41,7 +41,7 @@ const m0 = G.items.maniva || 0; G.fieldAction(); ok('colheu mandiocas e manivas;
 delete G.items.maniva; G.items.semente_milho = 2; const tm = G.farmTarget(); G.farmAct(tm); const pm = G.farm.plots.get(plot.k);
 ok('plantou milho', pm.crop === 'milho');
 G.terminal.run('estacao seca'); G.terminal.run('clima aberto'); step(2);
-const g0 = pm.grow; G.farmStep(600); ok('na Seca sem chuva nem rega: não cresce', pm.grow === g0 && pm.dry === 600);
+const g0 = pm.grow, d0 = pm.dry; G.farmStep(600); ok('na Seca sem chuva nem rega: não cresce (e a secura sobe 600 min)', pm.grow === g0 && pm.dry === d0 + 600, `${pm.grow - g0} ${pm.dry - d0}`);
 G.items.cabaca = 1; P.facing = 'right'; G.interaction.target = pm.obj; ok('sem água na cabaça: só informa (precisa de água)', /precisa de água/.test(G.actionFor(pm.obj).why || ''));
 G.items.cabaca_cheia = 1; delete G.items.cabaca; ok('com a cabaça cheia: "Regar"', G.actionFor(pm.obj).label === 'Regar'); G.fieldAction();
 G.farmStep(600); ok('regada: cresce na Seca', pm.grow > g0 && G.items.cabaca === 1);
@@ -63,7 +63,7 @@ const bl = G.houseBlockers(tree.x, tree.y + 30); ok('base da casa onde tem árvo
 // ---- comida e save ----
 ok('mandioca crua faz mal; assada alimenta', ITEMS.mandioca.food.hp < 0 && ITEMS.mandioca_assada.food.hp > 0);
 { const d = JSON.parse(JSON.stringify(G.serialize())); const S2 = fresh({ save: d });
-  ok('save: terra capinada, covas e plantas voltam; a roça abandonada não se repete', S2.farm.tilled.size === G.farm.tilled.size && S2.farm.plots.size === G.farm.plots.size && S2.objects.filter(o => o.type === 'casa_ruina').length <= 1);
+  ok('save: terra capinada, covas e plantas voltam; a roça abandonada não se repete', S2.farm.tilled.size === G.farm.tilled.size && S2.farm.plots.size === G.farm.plots.size && S2.objects.filter(o => o.id === 'roca-velha:casa').length === 1);
   S2.terminal.dispose(); }
 console.log(R.map(([c, n, e]) => `${c ? 'OK   ' : 'FALHA'} | ${n}${e && !c ? ' | ' + e : ''}`).join('\n'));
 const fl = R.filter(r => !r[0]).length; console.log(`\n${R.length - fl} de ${R.length} verificações passaram${fl ? ` | ${fl} FALHAS` : ''}.`); process.exit(fl ? 1 : 0);

@@ -4,6 +4,36 @@ Documentos de referência (nesta pasta):
 - `FERRAMENTAS_E_TIERS.md` — árvore de ferramentas, materiais e mineração (com as decisões tomadas).
 - `MUNDO_VILAS_CAVERNAS.md` — continentes, ilhas de vila, vilas autônomas, cavernas, casa do jogador e missões (com as decisões tomadas).
 - `GERADOR_V2.md` — gerador de mundo.
+- `POVOS_E_CASAS.md` — povos, NPCs, casas e prompts de arte.
+- `MISSOES.json` (vale sobre `MISSOES_resumo.csv`) — missões e falas da 6C.
+- `PERDIDO_Rotinas_NPCs_6B.docx` e `PERDIDO_Relatorio_Correcoes_6B_A3.docx` — especificação da 6B e relatório de correções (guardar nesta pasta).
+- Este é o **único** roadmap do projeto (a versão antiga `ROADMAP atualizado.md` foi removida).
+
+## Estado atual (25/11/2026)
+**Relógio:** 1 dia de jogo = 12 minutos reais (1 h de jogo = 30 s; 1 semana = 84 min; 30 dias = 6 h). Rotinas, produção, cultivo e viagens usam minutos de jogo.
+**Versão atual:** `perdido_ui2.zip` (todas as suítes de teste passando).
+**Próxima etapa:** 6B-B (clima nas rotinas, ferramentas e carga nos moradores, casas das vilas por dentro, despensa — especificação em `PERDIDO_Rotinas_NPCs_6B.docx`); a Interface 2 (minimapa com GPS e clique do mouse) já está pronta.
+
+| Área | Situação |
+|---|---|
+| Mundo | ✔ Ilha por semente (200 e 400), rios, lagos, vaus, ilhotas, estações, clima, dia e noite |
+| Sobrevivência | ✔ Vida, fome, energia, resistência; morte com trouxa; comida crua e assada |
+| Ferramentas e metais | ✔ Pedra → ferro → prata/ouro → platina; desgaste; bancada; adaga |
+| Fogo | ✔ Fogueira, forno, fogão de barro, carvão, fundição, sal |
+| Canoa | ✔ Achada e nova; desgaste, conserto, quebra no mar (tábua), destroços |
+| Cavernas | ✔ 6 por mundo (400x400), escuridão, tocha, lanterna, cristais, morcegos |
+| Casa | ✔ Abrigo, cama, rede, baú, bancada, fogão; 3 estilos (taipa, oca, palafita) com interior; terreno limpo |
+| Progressão | ✔ XP (9 habilidades), Diário, qualidades fixadas dormindo |
+| Lendas | ✔ 5 lendas (simples, curada com sal, ritual com poção); adaga obrigatória; carne |
+| Caça e pesca | ✔ Lanças, arco e flechas, vara, anzol, minhoca, arpão |
+| Roça | ✔ Enxada, pá, mandioca, milho, rega, roça abandonada; mato volta no chão parado |
+| Água | ✔ Natação (perna, cintura, nado), fundo perigoso, cor por profundidade, correnteza dos rios, cheia |
+| Interface | ✔ Menu, escolha de personagem, landing, logo, app instalável (service worker), celular |
+| Casas nível 2–4 | ✔ Nível 2 (2 cômodos) e 3 (andar de cima) da casa do jogador; ruínas pelo mapa; nível 4 trancado até a 6C |
+| Moradores (6B-A) | ✔ Identidade, lugares, rotas, semana com folgas, posição pelo relógio, ativação 30/45 tiles, conversa |
+| NPCs e vilas | ⏳ 12 folhas prontas e convertidas (caminhada e trabalho, homem e mulher, 3 povos: `assets/npcs/`); faltam crianças, idosos, líder, bebê, acessórios e ferramentas (`POVOS_E_CASAS.md`); a vila em si é a 6B |
+| Ilhas de vila | ✔ 2 a 4 por mundo 400x400, tamanhos variados, com lagoa e lugar de vila; vilas dos 3 povos (casas pelo tamanho, casa do líder); ilha virgem pode ganhar vila; continente fica para depois |
+| Missões | ⏳ Textos e regras em `docs/MISSOES.json`; entram na 6C |
 
 ## Feito
 - [x] Fase 0/1 — personagem, tileset, menu com semente, código do mundo
@@ -49,27 +79,87 @@ Documentos de referência (nesta pasta):
 - [x] 5C.2 Roça — `js/game/farm.js`; **enxada de pedra** (madeira + pedra lascada + corda) e **de ferro** (bancada): de frente para chão livre, **Capinar** (tira capim, flor, erva; vira terra limpa, salva) e **Abrir cova**; na cova, **plantar maniva** (mandioca: ~20 dias; raiz com a **pá**; +manivas) ou **semente de milho** (~12 dias; colhe com a mão: espigas + sementes); **Chuvas**: cresce 15% mais rápido; **Seca**: sem chuva precisa de **rega** (cabaça cheia, vale 1 dia; cabaça: 2 argilas + corda, enche em rio/lago); 3 dias seca → **murcha** (limpar libera a cova); **trovoada** pode derrubar milho alto (colhe metade); **pá de madeira/ferro**: **arranca tocos** (vira buraco, +1 madeira), +1 argila por mancha; **mandioca silvestre** nas clareiras dá manivas; **roça abandonada** (uma por mundo, às vezes numa ilhota): **casa velha** em ruína, estaca, covas com **milho velho** (sementes) e **mandioca pronta**; **terreno limpo**: a base da casa (3 estilos) só vai onde a pegada está livre — a prévia contorna o que atrapalha e diz o que limpar e com quê; comida: mandioca crua faz mal, assada sustenta; milho assado; a roça conta na **Coleta**; terminal `roca`; `tools/build_farm_assets.py`; teste `farm.test.mjs`. Roça abandonada e mandioca silvestre só no 400x400 (decisão do 200x200)
 - [x] Casas fase B (arte) — níveis 2, 3, 4 e ruína dos 3 povos convertidos (`assets/home/<oca|casa|palafita>_<n2|n3|n4|ruina>.png`), peças do andar de cima e objetos do líder (`assets/home/up_*`, `lider_*`); prontos para a etapa "Casas e vilas" (a ruína da taipa já é a casa velha da roça abandonada)
 - [x] S4 Natação — `js/world/depth.js` + `js/game/swim.js`; profundidade = distância da terra: **1º bloco água na perna** (anda a 80%), **2º na cintura** (como o vau), **3º ao 5º nadando** (sprite de nado nas 8 direções, 50% da velocidade, sem correr), **6º em diante fundo**: a correnteza não deixa passar ("Fundo demais"); a colisão da água passou a cobrir só o fundo; vale para mar, lago (o meio de lago grande vira fundo) e rio; vau continua sempre na cintura; **cor da água em degradê** (clara na beira, escurecendo até o fundo; blocos de 8 px em degraus); nadando gasta energia (parado, menos), **Fôlego** e a lenda **Peixe do fundo** reduzem o gasto; **energia zerada nadando: afoga devagar** (−1,2 vida/s, aviso piscando) até voltar ao raso; morrer na água leva a trouxa para a praia; nadando não monta, não pesca, não usa ferramenta e a tocha apaga; dá para subir na canoa ancorada pela água; desembarque só em terra; regra da canoa quebrada (tábua) não mudou; teste `swim.test.mjs`
-- [x] Correnteza dos rios + fundo + cheia — `js/world/current.js` + `js/game/river.js`; força por ponto: largura (beira 0,3 · cintura 0,6 · meio 1) x declive (remanso 0,6 · normal 1 · **corredeira** 1,8 nos 12% mais inclinados); vau no máx. 0,35; lago sem corrente; **nível do rio** por estação (Seca 0,6 · Estiagem 0,8 · Chuvas/Trovoadas 1) e pela umidade do chão (sobe depois da chuva e baixa devagar): chuva ~1,4, trovoada até 1,8; base 18 px/s (corredeira na trovoada ~58 px/s, mais forte que o nado); empurra quem nada (no vau, metade) e a **canoa**; nadar contra gasta até 2x; aviso "A correnteza está forte"; espuma andando na corredeira; rio **barrento** na cheia; **fundo** (6º bloco+) deixou de ser parede: dá para ir, mas a energia cai 3x e, zerada, a vida cai 3x; no mar fundo a corrente puxa para longe da ilha; **cheia** (nível ≥ 1,25): a margem do rio (não a do mar) vira água na perna e **mata a roça** que estiver nela, deixando o chão batido; **chão batido parado volta a ter mato** em 6 dias (Chuvas 1,5x → ~4 dias; Seca 0,5x → ~12 dias; Trovoadas 1,2x; brota a partir da metade) — vale para todo chão capinado e cova vazia; save `farm.regrow`; teste `river.test.mjs`
+- [x] Correnteza dos rios + fundo + cheia (regras confirmadas pelo autor em 25/11) — `js/world/current.js` + `js/game/river.js`; força por ponto: largura (beira 0,3 · cintura 0,6 · meio 1) x declive (remanso 0,6 · normal 1 · **corredeira** 1,8 nos 12% mais inclinados); vau no máx. 0,35; lago sem corrente; **nível do rio** por estação (Seca 0,6 · Estiagem 0,8 · Chuvas/Trovoadas 1) e pela umidade do chão (sobe depois da chuva e baixa devagar): chuva ~1,4, trovoada até 1,8; base 18 px/s (corredeira na trovoada ~58 px/s, mais forte que o nado); empurra quem nada (no vau, metade) e a **canoa**; nadar contra gasta até 2x; aviso "A correnteza está forte"; espuma andando na corredeira; rio **barrento** na cheia; **fundo** (6º bloco+) deixou de ser parede: dá para ir, mas a energia cai 3x e, zerada, a vida cai 3x; no mar fundo a corrente puxa para longe da ilha; **cheia** (nível ≥ 1,25): a margem do rio (não a do mar) vira água na perna e **mata a roça** que estiver nela, deixando o chão batido; **chão batido parado volta a ter mato** em 6 dias (Chuvas 1,5x → ~4 dias; Seca 0,5x → ~12 dias; Trovoadas 1,2x; brota a partir da metade) — vale para todo chão capinado e cova vazia; save `farm.regrow`; teste `river.test.mjs`
+- [x] Casas e vilas (casa do jogador) — casa pronta abre o menu **Entrar / Ampliar**; **nível 2** (casa com alpendre, maloca, palafita com varanda; ~2x o custo do nível 1; 3 h de obra; a área nova precisa de terreno limpo) troca o sprite e o interior vira **2 cômodos** (15x7, parede no meio com passagem); **nível 3** (sobrado, maloca com jirau alto, sobrado de madeira; exige **madeira nobre** (2 por árvore velha derrubada) e 3 barras de ferro; 4 h) ganha **escada** e **andar de cima** em cena própria (piso do andar e guarda-corpo do povo); móveis, baú e fogo de dentro ficam onde estavam ao ampliar; dormir no andar de cima: acorda lá; save no andar de cima volta lá; **nível 4 aparece trancado** ("honra de uma vila", 6C); **3 a 5 ruínas** dos 3 povos pelo mapa 400x400 (palafita em ruína só perto da água), revirar uma vez dá madeira, corda, pedra, argila, osso e às vezes ferro (a casa velha da roça também); terminal `nivel <1..4>`; teste `levels.test.mjs`. Correções: a **casa velha da roça abandonada sumia ao carregar o jogo** (agora é salva e volta no lugar); o marco "primeira árvore" do Diário voltou a contar
+- [x] NPCs (arte) — 12 folhas convertidas na escala do jogador (`tools/build_npc_sheets.py` → `assets/npcs/<povo>_<f|m>_<walk|work>.png`, `js/data/npcSprites.js`): caminhada 4 direções (esquerda espelhada) e as 6 poses de trabalho (agricultor, pescador, caçador, artesão, morador, guardião)
+- [x] 6A Ilhas de vila — `js/world/generator2.js` passo 6c + `js/game/villages.js`; no 400x400, **2 a 4 ilhas novas** no mar aberto (a principal e as ilhotas não mudam): uma grande (~3.800–5.200 tiles) e as outras de 1.600–3.800, crescidas a partir do mar mais aberto (forma natural, canais de ≥14 tiles da principal e ≥18 entre elas); as grandes ganham **lagoa**; cada ilha tem um **lugar de vila** reservado; **ao menos uma começa com vila, no máximo metade**; povo sorteado por ilha; **casas pelo tamanho** (~1 a cada 700 tiles, 2 a 7; moradores previstos ~1,7 por casa, até 10 — chegam na 6B); arranjo por povo (aldeia em roda, ribeirinhos perto da água, quilombo espalhado); casa do líder (nível 4) com 4+ casas; nomes (Aldeia…, Comunidade…, Quilombo…); chegar perto mostra o nome, dá XP e marca no mapa (F4); **ilha virgem pode ganhar vila** (save `villages.founded`; terminal `vila n`); ruínas e roça abandonada não caem nas ilhas de vila; terminal `vila`, `vila ir n`; teste `isles.test.mjs`. **Atenção:** muda o mapa dos jogos salvos no 400x400
+- [x] 6B pacote A (6B.1–6B.3) — `js/data/npcRoutines.js`, `js/systems/npcSchedule.js`, `js/game/npcs.js`; seguindo `PERDIDO_Rotinas_NPCs_6B.docx`: **moradores** pela semente (nome do povo, sexo, profissão pelo perfil do povo, líder sempre, guardião a partir de 4; família: líder na casa principal, os outros dividem as casas); **pontos de atividade** em terra da ilha (terreiro, roça, margem de pesca, atracadouro, mata, bancada, água/lagoa, posto de guarda; vagas por morador); **rotas** por A* só na caixa da ilha (casas bloqueiam, porta livre), em cache; **semana** 4 trabalho + 1 manutenção + 2 descanso, girada por morador (folgas distintas); **rotinas diárias** por profissão em minutos de jogo, deslocadas 10–30 min por morador; descanso com visita e passeio; ronda do guardião pela rota; **posição = função do relógio** (reconstrução direta: chegar depois de semanas mostra cada um no meio do que fazia, sem simular o passado); trabalho em **microtarefas** (pose, andar um pouco, olhar); em casa ficam escondidos e saem pela porta; **ativa a 30 tiles, desliga a 45** (histerese; longe nada roda); desenho na ordem certa com os animais; balão "Nome, profissão"; **E conversa** (fala por profissão; folga avisada; ele para e olha); sem nada novo no save (tudo pela semente); cesto carregado desenhado por código (provisório); teste `npcs.test.mjs` (23, em 2 mundos)
+- [x] 6B-A3 Correções do relatório (`PERDIDO_Relatorio_Correcoes_6B_A3.docx`) — **01** conversão de tempo: o fator 60 sobrando fazia o trabalho e a ronda durarem frações de segundo (ciclo de 40 s virava ~0,7 s); agora 1 min de jogo = 0,5 s real, derivado da configuração do relógio; **02** sem caminho o A* devolve "sem rota" (nunca mais linha reta atravessando água ou casa): o morador espera onde está, a ronda fica no posto, sem erro e sem rota inválida no cache; **03** bloqueios incluem árvores, pedras e construções do jogador (não só casas); pontos de atividade e vagas só em tile livre; rotas e bloqueios refeitos quando o cenário muda perto da vila (verificação a cada 2 s); **04** sem teletransporte: cada tarefa parte de onde a anterior REALMENTE terminou (se ainda andava, continua dali), a microtarefa e a ronda partem do ponto de chegada, e depois de uma conversa o morador volta ao trajeto andando; a reconstrução determinística para vila distante continua; **05** as folgas são embaralhadas a cada semana (sempre 4 trabalho + 1 manutenção + 2 descanso, reprodutível por semente); **06** a animação vem da atividade e não só da profissão (agricultor na bancada ou na fonte fica neutro; pescador repara a rede com a pose de pesca; guardião em ronda usa a pose de guarda); **07** o XP da conversa só vale no primeiro encontro com cada morador (guardado no save: `villages.met`); **08** os percentuais de sexo por profissão são **pesos de geração ficcionais e ajustáveis**, nunca fatos históricos, sem exclusividade (todas as profissões acessíveis a todos); teste `npcs.test.mjs` com 44 verificações em 4 mundos
+- [x] Correções das impressões de jogo (26/11) — **1** a chuva parava a cada golpe: o relógio e o clima pausavam com o golpe no ar; agora só pausam com menu ou mochila abertos; **2** árvore fina deixava toco grosso: tocos fino (11 px) e médio (20 px) feitos a partir do toco existente, escolhidos pelo tipo da árvore; **3** abelhas rígidas: 5 abelhas animadas por código voam em volta de cada colmeia ocupada (só de dia e sem chuva forte); **apagar tocha**: tecla T apaga e guarda o que sobrou, T de novo reacende dali (fica no save); **9** sombra de peixe com metade na areia: a sombra só nasce e só anda onde o retângulo inteiro (40x16) é água; **8** olhos e pescoço transparentes na canoa: furos de transparência DENTRO do contorno (que deixavam ver a água) preenchidos nos 4 personagens, na canoa, no nado e no boiar (`tools/fix_sprite_holes.py`; as células dos 4 personagens são diferentes: 84x70, 84x72, 80x74 e 82x76); **5** menu de Novo jogo: o 400x400 é o primeiro e o padrão ("recomendado") e o 200x200 mostra o aviso de que por ora não é atualizado (códigos antigos sem tamanho continuam abrindo o 200x200); **10** canoa ancorada na vertical: solução provisória por código (casco achatado com sombra), o sprite certo está no cronograma; teste `fixes.test.mjs`
+- [x] NPCs (arte) — 12 folhas novas convertidas (`tools/build_npc_extra.py` → `assets/npcs/`, `js/data/npcExtra.js`): **líder** dos 3 povos (4 linhas: andar e fala), **crianças** e **idosos** (menino/menina, homem/mulher; criança 70% e idoso 96% do adulto), **bebê**, **8 acessórios** (chapéu largo, boné, chapéu velho, faixa de penas, coroa de penas, chapéu de couro, cesto nas costas, bolsa) e **9 ferramentas** (enxada, vara, rede, arco, lança, martelo, cesto, jarro, balde); ainda sem uso no jogo (entram na 6B-B e 6B-C)
+- [x] Interface 2 — minimapa com GPS (`js/game/gps.js`, `js/ui/overview.js`): **marcar o destino no mapa F4** (clique do mouse, toque, ou setas + E/Enter; Shift anda mais rápido; Backspace/X limpa) com bandeirinha laranja, cursor e três botões clicáveis (GPS ligado/desligado, Limpar destino, Fechar); **GPS (tecla G ou o botão do mapa)**: liga o **minimapa** de 96 px no canto (a região de 96x96 tiles em volta de você, com você no centro, as vilas já vistas e o destino), a **bússola** (direção em 8 pontos e distância em tiles) e uma **seta redonda na borda da tela** com a distância quando o destino está fora da tela, ou um marcador sobre o lugar quando está à vista; marcar um destino liga o GPS sozinho; **ao chegar (≤ 3 tiles) o marcador some** com aviso; destino na água avisa "só de canoa"; sem sinal em caverna e dentro de casa; **save** `gps`; **clique do mouse na mochila** (abas, categorias, itens, receitas, botões, fora fecha) e no mapa (no celular continua o toque, sem duplicar); teste `gps.test.mjs` (28)
+- [x] Interface 1 — mochila em 3 colunas (`js/ui/inventory.js`): **categorias à esquerda** (Itens: Tudo, Ferramentas, Comida, Montar, Materiais; Fabricar: Tudo, Básicos, Ferramentas, Caça e pesca, Roça, Montar; Lendas: Todas, Ativas; Habilidades: Habilidades, Diário), **grade de ícones com rolagem no meio** (a janela tem tamanho FIXO e não cresce na vertical; barra de rolagem, roda do mouse, setas e ▲▼ no toque) e **card do item à direita** (ícone grande, tipo, descrição, durabilidade, o que alimenta; na Fabricar: "Precisa:" com cada ingrediente em verde/vermelho, bancada/mar, motivo de não poder fabricar); a janela ficou **bem maior** (até 600x332 lógicos; abaixo dos indicadores de vida/fome; a barra de teclas some com ela aberta); tela estreita (celular deitado): categorias viram chips no topo e o card fica à direita; **Q troca a categoria**, Tab a aba; usar/comer/colocar respeita a lista filtrada; o baú, as lendas (3 durações no card) e as habilidades (nível, XP, bônus; Diário com ✓) usam o mesmo molde; tocar numa categoria ou aba escolhe direto; teste `ui.test.mjs` (29)
 - [x] Mobile B — toque direto no inventário (abas, slots, receitas: 1º toque seleciona, 2º fabrica; botão Fabricar; [X]; tocar fora fecha), no diálogo (avança) e no mapa (fecha)
 - [x] Teste da água: amostras por tipo espalhadas por todos os tiles (a grade fixa não achava os vaus)
 - [x] Mobile A — paisagem obrigatória (aviso de girar + pausa), analógico 8 direções (borda = correr), AGIR com rótulo e segurar = golpes, Mochila/aba/Mapa/Menu/Zoom, menu rolável, tela cheia + trava paisagem (veja `MOBILE.md`)
 
 ## Próximas etapas (em ordem)
-| Etapa | Conteúdo | Depende de | Sprites |
+
+### 6B — Vilas autônomas (etapa atual)
+Numeração dos itens: `PERDIDO_Rotinas_NPCs_6B.docx`. Entregue em pacotes jogáveis e testados.
+
+| Pacote | Itens | Situação |
+|---|---|---|
+| **6B-A Moradores** | 6B.1 identidade e casas · 6B.2 navegação e pontos de interesse · 6B.3 rotina semanal e diária, reconstrução pelo relógio, ativação 30/45 tiles · correções 6B-A3 | ✔ |
+| **6B-B Clima, trabalho visual e despensa** (próxima) | 6B.4 clima e estações (chuva e trovoada trocam tarefas expostas por manutenção ou descanso; nada de viagem perigosa) · 6B.5 ferramentas na mão, carregar coisas, entrar e sair de casa, casas das vilas por dentro · 6B.7 despensa (produção e consumo por população, profissão, estação e clima; consolidação de dias/semanas de ausência com o último instante no save, sem duplicar após carregar ou dormir; não mexe em roça nem recursos do jogador) | — |
+| **6B-C Convivência e ciclo de vida** | 6B.6 conversas, refeições em família, visitas, brincadeiras, trabalho coletivo, reuniões; amizade individual preparada (sem IA generativa) · ciclo de vida simples por semana (ocupação de casas, mudança de profissão, famílias que chegam e saem, abandono; até 10 por vila) · 6B.8 desempenho no celular, save e saltos de tempo | crianças, idosos e líder entram quando as folhas chegarem |
+
+**Regras da 6B:** os percentuais de sexo por profissão são **pesos de geração ficcionais** (`FEM_SHARE`), ajustáveis, nunca exclusivos; povos retratados com respeito; escassez baixa a prosperidade e cria necessidades; excedente prepara as trocas da 6D.
+**Aceite 6B:** uma semana inteira com folgas distintas, moradores entrando em casa, rotas coerentes, adaptação ao clima, produção e consumo sem duplicar, e continuidade depois de salvar e carregar — testado também no navegador e **num celular de verdade durante 7 dias de jogo (84 min reais sem pausa)**.
+
+### 6C — Missões, resgates e reputação
+- 15 missões de `MISSOES.json` (lanterna depois da M06; casa nível 4 como honra).
+- Missões únicas separadas dos **pedidos recorrentes** gerados pela despensa, sem obrigar o jogador a resolver tudo.
+- Reputação da vila e amizade individual; desbloqueios graduais; criança que segue, bebê no colo e os demais resgates.
+- M12/M13 preparadas para a 6D; M08/M09 revistas quando o continente vier.
+- Diário com objetivos e recompensa; nunca dar recompensa duas vezes. **Aceite:** missões começam, avançam e terminam certo, inclusive depois de recarregar.
+
+### 6D — Viagens, comércio e naufrágios
+- Canoas de NPC entre ilhas; longe, a viagem é só duração e estado. Escambo por oferta e procura, sem moeda.
+- Clima adia viagens; tempestade pode virar naufrágio e resgate; M12/M13. **Aceite:** trocas conservam estoques, viagens ficam no save, nada duplica.
+
+### Fases seguintes (propostas — validar antes de cada uma)
+| Fase | Conteúdo | Depende de | Prioridade |
 |---|---|---|---|
-| **S3 Evolução das qualidades** | micro-XP por atividade + bom descanso; +1 ponto exige vários dias de jogo; dormir na cama consolida | 5B (cama), P1 | — |
-| **5C Caça, pesca, campo** | arco e flechas de osso (animais com vida/morte no save), facão, vara e anzol + peixes (e garça pescando), enxada e pá + plantio de mandioca e milho, sal (conservar) | 4c, 4d | arco, flecha, vara, enxada, pá, peixes, canteiro |
-| **S4 Natação e Fôlego** | profundidade por tile; nadar só perto da margem (mar aberto proibido, canoa continua necessária); Fôlego (cai nadando, mais rápido na correnteza/tempestade; recupera em terra, vau, canoa); afogamento usa a morte da S1; Capacidade Pulmonar entra | S1, 5C | ✔ sprites prontos: `assets/boat/swim_<f|m|ef|em>.png` (8 direções x 2 quadros; `js/data/swimSprites.js`, `tools/build_swim_assets.py`) |
-| **6A Novas terras** (400x400) | **1 pequeno continente** (e um 2º quando couber) + **ilhas de vila** nos cantos livres do oceano, com rios, biomas e fauna próprios, mantendo canais de navegação | — (pode ir antes, mas muda os mundos salvos) | nenhum novo de terreno |
-| **6B Vilas autônomas** (400x400, só nas terras novas) | 5–6 casas, até 10 NPCs, classes (agricultor, pescador, caçador, artesão, moradores, crianças, bebês), despensa, ciclo de vida, vila abandonada; simulação perto (completa) e longe (ticks) | 5C, 6A | corpo base adulto e infantil + variações por classe; casas por tipo |
-| **6C Missões e resgates** | coleta, suprimentos, cristais, resgate de crianças (seguem) e bebês (carregados), portões por ferramenta | 6B, 5A | — |
-| **6D Viagens de NPCs** | NPCs visitam a ilha principal de canoa (trocas na praia); podem se perder ou naufragar em trovoada → destroço + náufrago → missão de resgate | 6B, 6C, clima | canoa de NPC, destroço |
+| **7 Desenvolvimento comunitário** | prosperidade da vila; vila cresce sozinha dentro do que a ilha comporta; jogador ajuda, recupera ruínas e povoa ilhas virgens | 6B–6D | alta |
+| **8 Expansão agrícola e doméstica** | feijão, abóbora, batata-doce, amendoim, frutíferas; irrigação; galinhas e patos; farinha, salga, secagem, defumação (**revisar a decisão de carne não estragar**); móveis e depósitos | roça, construção, 6B | alta |
+| **9 Continente e expedições** | região maior (o 200x200 não muda), rios próprios, cachoeiras, ruínas, comunidades, cavernas profundas; esmeralda e diamante revistos; decidir geração e migração de saves antes | 6D | alta |
+| **10 Eventos dinâmicos** | seca longa, enchente, safra farta, festa, migração; pouco frequentes, previsíveis pela semente | 6B–6D | média |
+| **11 História e conclusão** | três caminhos; Selo de Honra, diamante e lendas como marcos; modo livre depois | 6C, 9 | alta |
+| **12 Balanceamento e otimização** | FPS, memória, geração, save e NPCs em aparelhos reais; rever números para o dia de 12 min; conferir documentação contra o código | todas | essencial |
+| **13 Versão 1.0** | regressão; desktop e Android (app instalado, cache, atualização, offline); saves e Supabase; acessibilidade; **congelar a geração v2** | 12 | essencial |
+| **14 Expansões** (opcional) | novos povos, regiões, histórias — só depois da 1.0. Fora do escopo: multiplayer, diálogos por IA, moeda complexa | 13 | opcional |
+
+**Identidade:** quatro pilares — **sobreviver, explorar, prosperar e pertencer**.
+
+## Sprites que faltam (prompts em `POVOS_E_CASAS.md`)
+As folhas de líder, crianças, idosos, bebê, acessórios e ferramentas **chegaram e estão convertidas**. Ainda faltam:
+
+| Folha | Para | Sem ela |
+|---|---|---|
+| **Canoa vazia vista de frente e de trás** (ancorada com a proa para cima ou para baixo) | correção do item 10 | casco achatado por código (provisório) |
+| Poses **sentar, comer, dormir e carregar nos braços** (por povo; opcional) | 6B-C | pose parada |
+| **N9 Canoa de NPC e náufrago** | 6D | — |
+| Parede interna da casa nível 2 (opcional) | acabamento | peça atual |
+
+## Problemas e melhorias pendentes (impressões de jogo de 26/11)
+Os que dava para corrigir sem arte e sem desenho novo foram **corrigidos nesta rodada** (ver "Feito"). Os demais:
+
+| # | Item | Tipo | Tamanho | Onde entra |
+|---|---|---|---|---|
+| A | **Menu Fabricar** em 3 colunas | interface | — | ✔ **feito** (Interface 1) |
+| B | **Inventário sem crescer na vertical** (rolagem; card à direita) | interface | — | ✔ **feito** (Interface 1) |
+| C | **Aumentar a tela do "I"** | interface | — | ✔ **feito** (Interface 1) |
+| D | **Minimapa com GPS**: marcar um lugar e apontar (seta e distância na borda da tela) | funcionalidade | — | ✔ **feito** (Interface 2) |
+| E | **Canoa ancorada na vertical parece em pé** | arte | pequeno, mas precisa do sprite de frente/trás | quando a folha chegar |
+
+**Pendente destes itens:** só o **E** (sprite da canoa vazia de frente e de trás). A mochila agora também responde ao **clique do mouse** (Interface 2).
 
 ## Decisões já tomadas para as próximas etapas
 - **5B Casa**: por fora nesta etapa (cena de dentro na etapa seguinte); dormir à noite (18h–5h) ou com energia < 15%, sem perigo perto; acorda 6h com energia cheia, resistência +40, fome −15; desmaiar → acorda na última cama; baú 20 tipos x 50 de cada; bancada exigida para ferro, platina, canoa nova e lanterna; **cama de folhas**; abrigo de palha (4 madeiras, 6 folhas largas, 4 gravetos, 2 cordas) protege você e a fogueira da chuva. Prompts em `docs/PROMPTS_5B_CASA.md`.
 - **S3 XP** (depois da 5B): habilidades por uso (coleta, corte, mineração, fogo/cozinha, navegação, construção, exploração), nível até 10, bônus até ~25%; marcos no Diário; a XP alimenta as 4 qualidades, fixadas ao dormir; **morrer tira 10% da XP de cada habilidade, que fica na trouxa e volta ao pegá-la** (qualidades já fixadas não se perdem).
 - **L1 Lendas** (depois da S3): Caldo de sapo (resistência cai 50% mais devagar), Sopa de jabuti (+25% vida máx.), Peixe do fundo (fôlego +50%, vale com a S4), Moqueca de teiú (fome 30% mais lenta), Gemada de coruja (correr/remar/golpear −30% energia). Duração: simples 1 dia, curada 3 dias, ritual vitalícia com metade do efeito (1 vez por lenda); não acumula; ícone do animal ao lado do status (pisca no fim, moldura dourada se vitalícia). Sapo, jabuti e ovo de coruja na L1 (com a mão); teiú (arco/lança) e peixe (vara/arpão) a partir da 5C. Lança entra na 5C.
-- Ordem: A1 ✔ → 5B Casa ✔ → S3 XP ✔ → L1 Lendas ✔ → casa por dentro ✔ → 5C.1 Caça e pesca ✔ → 5C.2 Roça ✔ → S4 Natação ✔ → **Casas e vilas (próxima; níveis 2–4, arte pronta)** → 6A Novas terras → 6B Vilas → 6C Missões → 6D Viagens
+- Ordem: A1 ✔ → 5B Casa ✔ → S3 XP ✔ → L1 Lendas ✔ → casa por dentro ✔ → 5C.1 Caça e pesca ✔ → 5C.2 Roça ✔ → S4 Natação ✔ → Casas e vilas ✔ → 6A Ilhas de vila ✔ → 6B-A Moradores ✔ → Interface 1 ✔ → Interface 2 ✔ → **6B-B Clima, trabalho visual e despensa (próxima)** → 6B-C Convivência e ciclo de vida → 6C Missões → 6D Viagens → 7 Comunidade → 8 Roça e casa → 9 Continente → 10 Eventos → 11 História → 12–13 Versão 1.0
 
 ## Decisões da 5C.2 Roça (fechadas)
 - **Terreno limpo** só para a **base da casa** (3 estilos) e a **roça**: a pegada inteira sem árvore, toco, pedra, arbusto e planta baixa; a prévia mostra o que atrapalha. Limpar: árvore → machado; pedra → picareta/mão; arbusto → facão; **planta baixa → enxada** (vira terra batida, salva); **toco → pá** (+1 madeira). Casas já feitas não mudam.
@@ -81,6 +171,11 @@ Documentos de referência (nesta pasta):
 - Missões: o JSON vale sobre o CSV; criar quando entrarem `peixe_salgado`, `madeira_nobre`, `semente_milho`, `amuleto_vila`, `ponta_diamante`; a **lanterna fica trancada até a M06**; M08/M09 vão para o continente na 6A.
 
 ## Pendências anotadas (fazer quando couber)
+- **Continente**: virou a **Fase 9**; ficou para depois (pesado agora: rios e drenagem próprios e falta de espaço no mapa). Esmeralda e diamante seguem nas cavernas grandes da ilha principal.
+- Ilhas de vila não têm rio próprio (só a lagoa).
+- Casas das vilas ainda não abrem por dentro nem têm moradores (6B).
+- Casa nível 2: a parede entre os cômodos ficou discreta (2 blocos); pode ganhar uma peça própria.
+- NPCs saíram um pouco mais encorpados que o jogador (estilo da arte); se incomodar, reduzir a escala para ~58 px.
 - Caça: só o teiú tem vida por enquanto; outros bichos de caça (capivara, cutia...) entram com as novas terras (6A).
 - Pesca na canoa (pescar remando) ainda não existe.
 - Carne não estraga (decidido por ora); o sal só tempera e cura lendas.
@@ -92,7 +187,7 @@ Documentos de referência (nesta pasta):
 - Dormir não checa "perigo por perto" (ainda não há animal hostil); entra com a caça (5C).
 - Chuva desenhada continua caindo na tela mesmo embaixo da copa (só o efeito na resistência muda).
 - Teiú nadando: desenho simples (só o dorso + marola); sprite próprio se incomodar.
-- **App instalável (PWA)**: falta o service worker (`sw.js`) para guardar o jogo e jogar sem internet; fazer quando o jogo estiver publicado no GitHub Pages (HTTPS). Cuidado: o cache precisa de versão para não prender o jogador numa versão antiga.
+- App instalável: o service worker já existe (A1); falta **confirmar no Android real** a abertura, o cache e a atualização (Fase 13).
 - Cavernas: cantos internos do autotile (4 peças da folha) ainda não usados; rios rasos/fundos dentro da caverna (previstos) ficam para depois.
 - Esmeralda e diamante estão nas cavernas grandes da ilha por enquanto (o documento previa o continente, 6A); usos: trocas (6B) e ponta de diamante (fim de jogo).
 - Ícone da lanterna é provisório (o do quartzo). Decoração `crystal_quartzo` usada como veio grande.

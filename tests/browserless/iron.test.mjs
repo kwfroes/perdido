@@ -67,7 +67,7 @@ const prata = G.objects.find(o => /^ore_prata$/.test(o.type) && G.footFree(o.x, 
 if (prata) { face(prata, 16); ok('prata: picareta de ferro serve', /picareta de ferro/.test(prata.actionLabel || ''), prata.actionLabel); }
 const giant = G.objects.find(o => o.type === 'tree_giant' && G.footFree(o.x, o.y + 16));
 if (giant) { face(giant, 16); ok('árvore velha: machado de ferro', /machado de ferro/.test(giant.actionLabel || ''), giant.actionLabel);
-  for (let i = 0; i < 4; i++) { tap('KeyE'); step(25); } ok('árvore velha cai em 4 golpes (toco + tora grande)', G.objects.find(o => o.id === giant.id).type === 'tree_stump'); }
+  for (let i = 0; i < 4; i++) { tap('KeyE'); step(25); } ok('árvore velha cai em 4 golpes (toco + tora grande)', /^tree_stump/.test(G.objects.find(o => o.id === giant.id).type)); }
 const rock = G.objects.find(o => o.type === 'rock_m' && G.footFree(o.x, o.y + 16));
 face(rock, 16); ok('pedra média: picareta de ferro em 2 golpes', /picareta de ferro/.test(rock.actionLabel) && HITS.rock_m.iron_pickaxe === 2, rock.actionLabel);
 

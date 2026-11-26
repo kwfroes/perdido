@@ -45,13 +45,13 @@ const tree = G.objects.find(o => o.type === 'tree_mature' && G.footFree(o.x, o.y
 face(tree); ok(`árvore com pedra: "${G.interaction.target.label}"`, /^Cortar \(pedra\)/.test(G.interaction.target.label));
 hits(tree, 14, 9); ok('9 golpes com a pedra: a árvore ainda de pé', G.objects.some(o => o.id === tree.id && o.type === 'tree_mature'));
 hits(tree, 14, 1); const st = G.objects.find(o => o.id === tree.id), log = G.objects.find(o => /^log_/.test(o.type) && Math.abs(o.x - tree.x) < 50);
-ok('10º golpe: a árvore vira toco e cai uma tora ao lado', st && st.type === 'tree_stump' && !!log && G.delta.changed.get(tree.id) === 'tree_stump' && G.delta.added.some(a => a.type === log.type));
+ok('10º golpe: a árvore vira toco e cai uma tora ao lado', st && /^tree_stump/.test(st.type) && !!log && /^tree_stump/.test(G.delta.changed.get(tree.id) || '') && G.delta.added.some(a => a.type === log.type));
 face(log, 8); ok('tora: "Pegar a tora"', G.interaction.target === log && G.interaction.target.label === 'Pegar a tora');
 tap('KeyE'); step(2); ok('pegar a tora dá 4 madeiras e ela sai do mundo e do save', G.items.madeira === 4 && !G.objects.includes(log) && !G.delta.added.some(a => a.type === log.type));
 // ---- segurar E repete golpes ----
 { const t2 = G.objects.find(o => o.type === 'tree_young' && G.footFree(o.x, o.y + 14)) || G.objects.find(o => o.type === 'tree_tall' && G.footFree(o.x, o.y + 14));
   face(t2); fire('keydown', 'KeyE'); step(60 * 5); fire('keyup', 'KeyE'); step(2);
-  ok('segurar E 5 s derruba uma árvore com a pedra (golpes repetidos)', G.objects.find(o => o.id === t2.id).type === 'tree_stump'); G.dialog.close();
+  ok('segurar E 5 s derruba uma árvore com a pedra (golpes repetidos)', /^tree_stump/.test(G.objects.find(o => o.id === t2.id).type)); G.dialog.close();
   const l2 = G.objects.find(o => /^log_/.test(o.type)); face(l2, 8); tap('KeyE'); step(2); }
 // ---- 4c: capim, galhos, bolota de coruja ----
 { const grass = G.objects.find(o => o.type === 'plant_grass' && G.footFree(o.x, o.y + 10));
@@ -66,7 +66,7 @@ tap('KeyE'); step(2); ok('pegar a tora dá 4 madeiras e ela sai do mundo e do sa
 // ---- fabricar ----
 G.items.pedra = 6; G.items.madeira = 4; G.items.capim = 6; delete G.items.pedra_lascada; delete G.items.corda; delete G.items.fibra;
 tap('KeyI'); step(1); tap('Tab'); step(1); ok('Tab abre a aba Fabricar', G.inventory.tab === 'craft');
-const sel = (item) => { tap('ArrowUp'); tap('ArrowUp'); tap('ArrowUp'); tap('ArrowUp'); tap('ArrowUp'); tap('ArrowUp'); step(1); const i = RECIPES.findIndex(r => r.item === item); for (let k = 0; k < i; k++) tap('ArrowDown'); step(1); };
+const sel = (item) => { G.inventory.sel = RECIPES.findIndex(r => r.item === item); step(1); };   // (Interface 1: a aba Fabricar virou grade; as setas movem uma casa/linha)
 sel('picareta_pedra'); tap('KeyE'); step(1); ok('sem lascas nem corda: não fabrica a picareta', !G.items.picareta_pedra && /Falta material/.test(G.inventory.msg));
 sel('fibra'); for (let k = 0; k < 3; k++) { tap('KeyE'); step(1); } ok('3x fibra: gasta 6 capins', G.items.fibra === 3 && !G.items.capim);
 sel('corda'); tap('KeyE'); step(1); ok('corda: 3 fibras -> 1 corda', G.items.corda === 1 && !G.items.fibra);
@@ -84,7 +84,7 @@ face(rockL, 22); ok(`rocha: usa a picareta, 3 golpes ("${G.interaction.target.la
 hits(rockL, 22, 3); ok('rocha grande quebra em 3 golpes de picareta e dá 4 pedras e 1 lascada', G.objects.find(o => o.id === rockL.id).type === 'rock_l_rubble' && G.items.pedra === 4 && G.items.pedra_lascada >= 1);
 const tree2 = G.objects.find(o => o.type === 'tree_bushy' && G.footFree(o.x, o.y + 14)) || G.objects.find(o => o.type === 'tree_01' && G.footFree(o.x, o.y + 14));
 face(tree2); ok(`árvore: usa o machado ("${G.interaction.target.label}")`, /^Cortar \(machado\)/.test(G.interaction.target.label));
-hits(tree2, 14, 3); ok('árvore cai em 3 golpes de machado', G.objects.find(o => o.id === tree2.id).type === 'tree_stump');
+hits(tree2, 14, 3); ok('árvore cai em 3 golpes de machado', /^tree_stump/.test(G.objects.find(o => o.id === tree2.id).type));
 face(ore); ok(`minério de ferro: picareta ("${G.interaction.target.label}")`, /^Bater \(picareta\)/.test(G.interaction.target.label));
 hits(ore, 14, 5); ok('5 golpes: minério rachado, ainda de pé', G.objects.find(o => o.id === ore.id).type === 'ore_ferro_cracked');
 hits(G.objects.find(o => o.id === ore.id), 14, 1); const rub = G.objects.find(o => o.id === ore.id);
@@ -114,7 +114,7 @@ tap('KeyI'); step(2); ok('I fecha', !G.inventory.open && !G.clock.paused);
 const data = JSON.parse(JSON.stringify(G.serialize()));
 const S2 = new Session({ world: G.world, assets: G.assets, renderer: G.renderer, input: G.input, onCopy: async () => {}, save: data });
 ok('carregado: inventário igual (ferramentas incluídas)', JSON.stringify(S2.items) === JSON.stringify(G.items) && S2.items.picareta_pedra === 1);
-ok('carregado: tocos, rochas quebradas e minério em cascalho', S2.objects.find(o => o.id === tree.id).type === 'tree_stump' && S2.objects.find(o => o.id === rockL.id).type === 'rock_l_rubble' && S2.objects.find(o => o.id === ore.id).type === 'ore_ferro_rubble');
+ok('carregado: tocos, rochas quebradas e minério em cascalho', /^tree_stump/.test(S2.objects.find(o => o.id === tree.id).type) && S2.objects.find(o => o.id === rockL.id).type === 'rock_l_rubble' && S2.objects.find(o => o.id === ore.id).type === 'ore_ferro_rubble');
 ok('carregado: a contagem de objetos bate', S2.objects.length === G.objects.length, `${S2.objects.length} x ${G.objects.length}`);
 { const t3 = G.objects.find(o => o.type === 'tree_01' && o !== tree2 && G.footFree(o.x, o.y + 14)); hits(t3, 14, 2); const mid = JSON.parse(JSON.stringify(G.serialize()));
   const S3 = new Session({ world: G.world, assets: G.assets, renderer: G.renderer, input: G.input, onCopy: async () => {}, save: mid });

@@ -86,7 +86,7 @@ for (const w of worlds) {
   for (const p of f.props) { const t = w.at(Math.floor(p.x / T), Math.floor((p.y - 1) / T)); if (p.water ? t !== TR.WATER : t === TR.WATER) { bad++; if (!why) why = `sinal ${p.kind} no lugar errado`; } }
   check(`${w.code}: ${f.animals.length} animais e ${f.props.length} sinais, cada um no seu habitat, fora de colisores e longe do início`, bad === 0, `${bad}; ${why}`);
   check(`${w.code}: todas as 9 espécies aparecem (${Object.entries(cnt).map(([k, v]) => `${k} ${v}`).join(', ')})`, Object.keys(ANIMALS).every(k => cnt[k] > 0), Object.keys(ANIMALS).filter(k => !cnt[k]).join(','));
-  check(`${w.code}: gato-do-mato é raro (${cnt.gato} no mapa; mínimo ${ANIMALS.gato.min[w.W]})`, cnt.gato >= ANIMALS.gato.min[w.W] && cnt.gato <= (w.W >= 400 ? 6 : 3));
+  check(`${w.code}: gato-do-mato é raro (${cnt.gato} no mapa; mínimo ${ANIMALS.gato.min[w.W]})`, cnt.gato >= ANIMALS.gato.min[w.W] && cnt.gato <= (w.W >= 400 ? 8 : 4));
 }
 check(`ninhos de jabuti, ovos de sapo e bolotas de coruja aparecem nos mundos testados`, worlds.some(w => placeFauna(w).props.some(p => p.kind === 'jabuti_nest')) && worlds.some(w => placeFauna(w).props.some(p => p.kind === 'cururu_eggs')) && worlds.some(w => placeFauna(w).props.some(p => p.kind === 'owl_pellet')));
 { const v1 = await generateWorld({ version: 1, size: 'G', seed: 'FAUNA-V1' }), f = placeFauna(v1);

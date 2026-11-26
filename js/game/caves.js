@@ -141,7 +141,14 @@ export class CavesMixin {
   }
   // ---- luz que você carrega: lanterna (sempre) ou tocha acesa (gasta) ----
   lightRadius() { return this.items.lanterna ? 1.25 : this.torch && this.torch.left > 0 ? 1 : 0; }
+  // apagar a tocha (tecla T): guarda os minutos que sobraram; ao acender de novo, continua dali
+  snuffTorch() {
+    if (!this.torch || this.torch.left <= 0) { this.toast('Você não está com uma tocha acesa.', 2); return false; }
+    this.stub = { left: this.torch.left }; this.torch = null; this.toast('Você apagou a tocha. Ela fica na mão para acender de novo.', 2.5); return true;
+  }
   lightTorch() {
+    if (this.stub && this.stub.left > 0 && !(this.torch && this.torch.left > 0)) { if (this.wreck || this.player.swimming) { this.toast('Molhada demais para acender.', 2); return false; }
+      this.torch = { left: this.stub.left }; this.stub = null; this.toast(`Você acendeu a tocha de novo (~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h).`, 2.5); return true; }
     if (this.items.lanterna) { this.toast('A lanterna já ilumina sem gastar nada.', 2); return false; }
     if (this.torch && this.torch.left > 0) { this.toast(`A tocha ainda está acesa (~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h).`, 2); return false; }
     if (!this.items.tocha) return false; if (this.wreck || this.player.swimming) { this.toast('Molhada demais para acender.', 2); return false; }

@@ -32,7 +32,7 @@ hit(tree, 14); ok('golpe com machado em árvore adulta gasta 3', G.dur.machado_p
   const t2 = G.objects.find(o => o.type === 'tree_01' && G.footFree(o.x, o.y + 14) && G.footFree(o.x + 40, o.y + 6));
   for (let k = 0; k < 6; k++) hit(t2, 14);
   const log = G.objects.find(o => /^log_/.test(o.type) && Math.abs(o.x - t2.x) < 50);
-  ok('árvore cortada com picareta (ferramenta errada): cai a tora pequena (metade da madeira)', G.objects.find(o => o.id === t2.id).type === 'tree_stump' && log && log.type === 'log_m');
+  ok('árvore cortada com picareta (ferramenta errada): cai a tora pequena (metade da madeira)', /^tree_stump/.test(G.objects.find(o => o.id === t2.id).type) && log && log.type === 'log_m');
   ok('picareta em árvore gastou 3 por golpe (18 em 6 golpes)', G.dur.picareta_pedra === 41 - 18, String(G.dur.picareta_pedra));
   G.items.machado_pedra = 1; G.dur.machado_pedra = saved; }
 // ---- barra e texto ----

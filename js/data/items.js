@@ -90,6 +90,7 @@ export const ITEMS = {
   milho:          { label: 'Espiga de milho',  icon: 'assets/items/item_milho.png',                 text: 'Dá para comer, mas assada é melhor.', food: { hunger: 10, energy: 4 } },
   milho_assado:   { label: 'Milho assado',     icon: 'assets/items/item_milho_assado.png',          text: 'Espiga tostada na brasa.', food: { hunger: 18, energy: 8, hp: 2 } },
   semente_milho:  { label: 'Sementes de milho', icon: 'assets/items/item_semente_milho.png',        text: 'Para plantar numa cova.' },
+  madeira_nobre:  { label: 'Madeira nobre',    icon: 'assets/items/item_madeira_nobre.png',         text: 'Cerne duro da árvore velha. Escoras e assoalho do andar de cima.' },
   carvao:         { label: 'Carvão',           icon: 'assets/items/item_carvao.png',                text: 'Madeira queimada devagar. Vai alimentar a fundição.' },
   madeira:        { label: 'Madeira',          icon: 'assets/items/item_madeira.png',               text: 'Pedaço de tronco. Serve para cabos e construções.' },
   picareta_pedra: { label: 'Picareta de pedra', icon: 'assets/items/item_picareta_pedra.png',      text: 'Pedra pontuda amarrada num cabo. Quebra rochas e minério de ferro.' },
@@ -271,8 +272,20 @@ export const PALAFITA_STAGES = [
   { type: 'palafita_3', label: 'Levantar as paredes', needs: { madeira: 12, corda: 2 },              minutes: 90 },
   { type: 'palafita_4', label: 'Cobrir o telhado',  needs: { folha_larga: 12, capim: 10, corda: 2 }, minutes: 90 },
 ];
+// Casas e vilas: ampliar a casa pronta (nível 2) e subir o andar (nível 3); o nível 4 (casa do líder) é honra das missões (6C)
+export const UPGRADE_STAGES = [
+  { type: 'casa_n2',     label: 'Ampliar com alpendre',     needs: { argila: 24, madeira: 10, graveto: 16, corda: 4, folha_larga: 12 }, minutes: 180 },
+  { type: 'casa_n3',     label: 'Erguer o sobrado',         needs: { madeira_nobre: 4, barra_ferro: 3, madeira: 12, argila: 20, corda: 6 }, minutes: 240 },
+  { type: 'oca_n2',      label: 'Alongar em maloca',        needs: { madeira: 10, graveto: 24, corda: 6, folha_larga: 20, capim: 20 }, minutes: 180 },
+  { type: 'oca_n3',      label: 'Subir o jirau alto',       needs: { madeira_nobre: 4, barra_ferro: 3, madeira: 10, corda: 8, folha_larga: 10 }, minutes: 240 },
+  { type: 'palafita_n2', label: 'Fazer a varanda',          needs: { madeira: 20, corda: 4, folha_larga: 12, capim: 10 }, minutes: 180 },
+  { type: 'palafita_n3', label: 'Levantar o segundo andar', needs: { madeira_nobre: 4, barra_ferro: 3, madeira: 16, corda: 6 }, minutes: 240 },
+];
 export const STAGE_BY_TYPE = {};
+for (const s of UPGRADE_STAGES) STAGE_BY_TYPE[s.type] = { ...s, n: s.type.endsWith('n2') ? 2 : 3, upgrade: true };
 for (const L of [HOUSE_STAGES, OCA_STAGES, PALAFITA_STAGES]) L.forEach((s, i) => { STAGE_BY_TYPE[s.type] = { ...s, n: i + 2 }; });
+// ruínas: o que se acha revirando (uma vez por ruína)
+export const RUIN_LOOT = { madeira: [2, 5], corda: [1, 3], pedra: [2, 4], argila: [0, 4], barra_ferro: [0, 1], osso: [0, 2] };
 export const CHEST = { types: 20, max: 50 };
 
 // L0 — folha larga sem facão (antes só saía cortando a planta com facão de ferro: travava abrigo e cama)

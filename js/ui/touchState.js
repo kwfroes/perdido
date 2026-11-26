@@ -40,7 +40,7 @@ export function actLabel(s) {
   if (s.inventory && s.inventory.open) {
     if (s.inventory.tab === 'craft') return 'Fabricar';
     if (s.inventory.chest) return s.inventory.tab === 'chest' ? 'Pegar' : 'Guardar';
-    const cur = s.inventory.entries(s.items)[s.inventory.sel]; return cur && ITEMS[cur[0]].place ? 'Colocar' : cur && ITEMS[cur[0]].use ? 'Usar' : cur && ITEMS[cur[0]].food ? 'Comer' : '';
+    const cur = s.inventory.listFor(s.items)[s.inventory.sel]; return cur && ITEMS[cur[0]].place ? 'Colocar' : cur && ITEMS[cur[0]].use ? 'Usar' : cur && ITEMS[cur[0]].food ? 'Comer' : '';
   }
   if (s.overview && s.overview.open) return '';
   const t = s.interaction && s.interaction.target; if (!t) return '';

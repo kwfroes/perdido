@@ -365,6 +365,58 @@ async function buildAttempt(code, attempt, onProgress, yieldFn) {
     }
   }
 
+  // ---------- 6c. ilhas de vila (só 400x400): 2 a 4 ilhas de tamanhos variados no mar aberto, longe da principal e das ilhotas ----------
+  // Crescem a partir do mar mais aberto (forma natural). As grandes ganham lagoa; cada uma tem um LUGAR DE VILA reservado.
+  // A vila é montada pela partida (js/game/villages.js). Marcadas em islet[] com id 101+. Sem seno/cosseno (mundo igual em todo navegador).
+  const vilaIsles = [];
+  if (W >= 400) {
+    const rngV = mulberry32(streamSeed(key, 'ilhas-vila')), nV = makeNoise2D(streamSeed(key, 'ilhas-vila-forma'));
+    const want = 2 + Math.floor(rngV() * 3), sizes = [3800 + rngV() * 1400]; while (sizes.length < want) sizes.push(1600 + rngV() * 2200);
+    const GAP = 14, SPACE = 18, EDGE = P2.EDGE_SEA + 6, taken = new Uint8Array(N);
+    let dFree = distanceField(W, H, i => terrain[i] !== TR.WATER, 250);
+    const edgeD = (i) => { const x = i % W, y = (i / W) | 0; return Math.min(x, y, W - 1 - x, H - 1 - y); };
+    for (const A of sizes) {
+      const cand = []; for (let i = 0; i < N; i++) { if (waterKind[i] !== WK.SEA) continue; const f = Math.min(dFree[i] - GAP, edgeD(i) - EDGE); if (f >= 8) cand.push([f + rngV() * 6, i]); }
+      if (!cand.length) break; cand.sort((p, q) => q[0] - p[0]); const c0 = cand[Math.floor(rngV() * Math.min(12, cand.length))][1];
+      const id = 101 + vilaIsles.length, cx = c0 % W, cy = (c0 / W) | 0, stretch = 0.7 + rngV() * 0.6;
+      const ROT = [[1, 0], [0.8, 0.6], [0.6, 0.8], [0, 1], [-0.6, 0.8], [-0.8, 0.6]][Math.floor(rngV() * 6)], rc = ROT[0], rs = ROT[1];
+      const prio = (i) => { const x = i % W, y = (i / W) | 0, dx = x - cx, dy = y - cy, u = (dx * rc + dy * rs) * stretch, w2 = (-dx * rs + dy * rc) / stretch;
+        return Math.sqrt(u * u + w2 * w2) * (1 + 0.55 * (fbm01(nV, x * 0.06 + id * 13, y * 0.06, 4) - 0.5)); };
+      const ok = (i) => waterKind[i] === WK.SEA && !taken[i] && dFree[i] >= GAP && edgeD(i) >= EDGE;
+      const heap = [[0, c0]], seen = new Uint8Array(N); seen[c0] = 1; const cells = [];
+      const push = (it) => { heap.push(it); let k = heap.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (heap[p][0] <= heap[k][0]) break; [heap[p], heap[k]] = [heap[k], heap[p]]; k = p; } };
+      const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; [heap[m], heap[k]] = [heap[k], heap[m]]; k = m; } } return top; };
+      while (heap.length && cells.length < A) { const [, i] = pop(); if (!ok(i)) continue; cells.push(i); const x = i % W, y = (i / W) | 0;
+        for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) if (j >= 0 && !seen[j]) { seen[j] = 1; push([prio(j), j]); } }
+      if (cells.length < 900) continue;
+      for (const i of cells) { terrain[i] = TR.GRASS; waterKind[i] = WK.NONE; flow[i] = 0; islet[i] = id; }
+      vilaIsles.push({ id, tx: cx, ty: cy, R: Math.sqrt(cells.length / Math.PI) });
+      const dNew = distanceField(W, H, i => islet[i] === id, SPACE + 1); for (let i = 0; i < N; i++) if (dNew[i] <= SPACE) taken[i] = 1;
+      dFree = distanceField(W, H, i => terrain[i] !== TR.WATER, 250);
+    }
+    if (vilaIsles.length) {
+      for (let iter = 0; iter < 4; iter++) if (!closePinches()) break;
+      for (let i = 0; i < N; i++) if (islet[i] > 100 && terrain[i] === TR.WATER) islet[i] = 0;
+      for (const v of vilaIsles) {
+        const m = new Uint8Array(N); for (let i = 0; i < N; i++) m[i] = islet[i] === v.id ? 1 : 0;
+        const c = components(m, W, H, 1); let best = 0; for (let k = 1; k < c.sizes.length; k++) if (c.sizes[k] > c.sizes[best]) best = k;
+        for (let i = 0; i < N; i++) if (m[i] && c.lab[i] !== best) { islet[i] = 0; terrain[i] = TR.WATER; waterKind[i] = WK.SEA; }
+        v.size = c.sizes.length ? c.sizes[best] : 0;
+        const cells = []; for (let i = 0; i < N; i++) if (islet[i] === v.id) cells.push(i);
+        const dIn = distanceField(W, H, i => islet[i] !== v.id, 30); let deep = cells[0]; for (const i of cells) if (dIn[i] > dIn[deep]) deep = i;
+        const px = deep % W, py = (deep / W) | 0;
+        if (v.size >= 2400 && dIn[deep] >= 9) { const r = 2.2 + (v.size > 3800 ? 1.3 : 0.4);
+          for (let y = py - 5; y <= py + 5; y++) for (let x = px - 5; x <= px + 5; x++) { const i = y * W + x; if (islet[i] === v.id && Math.sqrt((x - px) * (x - px) + (y - py) * (y - py) * 1.44) <= r + 0.6 * (fbm01(nV, x * 0.5, y * 0.5, 2) - 0.5)) { terrain[i] = TR.WATER; waterKind[i] = WK.LAKE; islet[i] = 0; } }
+          v.pond = { tx: px, ty: py }; }
+        const ring = cells.filter(i => islet[i] === v.id && dIn[i] >= 6 && dIn[i] <= 9 && ((i % W) - px) * ((i % W) - px) + (((i / W) | 0) - py) * (((i / W) | 0) - py) >= 36);
+        const s = ring.length ? ring[Math.floor(rngV() * ring.length)] : deep; v.site = { tx: s % W, ty: (s / W) | 0 };
+      }
+      for (let k = vilaIsles.length - 1; k >= 0; k--) if (vilaIsles[k].size < 900) { const id = vilaIsles[k].id; for (let i = 0; i < N; i++) if (islet[i] === id) { islet[i] = 0; terrain[i] = TR.WATER; waterKind[i] = WK.SEA; } vilaIsles.splice(k, 1); }
+      vilaIsles.sort((a, b) => b.size - a.size); const maxV = Math.max(1, Math.floor(vilaIsles.length / 2)); let nv = 0;
+      vilaIsles.forEach((v, k) => { v.village = nv < maxV && (k === 0 || rngV() < 0.5); if (v.village) nv++; v.R = Math.round(v.R); });   // ao menos 1, no máximo metade
+    }
+  }
+
   // ---------- 7. areia (praias, margens de lagos e rios) e clareiras ----------
   await progress('Espalhando areia e clareiras...', 0.62);
   const dSea = distanceField(W, H, i => waterKind[i] === WK.SEA || waterKind[i] === WK.LAKE, 10);
@@ -731,7 +783,7 @@ async function buildAttempt(code, attempt, onProgress, yieldFn) {
     valid: true, score: 2, reasons: [],
     data: {
       W, H, terrain, biome, objects, pois, key, elev, waterKind, flow,
-      islet, islets: islets.map(q => ({ id: q.id, tx: q.tx, ty: q.ty, size: q.size, dMain: q.dMain })), deposits, canoe, paddle,
+      islet, islets: islets.map(q => ({ id: q.id, tx: q.tx, ty: q.ty, size: q.size, dMain: q.dMain })), deposits, canoe, paddle, vilaIsles,
       fords: fords.map(f => ({ tx: f.tx, ty: f.ty })),
       start: { tx: spawn.tx, ty: spawn.ty, x: sx, y: sy },
       reserved, stats: { landShare: landCount / N, objects: objects.length, trailTiles: trail.reduce((a, v) => a + v, 0), rivers: bigRivers, riverTiles, fordTiles, fords: fords.length, lakeTiles, mouths, decor: objects.filter(o => !OBJECT_DEFS[o.type].collider).length },

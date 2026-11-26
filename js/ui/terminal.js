@@ -55,7 +55,7 @@ export class Terminal {
           'limpar-inventario   reparar   durabilidade',
           'clima <aberto|nublado|chuva|trovoada|auto>   relampago <on|off>',
           'agua <on|off>   personagem <nawa|caua|helena|mateus>',
-          'roca   caca   pesca   casa (kits)   bancada (de bolso)   dormir   canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
+          'vila [n | ir n]   nivel <1..4>   roca   caca   pesca   casa (kits)   bancada (de bolso)   dormir   canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
           'status   curar   vida <n>   fome <n>   energia <n>   resistencia <n>   (fogueira: dar kit_fogueira)',
           'hora <hh[:mm]>   noite   manha   dia [+n]   estacao <chuvas|estiagem|seca|trovoadas|proxima>',
           'ir <inicio|canoa|ilhota|x y>   onde   limpar   fechar'].join('\n');
@@ -90,6 +90,14 @@ export class Terminal {
       case 'caca': s.give('adaga', 1); s.give('lanca_pedra', 1); s.give('arco', 1); s.give('flecha_osso', 10); s.ensureDur(); return '+ adaga, lança, arco e 10 flechas.';
       case 'pesca': s.give('vara', 1); s.give('anzol_osso', 3); s.give('minhoca', 10); s.give('arpao', 1); s.ensureDur(); return '+ vara, 3 anzóis, 10 minhocas e arpão.';
       case 'roca': s.give('enxada_pedra', 1); s.give('pa_madeira', 1); s.give('maniva', 6); s.give('semente_milho', 6); s.give('cabaca', 2); s.ensureDur(); return '+ enxada, pá, 6 manivas, 6 sementes e 2 cabaças.' + (s.oldFarm ? ` Roça abandonada em ${Math.round(s.oldFarm.x / 32)},${Math.round(s.oldFarm.y / 32)}.` : '');
+      case 'nivel': { const h = s.homes.find(x => /^(casa|oca|palafita)/.test(x.type) && !x.inHouse); if (!h) return 'não há casa.'; const want = parseInt(args[0], 10) || 2;
+        const pre = { quilombola: 'casa', indigena: 'oca', ribeirinho: 'palafita' }[s.houseStyle(h)]; const type = want === 1 ? { casa: 'casa', oca: 'oca_4', palafita: 'palafita_4' }[pre] : `${pre}_n${want}`;
+        s.resetHouseScenes(h); s.changeHomeType(h, type); return `casa no nível ${want}.`; }
+      case 'vila': { const L = s.world.vilaIsles || []; if (!L.length) return 'este mundo não tem ilhas de vila (só no 400x400).';
+        const n = parseInt(args[0], 10);
+        if (args[0] === 'ir') { const k = parseInt(args[1], 10) || 0, v = L[k]; if (!v) return 'não existe.'; if (s.cave) s.leaveCave(true); s.player.x = v.site.tx * 32 + 16; s.player.y = (v.site.ty + 5) * 32; s.camera.snapTo(...s.camTarget(), s.renderer.width, s.renderer.height); return `na ilha ${k}.`; }
+        if (Number.isInteger(n)) { const v = L[n]; if (!v) return 'não existe.'; if (s.villages.some(x => x.isle === v.id)) return 'já tem vila.'; const vl = s.foundVillage(v.id); return vl ? `fundou: ${vl.name} (${vl.houses.length} casas).` : 'não coube.'; }
+        return L.map((v, k) => { const vl = s.villages.find(x => x.isle === v.id); return `${k}: ilha ${v.size} tiles em ${v.site.tx},${v.site.ty}${v.pond ? ', lagoa' : ''}${vl ? ` — ${vl.name}, ${vl.houses.length} casas, ~${vl.residents} moradores` : ' — virgem'}`; }).join('\n'); }
       case 'canoa': {                                                     // C1: testar o desgaste
         const c = s.canoe, pct = () => `${Math.round(s.canoeFrac * 100)}%`;
         if (!args.length) return `${c.broken && !s.canoeObj && s.boat.state === 'none' ? 'canoa partida' : c.built ? 'canoa nova' : 'canoa achada'}: ${pct()} (${Math.round(c.dur)} de ${c.max} px), consertos ${c.repairs}`;

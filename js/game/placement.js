@@ -11,7 +11,7 @@ import { ITEMS } from '../data/items.js';
 export class PlacementMixin {
   // usar o item selecionado na mochila: comer ou colocar no mundo
   useSelected() {
-    const cur = this.inventory.entries(this.items)[this.inventory.sel]; if (!cur) return false;
+    const cur = this.inventory.listFor(this.items)[this.inventory.sel]; if (!cur) return false;   // lista da categoria atual
     if (ITEMS[cur[0]].place) return this.startPlacing(cur[0]);
     if (ITEMS[cur[0]].use === 'light') return this.lightTorch();
     if (ITEMS[cur[0]].use === 'sharpen') return this.sharpen();

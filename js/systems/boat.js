@@ -106,7 +106,11 @@ export class Boat {
       ctx.drawImage(img, fr * cw, this.dir * ch, cw, ch, gx - cw / 2, gy - ch / 2 - 6, cw, ch);
     } else {
       const im = (assets.canoeEmptyWorn && assets.canoeEmptyWorn[this.wearStage | 0]) || assets.canoe, vert = DIRS[this.dir] === 'N' || DIRS[this.dir] === 'S';
-      if (vert) { ctx.save(); ctx.translate(gx, gy); ctx.rotate(Math.PI / 2); ctx.drawImage(im, -im.width / 2, -im.height / 2); ctx.restore(); }
+      if (vert) {                                                       // canoa ancorada de proa para cima/baixo: o desenho é visto de LADO, então girar 90° deixa o casco "em pé".
+        // Aqui o casco é desenhado deitado e encurtado (visto em perspectiva pela proa), com a sombra na água; um sprite próprio de frente/trás fica no cronograma.
+        const w = im.width, h = im.height, sx = 0.52, sy = 1.0;
+        ctx.save(); ctx.translate(gx, gy + 2); ctx.fillStyle = 'rgba(0,0,0,0.16)'; ctx.beginPath(); ctx.ellipse(0, 4, w * sx * 0.5, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.scale(sx, sy); ctx.drawImage(im, -w / 2, -h / 2 - 2); ctx.restore(); }
       else ctx.drawImage(im, gx - im.width / 2, gy - im.height / 2);
     }
   }

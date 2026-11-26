@@ -14,7 +14,7 @@ ok('9 habilidades (com Caça e Pesca), nível 0..10 pela XP', SKILL_ORDER.length
 const x0 = S.xp.coleta; const grass = G.objects.find(o => o.type === 'plant_grass' && G.footFree(o.x, o.y + 12));
 P.x = grass.x; P.y = grass.y + 12; P.facing = 'up'; step(4); tap('KeyE'); step(2);
 ok('colher capim dá XP de coleta', S.xp.coleta > x0, `${x0} -> ${S.xp.coleta}`);
-G.terminal.run('dar ferramentas'); const tree = G.objects.find(o => o.type === 'tree_young' && G.footFree(o.x, o.y + 16)) || G.objects.find(o => o.type === 'tree_tall' && G.footFree(o.x, o.y + 16));
+G.terminal.run('dar ferramentas'); const tree = G.objects.find(o => o.type === 'tree_young' && G.footFree(o.x, o.y + 16)) || G.objects.find(o => o.type === 'tree_mature' && G.footFree(o.x, o.y + 16));   // (árvore alta com facão abre o menu da resina)
 P.x = tree.x; P.y = tree.y + 16; P.facing = 'up'; step(4); for (let i = 0; i < 4; i++) { tap('KeyE'); step(25); } G.dialog.close(); step(1);
 ok('derrubar árvore: XP de corte e marco "primeira árvore" no Diário', S.xp.corte >= 15 && S.journal.includes('arvore'), `${S.xp.corte} ${S.journal}`);
 // ---- subir de nível e bônus ----

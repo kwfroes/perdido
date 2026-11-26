@@ -101,7 +101,7 @@ const ri = RECIPES.findIndex(r => r.item === 'remo'), ci = RECIPES.findIndex(r =
 ok('receitas: remo (2 madeiras, machado) e canoa nova (10 madeiras + 4 cordas, machado de ferro)', ri >= 0 && RECIPES[ri].tool === 'machado_pedra' && RECIPES[ci].needs.madeira === 10 && RECIPES[ci].needs.corda === 4 && RECIPES[ci].tool === 'machado_ferro');
 for (const k of Object.keys(G.items)) delete G.items[k]; Object.assign(G.items, { madeira: 12, corda: 4, machado_pedra: 1, machado_ferro: 1 }); G.ensureDur();
 inv.open = true; inv.tab = 'craft'; inv.sel = ri; step(1); tap('KeyE'); step(1); ok('fez o remo', G.items.remo === 1 && G.items.madeira === 10);
-inv.sel = RECIPES.length - 1; step(1); ok(`receitas rolam (${RECIPES.length} receitas, ${inv.rowsVis} à vista): a última selecionada fica à vista`, inv.rowsVis < RECIPES.length && inv.scroll > 0 && RECIPES.length - 1 < inv.scroll + inv.rowsVis && !!inv.hits.up, `${inv.scroll} ${inv.rowsVis}`);
+inv.sel = RECIPES.length - 1; step(1); ok(`a última das ${RECIPES.length} receitas fica à vista na grade (linha ${Math.floor(inv.sel / inv.cols)}, rolagem ${inv.scroll}, ${inv.rowsVis} linhas)`, Math.floor(inv.sel / inv.cols) >= inv.scroll && Math.floor(inv.sel / inv.cols) < inv.scroll + inv.rowsVis && inv.hits.cells.some(c => c.i === inv.sel));
 await shot('canoa_receitas_rolagem'); inv.sel = ci; step(1);
 await shot('canoa_receita');
 tap('KeyE'); step(1); ok('fez o kit da canoa nova', G.items.kit_canoa === 1 && !G.items.madeira);

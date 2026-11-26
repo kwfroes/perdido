@@ -45,7 +45,7 @@ export class WorldObject {
   get sortY() { return this.y; }
   get label() { if (this.actionLabel) return this.actionLabel;                    // definido pela partida (colher, pegar, bater)
     return this.viewDef.label + (this.fruit && this.fruitN > 0 ? ` (${FRUIT_STATE_LABEL[this.fruit]})` : '') + (this.flowerN ? ' (florida)' : ''); }
-  get text() { if (this.flowerN) return 'Os galhos ainda estão nus, mas cachinhos de flores rosadas já se abrem. Logo virão os frutos.';
+  get text() { if (this.textOverride) return this.textOverride; if (this.flowerN) return 'Os galhos ainda estão nus, mas cachinhos de flores rosadas já se abrem. Logo virão os frutos.';
     return (this.fruit && this.fruitN > 0 && FRUIT_TEXT[this.viewType] && FRUIT_TEXT[this.viewType][this.fruit]) || this.viewDef.text; }
   // retângulos (canto superior esquerdo + tamanho, no espaço do mundo) em que cada fruta é desenhada
   fruitRects() {

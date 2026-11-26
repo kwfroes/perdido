@@ -1,14 +1,29 @@
 import { ITEMS, ITEM_ORDER, RECIPES, DURABILITY } from '../data/items.js';
 import { SKILLS, SKILL_ORDER, XP_AT, MILESTONES, XP_RULES } from '../systems/skills.js';
 import { LEGENDS, TIERS } from '../systems/legends.js';
-const LG_KEYS = Object.keys(LEGENDS), LG_TIERS = ['simples', 'curada', 'ritual'], LG_RH = 26;   // L1: aba Lendas
-const SK_RH = 17;   // S3: altura de cada linha da aba Habilidades
+const LG_KEYS = Object.keys(LEGENDS), LG_TIERS = ['simples', 'curada', 'ritual'], MS_KEYS = Object.keys(MILESTONES);
 
-// Inventário (tecla I): duas abas.
-//   Itens:    grade com ícone e quantidade; o item selecionado mostra nome e descrição.
-//   Fabricar: receitas (ferramentas); E/Enter fabrica a selecionada se houver material.
-// Tab (ou Q) troca de aba; setas/WASD movem a seleção; I ou Esc fecham. Pausa o tempo.
-const COLS = 5, CELL = 30, PAD = 8, W = 200, RH = 25;   // RH = altura de cada receita
+// Mochila (tecla I) — Interface 1: três colunas.
+//   esquerda: CATEGORIAS (Q troca)  |  meio: GRADE de ícones com ROLAGEM (a janela nunca cresce na vertical)  |  direita: CARD do item selecionado
+// Abas (Tab): Itens, Fabricar, Lendas, Hab. (ou Mochila e Baú quando há um baú aberto). Em telas estreitas as categorias viram uma fileira de chips no topo do meio.
+// Setas/WASD movem a seleção; E age (comer, colocar, fabricar, preparar...); I ou Esc fecham. Pausa o tempo (feito em session.js).
+const CELL = 30, PAD = 6, SB = 5;   // célula da grade, margem, largura da barra de rolagem
+
+// ---------- categorias ----------
+export const ITEM_CATS = ['Tudo', 'Ferramentas', 'Comida', 'Montar', 'Materiais'];
+export const RECIPE_CATS = ['Tudo', 'Básicos', 'Ferramentas', 'Caça e pesca', 'Roça', 'Montar'];
+const SHORT = { Ferramentas: 'Ferram.', Materiais: 'Mat.', 'Caça e pesca': 'Caça', Básicos: 'Básico', Habilidades: 'Habil.' };   // chips das telas estreitas
+const EQUIP = new Set(['lanterna', 'remo', 'adaga']);
+const HUNT = new Set(['lanca_pedra', 'lanca_ferro', 'arco', 'flecha_osso', 'flecha_ferro', 'vara', 'anzol_osso', 'anzol_ferro', 'arpao', 'pote_agua']);
+const FARM = new Set(['enxada_pedra', 'enxada_ferro', 'pa_madeira', 'pa_ferro', 'cabaca']);
+export function itemCat(k) {
+  const it = ITEMS[k]; if (it.place) return 'Montar'; if (DURABILITY[k] || EQUIP.has(k)) return 'Ferramentas';
+  if (it.food || it.use === 'heal') return 'Comida'; return 'Materiais';
+}
+export function recipeCat(item) {
+  if (ITEMS[item].place) return 'Montar'; if (HUNT.has(item)) return 'Caça e pesca'; if (FARM.has(item)) return 'Roça';
+  if (DURABILITY[item] || EQUIP.has(item)) return 'Ferramentas'; return 'Básicos';
+}
 
 // quebra o texto em linhas que cabem em maxW (mede com a fonte atual do ctx)
 export function wrapText(ctx, text, maxW) {
@@ -35,37 +50,54 @@ export function itemTag(k, dur = {}) {
 }
 
 export class Inventory {
-  constructor() { this.open = false; this.sel = 0; this.tab = 'items'; this.msg = null; this.touch = false; this.hits = null; this.scroll = 0; this.chest = null; this.nearBench = false; }
+  constructor() { this.open = false; this.sel = 0; this._tab = 'items'; this.cat = 0; this.msg = null; this.touch = false; this.hits = null; this.scroll = 0; this.chest = null; this.nearBench = false; this.ltier = 0; this.cols = 8; this.rowsVis = 6; }
+  // trocar de aba zera categoria e rolagem
+  get tab() { return this._tab; }
+  set tab(v) { if (v !== this._tab) { this._tab = v; this.cat = 0; this.scroll = 0; } }
   // 5B: baú aberto -> abas "Mochila" e "Baú" (E guarda / pega o item selecionado)
-  openChest(c) { this.open = true; this.chest = c; this.tab = 'chest'; this.sel = 0; this.msg = null; }
+  openChest(c) { this.open = true; this.chest = c; this.tab = 'chest'; this.cat = 0; this.sel = 0; this.scroll = 0; this.msg = null; }
   get grid() { return this.tab === 'items' || this.tab === 'chest'; }
-  listFor(items) { return this.entries(this.tab === 'chest' && this.chest ? this.chest.items : items); }
+  catNames() { return this.grid ? ITEM_CATS : this.tab === 'craft' ? RECIPE_CATS : this.tab === 'legends' ? ['Todas', 'Ativas'] : ['Habilidades', 'Diário']; }
+  // itens da aba atual, já filtrados pela categoria
+  listFor(items) {
+    let list = this.entries(this.tab === 'chest' && this.chest ? this.chest.items : items);
+    if (this.grid && this.cat > 0) { const n = ITEM_CATS[this.cat]; list = list.filter(([k]) => itemCat(k) === n); }
+    return list;
+  }
+  // receitas visíveis (índices em RECIPES) pela categoria
+  recipeIdx() { const n = RECIPE_CATS[this.cat]; return RECIPES.map((r, i) => i).filter(i => this.cat === 0 || recipeCat(RECIPES[i].item) === n); }
+  legendKeys() { const g = this.game, now = g ? g.clock.minutes : 0; return this.cat === 1 && g ? LG_KEYS.filter(k => g.legends.active[k] && g.legends.active[k].until > now) : LG_KEYS; }
+  legendKey() { return this.legendKeys()[this.sel] || LG_KEYS[0]; }
+  listLen(items) { return this.grid ? this.listFor(items).length : this.tab === 'craft' ? this.recipeIdx().length : this.tab === 'legends' ? this.legendKeys().length : this.cat === 1 ? MS_KEYS.length : SKILL_ORDER.length; }
   // toque: devolve o que está sob (x, y) em coordenadas lógicas, a partir das áreas gravadas no último draw()
-  //   { type: 'tab', tab } | { type: 'slot', i } | { type: 'recipe', i } | { type: 'craft' } | { type: 'close' } | { type: 'outside' } | null (dentro, sem alvo)
+  //   { type: 'tab', tab } | { type: 'cat', i } | { type: 'slot'|'recipe'|'legendRow'|'skillRow', i } | { type: 'craft'|'eat'|'legend' } | { type: 'ltier', i } | { type: 'scroll', d } | { type: 'close' } | { type: 'outside' } | null
   hitTest(x, y) {
     const h = this.hits; if (!h) return null; const inR = (r) => r && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
     if (inR(h.close)) return { type: 'close' };
     if (!inR(h.box)) return { type: 'outside' };
     for (const t of h.tabs) if (inR(t)) return { type: 'tab', tab: t.k };
+    for (const c of h.cats || []) if (inR(c)) return { type: 'cat', i: c.i };
     if (inR(h.up)) return { type: 'scroll', d: -1 };
     if (inR(h.down)) return { type: 'scroll', d: 1 };
     if (inR(h.craft)) return { type: 'craft' };
     if (inR(h.eat)) return { type: 'eat' };
     if (inR(h.legend)) return { type: 'legend' };
     for (const c of h.ltiers || []) if (inR(c)) return { type: 'ltier', i: c.i };
-    for (const c of h.cells) if (inR(c)) return { type: h.kind === 'craft' ? 'recipe' : h.kind === 'legends' ? 'legendRow' : 'slot', i: c.i };
+    for (const c of h.cells) if (inR(c)) return { type: h.kind === 'craft' ? 'recipe' : h.kind === 'legends' ? 'legendRow' : h.kind === 'skills' ? 'skillRow' : 'slot', i: c.i };
     return null;
   }
-  toggle() { this.open = !this.open; this.sel = 0; this.tab = 'items'; this.msg = null; this.chest = null; }
-  switchTab() { this.tab = this.chest ? (this.tab === 'items' ? 'chest' : 'items') : ({ items: 'craft', craft: 'legends', legends: 'skills', skills: 'items' })[this.tab] || 'items'; this.sel = 0; this.msg = null; this.scroll = 0; }
-  scrollBy(d) { this.scroll = Math.max(0, Math.min(RECIPES.length - (this.rowsVis || RECIPES.length), this.scroll + d)); }
+  toggle() { this.open = !this.open; this.sel = 0; this.tab = 'items'; this.cat = 0; this.scroll = 0; this.msg = null; this.chest = null; }
+  switchTab() { this.tab = this.chest ? (this.tab === 'items' ? 'chest' : 'items') : ({ items: 'craft', craft: 'legends', legends: 'skills', skills: 'items' })[this.tab] || 'items'; this.cat = 0; this.sel = 0; this.msg = null; this.scroll = 0; }
+  switchCat(d = 1) { const n = this.catNames().length; this.setCat(((this.cat + d) % n + n) % n); }
+  setCat(i) { this.cat = i; this.sel = 0; this.scroll = 0; this.msg = null; }
+  scrollBy(d) { this.scroll = Math.max(0, this.scroll + d); }   // limitado no desenho (depende do tamanho da janela)
   entries(items) { return ITEM_ORDER.filter(k => items[k] > 0).map(k => [k, items[k]]); }
-  count() { return this.tab === 'items' ? null : RECIPES.length; }
+  count() { return this.tab === 'items' ? null : this.tab === 'craft' ? this.recipeIdx().length : this.listLen({}); }
   move(dx, dy, n) {
-    if (this.tab === 'skills') return;
-    if (this.tab === 'legends') { if (dy) this.sel = Math.max(0, Math.min(LG_KEYS.length - 1, this.sel + dy)); if (dx) this.ltier = Math.max(0, Math.min(2, (this.ltier || 0) + dx)); this.msg = null; return; }
-    if (this.tab === 'craft') { this.sel = Math.max(0, Math.min(RECIPES.length - 1, this.sel + dy + dx)); return; }
-    if (!n) return; this.sel = Math.max(0, Math.min(n - 1, this.sel + dx + dy * COLS));
+    if (this.tab === 'skills') { const len = this.cat === 1 ? MS_KEYS.length : SKILL_ORDER.length; this.sel = Math.max(0, Math.min(len - 1, this.sel + dy)); return; }
+    if (this.tab === 'legends') { if (dy) this.sel = Math.max(0, Math.min(this.legendKeys().length - 1, this.sel + dy)); if (dx) this.ltier = Math.max(0, Math.min(2, (this.ltier || 0) + dx)); this.msg = null; return; }
+    if (this.tab === 'craft') { const len = this.recipeIdx().length; this.sel = Math.max(0, Math.min(len - 1, this.sel + dx + dy * this.cols)); return; }
+    if (!n) return; this.sel = Math.max(0, Math.min(n - 1, this.sel + dx + dy * this.cols));
   }
   // pode fabricar? { ok, why }
   canCraft(r, items) {
@@ -78,155 +110,184 @@ export class Inventory {
   }
   // fabrica a receita selecionada; devolve a mensagem
   craft(items) {
-    const r = RECIPES[this.sel]; if (!r) return null; const c = this.canCraft(r, items);
+    const r = RECIPES[this.recipeIdx()[this.sel]]; if (!r) return null; const c = this.canCraft(r, items);
     if (!c.ok) { this.msg = c.why === 'Você já tem' ? `Você já tem ${ITEMS[r.item].label.toLowerCase()}.` : c.why + '.'; return null; }
     for (const [k, n] of Object.entries(r.needs)) { items[k] -= n; if (!items[k]) delete items[k]; }
     const out = r.out || 1; items[r.item] = (items[r.item] || 0) + out; this.msg = `Você fez: ${ITEMS[r.item].label.toLowerCase()}${out > 1 ? ` x${out}` : ''}!`; return r.item;
   }
 
+  // ---------- desenho ----------
+  layout(vw, vh) {
+    // a janela fica abaixo dos indicadores de vida/fome e das etiquetas (canto superior esquerdo, até y≈54) e centrada no resto
+    const bw = Math.min(vw - 8, 600), bh = Math.min(vh - 62, 332), x = Math.round((vw - bw) / 2), y = Math.max(56, Math.round((vh - bh) / 2)), wide = bw >= 470;
+    const lw = wide ? 86 : 0, rw = wide ? Math.min(190, Math.round(bw * 0.35)) : Math.round(bw * 0.42), chipH = wide ? 0 : 15;
+    const top = y + 24, bot = y + bh - (this.touch ? 4 : 14);
+    return { x, y, bw, bh, wide, lw, rw, chipH, midX: x + lw, midW: bw - lw - rw, rx: x + bw - rw, top, bot, gx: x + lw + PAD, gy: top + chipH + 3, gw: bw - lw - rw - PAD * 2 - SB, gh: bot - (top + chipH + 3) };
+  }
   draw(ctx, vw, vh, items, icons, dur = {}) {
-    if (!this.open) return; this.dur = dur;
-    const maxW = W - PAD * 2;
-    ctx.font = '9px monospace';
-    // altura: calculada antes de desenhar, para o texto nunca sair da janela
-    let body, lines;
-    if (this.grid) {
-      const list = this.listFor(items), rows = Math.max(2, Math.ceil(list.length / COLS));
-      if (this.sel >= list.length) this.sel = Math.max(0, list.length - 1);
-      const cur = list[this.sel], fd = cur && ITEMS[cur[0]].food;
-      const txt = cur ? ITEMS[cur[0]].text + (DURABILITY[cur[0]] ? ` Durabilidade: ${Math.max(0, dur[cur[0]] ?? DURABILITY[cur[0]])}/${DURABILITY[cur[0]]}.` : '')
-        + (fd ? ` Alimenta: +${fd.hunger} fome${fd.energy ? `, +${fd.energy} energia` : ''}${fd.hp ? `, +${fd.hp} vida` : ''}.${this.touch ? '' : ' E: comer.'}` : '')
-        + (ITEMS[cur[0]].place ? (this.touch ? ' Toque em Colocar e escolha o lugar.' : ' E: colocar no mundo.') : '') + (ITEMS[cur[0]].use && !this.touch ? ' E: usar.' : '') : 'Vazio. Colha frutas, pegue pedras e madeira, bata em rochas e minérios.';
-      const ctxt = this.chest ? (this.tab === 'chest' ? (cur ? `${ITEMS[cur[0]].text} ${this.touch ? 'Toque em Pegar.' : 'E: pegar tudo.'}` : 'O baú está vazio. Na aba Mochila, E guarda o item selecionado.')
-        : (cur ? `${ITEMS[cur[0]].label}: ${this.touch ? 'toque em Guardar.' : 'E guarda no baú (até 50 de cada, 20 tipos).'}` : 'Mochila vazia.')) : null;
-      lines = wrapText(ctx, ctxt || txt, maxW); body = { list, rows, cur, tag: cur ? itemTag(cur[0], dur) : null };
-    } else if (this.tab === 'legends') {
-      const g = this.game, k = LG_KEYS[this.sel], tier = LG_TIERS[this.ltier || 0], L = LEGENDS[k], T = TIERS[tier];
-      const need = g ? Object.entries(g.legendNeeds(k, tier)).map(([it, q]) => `${q} ${it === L.animal ? ITEMS[it].label.toLowerCase() : ITEMS[it].label.toLowerCase()}`).join(' + ') : '';
-      const c = g ? g.legendCan(k, tier) : { ok: false, why: '' };
-      lines = wrapText(ctx, this.msg || `${L.label} ${T.label} (${tier === 'ritual' ? 'para sempre, metade da força' : `${T.days} dia${T.days > 1 ? 's' : ''}`}): ${L.effect}. Leva ${need}. ${c.ok ? (this.touch ? 'Toque em Preparar.' : 'E: preparar.') : c.why} ${this.touch ? '' : '←→ escolhe simples/curada/ritual.'}`, maxW);
-    } else if (this.tab === 'skills') {
-      const sk = this.skills, jn = sk ? sk.journal.length : 0, pend = sk ? Object.values(sk.pending).reduce((a, b) => a + b, 0) : 0;
-      lines = wrapText(ctx, `Diário: ${jn} de ${Object.keys(MILESTONES).length} marcos. A XP também fortalece suas qualidades, mas só fica de vez quando você dorme${pend ? ` (${Math.round(pend)} XP esperando)` : ''}. Morrer guarda 10% da XP na trouxa.`, maxW);
-    } else {
-      lines = wrapText(ctx, this.msg || (this.touch ? 'Toque numa receita e em Fabricar.' : 'Tab: voltar aos itens. E: fabricar.'), maxW);
-    }
-    const eatBtn = this.touch && this.grid && body.cur && (this.chest || ITEMS[body.cur[0]].food || ITEMS[body.cur[0]].place || ITEMS[body.cur[0]].use);
-    const btnH = this.touch && (this.tab === 'craft' || this.tab === 'legends' || eatBtn) ? 20 : 0;   // botão [Fabricar] / [Comer] (só no toque)
-    // receitas: só as que cabem na tela; o resto rola (setas / ▲▼ no toque); a seleção fica sempre à vista
-    if (this.tab === 'craft') {
-      this.rowsVis = Math.max(3, Math.min(RECIPES.length, Math.floor((vh - 80 - lines.length * 10 - (this.touch ? 20 : 0)) / RH)));
-      if (this.sel < this.scroll) this.scroll = this.sel; if (this.sel >= this.scroll + this.rowsVis) this.scroll = this.sel - this.rowsVis + 1;
-      this.scroll = Math.max(0, Math.min(RECIPES.length - this.rowsVis, this.scroll));
-    }
-    const gridH = this.grid ? body.rows * CELL : this.tab === 'skills' ? SKILL_ORDER.length * SK_RH : this.tab === 'legends' ? LG_KEYS.length * LG_RH + 14 : this.rowsVis * RH;
-    const h = 20 + 12 + gridH + 6 + (this.grid && body.cur ? 22 : 0) + lines.length * 10 + PAD + btnH;
-    const x = Math.round((vw - W) / 2), y = Math.round((vh - h) / 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, vw, vh);
-    ctx.fillStyle = 'rgba(24,18,12,0.96)'; ctx.fillRect(x, y, W, h);
-    ctx.strokeStyle = '#d9a066'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, W - 1, h - 1);
+    if (!this.open) return; this.dur = dur; const L = this.layout(vw, vh), { x, y, bw, bh } = L;
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(0, 0, vw, vh);
+    ctx.fillStyle = 'rgba(24,18,12,0.97)'; ctx.fillRect(x, y, bw, bh);
+    ctx.strokeStyle = '#d9a066'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, bh - 1);
+    const hits = this.hits = { kind: this.tab, box: { x, y, w: bw, h: bh }, tabs: [], cats: [], cells: [], craft: null, eat: null, legend: null, ltiers: [], close: null, up: null, down: null };
     // abas
     ctx.font = 'bold 10px monospace';
-    const hits = this.hits = { kind: this.tab, box: { x, y, w: W, h }, tabs: [], cells: [], craft: null, eat: null, legend: null, ltiers: [], close: null, up: null, down: null };
-    const tabs = this.chest ? [['items', 'Mochila'], ['chest', `Baú ${Object.keys(this.chest.items).length}/20`]] : [['items', 'Itens'], ['craft', 'Fabricar'], ['legends', 'Lendas'], ['skills', 'Hab.']]; let tx = x + PAD;
-    for (const [k, label] of tabs) { const lw = ctx.measureText(label).width; ctx.fillStyle = this.tab === k ? '#d9a066' : '#7d6b55'; ctx.fillText(label, tx, y + 13); if (this.tab === k) ctx.fillRect(tx, y + 15, lw, 1);
-      hits.tabs.push({ k, x: tx - 4, y, w: lw + 8, h: 22 }); tx += lw + 12; }
-    if (this.touch) {                                                    // [X] grande no canto (no teclado: a dica de teclas)
-      const bx = x + W - 22, by = y + 2; ctx.strokeStyle = '#d9a066'; ctx.strokeRect(bx + 0.5, by + 0.5, 19, 17);
-      ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText('X', bx + 7, by + 13); hits.close = { x: bx - 6, y: by - 4, w: 32, h: 26 };
-    } else if (tabs.length < 3) { ctx.font = '8px monospace'; ctx.fillStyle = '#9c8a74'; const hint = 'Tab | I/Esc'; ctx.fillText(hint, x + W - PAD - ctx.measureText(hint).width, y + 13); }
-    const gy = y + 24;
-    if (this.grid) this.drawItems(ctx, x, gy, body, icons);
-    else if (this.tab === 'skills') this.drawSkills(ctx, x, gy);
-    else if (this.tab === 'legends') this.drawLegends(ctx, x, gy, icons);
-    else this.drawCraft(ctx, x, gy, items, icons);
-    // texto
-    let ty = gy + gridH + 12;
-    ctx.font = '9px monospace';
-    if (this.grid && body.cur) { ctx.fillStyle = '#f3e9d8'; ctx.fillText(ITEMS[body.cur[0]].label, x + PAD, ty); ty += 11;
-      ctx.font = 'bold 7px monospace'; ctx.fillStyle = body.tag.color; ctx.fillText(body.tag.text, x + PAD, ty); ty += 11; ctx.font = '9px monospace'; }
-    ctx.fillStyle = this.tab === 'craft' && this.msg && /fez/.test(this.msg) ? '#a8e08a' : '#c8bfae';
-    for (const l of lines) { ctx.fillText(l, x + PAD, ty); ty += 10; }
-    if (btnH) {
-      const leg = this.tab === 'legends', eat = this.grid, r = RECIPES[this.sel], plc = eat && body.cur && ITEMS[body.cur[0]].place, usa = eat && body.cur && ITEMS[body.cur[0]].use;
-      const can = leg ? !!(this.game && this.game.legendCan(LG_KEYS[this.sel], LG_TIERS[this.ltier || 0]).ok) : this.chest || plc || usa ? true : eat ? !(this.vitals && this.vitals.hunger >= 98) : r && this.canCraft(r, items).ok, bw = 70, bx = x + W - PAD - bw, by = y + h - PAD - 16;
-      ctx.fillStyle = can ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(bx, by, bw, 16);
-      ctx.font = 'bold 9px monospace'; ctx.fillStyle = can ? '#1a1410' : '#8f8170'; const t = leg ? 'Preparar' : this.chest ? (this.tab === 'chest' ? 'Pegar' : 'Guardar') : plc ? 'Colocar' : usa ? 'Usar' : eat ? 'Comer' : 'Fabricar'; ctx.fillText(t, bx + (bw - ctx.measureText(t).width) / 2, by + 11);
-      hits[leg ? 'legend' : eat ? 'eat' : 'craft'] = { x: bx - 4, y: by - 4, w: bw + 8, h: 24 };
-    }
+    const tabs = this.chest ? [['items', 'Mochila'], ['chest', `Baú ${Object.keys(this.chest.items).length}/20`]] : [['items', 'Itens'], ['craft', 'Fabricar'], ['legends', 'Lendas'], ['skills', 'Hab.']]; let tx = x + PAD + 2;
+    for (const [k, label] of tabs) { const lw = ctx.measureText(label).width; ctx.fillStyle = this.tab === k ? '#d9a066' : '#7d6b55'; ctx.fillText(label, tx, y + 14); if (this.tab === k) ctx.fillRect(tx, y + 17, lw, 1);
+      hits.tabs.push({ k, x: tx - 4, y, w: lw + 8, h: 24 }); tx += lw + 14; }
+    if (this.touch) { const bx = x + bw - 24, by = y + 3; ctx.strokeStyle = '#d9a066'; ctx.strokeRect(bx + 0.5, by + 0.5, 19, 17); ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText('X', bx + 7, by + 13); hits.close = { x: bx - 6, y: by - 4, w: 32, h: 26 }; }
+    else { ctx.font = '8px monospace'; ctx.fillStyle = '#9c8a74'; const hint = 'Tab aba · Q categoria · setas movem · E age · I fecha'; ctx.fillText(hint, x + PAD + 2, y + bh - 4); }
+    ctx.fillStyle = 'rgba(217,160,102,0.25)'; ctx.fillRect(x + 1, y + 23, bw - 2, 1);
+    // clamp da seleção
+    const n = this.listLen(items); if (this.sel >= n) this.sel = Math.max(0, n - 1);
+    this.drawCats(ctx, L);
+    // colunas: meio e card
+    ctx.save(); ctx.beginPath(); ctx.rect(L.midX, L.top, L.midW, L.bot - L.top + 1); ctx.clip();
+    if (this.grid) this.drawGrid(ctx, L, items, icons, this.listFor(items), false);
+    else if (this.tab === 'craft') this.drawGrid(ctx, L, items, icons, this.recipeIdx(), true);
+    else if (this.tab === 'legends') this.drawLegendRows(ctx, L, icons);
+    else this.drawSkillRows(ctx, L);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(L.rx, L.top, L.rw - 1, L.bot - L.top + 1); ctx.fillStyle = 'rgba(217,160,102,0.2)'; ctx.fillRect(L.rx - 1, L.top, 1, L.bot - L.top + 1);
+    ctx.save(); ctx.beginPath(); ctx.rect(L.rx, L.top, L.rw, L.bot - L.top + 1); ctx.clip(); this.drawCard(ctx, L, items, icons); ctx.restore();
   }
   drawIcon(ctx, im, cx, cy, size) {
     if (!im) return; const m = Math.max(im.width, im.height), s = m > size ? size / m : Math.max(1, Math.floor(size / m));
     const iw = Math.round(im.width * s), ih = Math.round(im.height * s); ctx.drawImage(im, Math.round(cx - iw / 2), Math.round(cy - ih / 2), iw, ih);
   }
-  drawItems(ctx, x, gy, { list, rows }, icons) {
-    for (let i = 0; i < COLS * rows; i++) {
-      const cx = x + PAD + (i % COLS) * CELL, cy = gy + Math.floor(i / COLS) * CELL;
-      if (list[i] && this.hits) this.hits.cells.push({ i, x: cx, y: cy, w: CELL, h: CELL });
-      ctx.fillStyle = i === this.sel && list[i] ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(cx + 1, cy + 1, CELL - 2, CELL - 2);
-      if (!list[i]) continue;
-      const [k, n] = list[i];
-      if (DURABILITY[k]) {                                                // barra de durabilidade embaixo do ícone
-        const f = Math.max(0, Math.min(1, ((this.dur || {})[k] ?? DURABILITY[k]) / DURABILITY[k])), bw = CELL - 8;
-        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(cx + 4, cy + CELL - 5, bw, 3);
-        ctx.fillStyle = f > 0.5 ? '#7fd36a' : f > 0.2 ? '#e8c84a' : '#e05a4a'; ctx.fillRect(cx + 4, cy + CELL - 5, Math.max(1, Math.round(bw * f)), 3);
-      } this.drawIcon(ctx, icons[k], cx + CELL / 2, cy + CELL / 2 - 1, 22);
-      if (DURABILITY[k] && n === 1) continue;                            // ferramenta: a barra substitui o número
-      ctx.font = 'bold 8px monospace'; const t = String(n), tw = ctx.measureText(t).width;
-      ctx.fillStyle = '#000'; ctx.fillText(t, cx + CELL - tw - 2, cy + CELL - 2); ctx.fillStyle = '#fff'; ctx.fillText(t, cx + CELL - tw - 3, cy + CELL - 3);
+  // categorias: coluna à esquerda (telas largas) ou fileira de chips no topo do meio (estreitas)
+  drawCats(ctx, L) {
+    const names = this.catNames(), hits = this.hits; ctx.font = 'bold 8px monospace';
+    if (L.wide) {
+      ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(L.x + 1, L.top, L.lw - 1, L.bot - L.top + 1);
+      names.forEach((nm, i) => { const cy = L.top + 4 + i * 20, on = i === this.cat;
+        ctx.fillStyle = on ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.05)'; ctx.fillRect(L.x + 4, cy, L.lw - 9, 18);
+        ctx.fillStyle = on ? '#1a1410' : '#c8bfae'; ctx.fillText(nm, L.x + 9, cy + 12); hits.cats.push({ i, x: L.x + 2, y: cy - 1, w: L.lw - 5, h: 20 }); });
+    } else {
+      let cx = L.midX + PAD; names.forEach((nm0, i) => { const nm = SHORT[nm0] || nm0, w = ctx.measureText(nm).width + 8, on = i === this.cat; if (cx + w > L.midX + L.midW - 2) return;
+        ctx.fillStyle = on ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.07)'; ctx.fillRect(cx, L.top + 2, w, 13); ctx.fillStyle = on ? '#1a1410' : '#c8bfae'; ctx.fillText(nm, cx + 4, L.top + 12);
+        hits.cats.push({ i, x: cx - 1, y: L.top, w: w + 2, h: 17 }); cx += w + 3; });
     }
   }
-  // S3: barra de XP de cada habilidade (parte apagada = XP guardada em trouxas ainda não recuperadas)
-  // L1: lista das lendas (ícone do animal, nome, efeito, se está ativa) + escolha da duração
-  drawLegends(ctx, x, gy, icons) {
-    const g = this.game, now = g ? g.clock.minutes : 0, act = g ? g.legends.active : {}, T = this.ltier || 0;
-    LG_TIERS.forEach((tk, i) => { const tw = 56, tx = x + PAD + i * (tw + 4);
-      ctx.fillStyle = i === T ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.07)'; ctx.fillRect(tx, gy, tw, 11);
-      ctx.font = 'bold 7px monospace'; ctx.fillStyle = i === T ? '#1a1410' : '#b9ad9a'; const lb = TIERS[tk].label + (tk === 'ritual' ? ' ∞' : ` ${TIERS[tk].days}d`); ctx.fillText(lb, tx + (tw - ctx.measureText(lb).width) / 2, gy + 8);
-      if (this.hits) (this.hits.ltiers ||= []).push({ i, x: tx, y: gy - 2, w: tw, h: 15 }); });
-    LG_KEYS.forEach((k, i) => {
-      const L = LEGENDS[k], y = gy + 14 + i * LG_RH; if (this.hits) this.hits.cells.push({ i, x: x + PAD, y, w: W - PAD * 2, h: LG_RH - 2 });
-      ctx.fillStyle = i === this.sel ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(x + PAD, y, W - PAD * 2, LG_RH - 2);
-      this.drawIcon(ctx, icons[L.animal], x + PAD + 11, y + LG_RH / 2 - 1, 18);
-      const c = g ? g.legendCan(k, LG_TIERS[T]) : { ok: false }, a = act[k] && act[k].until > now ? act[k] : null;
-      ctx.font = 'bold 8px monospace'; ctx.fillStyle = c.ok ? '#f3e9d8' : '#a89a86'; ctx.fillText(L.label, x + PAD + 24, y + 10);
-      ctx.font = '7px monospace'; ctx.fillStyle = a ? '#e8c84a' : '#8d8272';
-      ctx.fillText(a ? (a.until === Infinity ? 'ativa para sempre' : `ativa: ~${Math.max(1, Math.round((a.until - now) / 60))} h`) : L.effect.slice(0, 34), x + PAD + 24, y + 20);
-    });
+  // rolagem em linhas: garante a seleção à vista e desenha a barra (e ▲▼ no toque)
+  fitScroll(L, total, rowsVis, selRow, rowH) {
+    const max = Math.max(0, total - rowsVis); this.scroll = Math.max(0, Math.min(max, this.scroll));
+    const key = `${this.tab}|${this.cat}|${this.sel}`;                          // a seleção só é trazida à vista quando MUDA (senão a roda do mouse não conseguiria rolar para longe dela)
+    if (selRow >= 0 && key !== this._selKey) { if (selRow < this.scroll) this.scroll = selRow; if (selRow >= this.scroll + rowsVis) this.scroll = selRow - rowsVis + 1; this.scroll = Math.max(0, Math.min(max, this.scroll)); }
+    this._selKey = key;
+    if (max <= 0) return; const ctx = this._ctx, tx = L.midX + L.midW - SB - 2, ty = L.gy, th = rowsVis * rowH, thumbH = Math.max(10, Math.round(th * rowsVis / total)), thumbY = ty + Math.round((th - thumbH) * this.scroll / max);
+    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(tx, ty, SB - 1, th); ctx.fillStyle = '#d9a066'; ctx.fillRect(tx, thumbY, SB - 1, thumbH);
+    if (this.touch) { ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#d9a066'; if (this.scroll > 0) { ctx.fillText('▲', tx - 3, ty + 8); this.hits.up = { x: tx - 12, y: ty - 2, w: 24, h: 18 }; }
+      if (this.scroll < max) { ctx.fillText('▼', tx - 3, ty + th - 2); this.hits.down = { x: tx - 12, y: ty + th - 16, w: 24, h: 18 }; } }
   }
-  drawSkills(ctx, x, gy) {
-    const sk = this.skills; if (!sk) return; const inB = {};
-    for (const b of this.bundles || []) for (const [k, n] of Object.entries(b.xp || {})) inB[k] = (inB[k] || 0) + n;
-    SKILL_ORDER.forEach((k, i) => {
-      const y = gy + i * SK_RH, xp = sk.xp[k], L = sk.level(k), lo = XP_AT[L], hi = XP_AT[Math.min(10, L + 1)], f = L >= 10 ? 1 : (xp - lo) / (hi - lo), bw = W - PAD * 2 - 38;
-      ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText(SKILLS[k].label, x + PAD, y + 8);
-      ctx.fillStyle = '#d9a066'; const lv = `nv ${L}`; ctx.fillText(lv, x + W - PAD - ctx.measureText(lv).width, y + 8);
-      ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(x + PAD, y + 11, bw, 4);
-      if (inB[k] && L < 10) { const fb = Math.min(1, (xp + inB[k] - lo) / (hi - lo)); ctx.fillStyle = 'rgba(217,160,102,0.3)'; ctx.fillRect(x + PAD, y + 11, Math.round(bw * fb), 4); }
-      ctx.fillStyle = '#d9a066'; ctx.fillRect(x + PAD, y + 11, Math.round(bw * Math.max(0, f)), 4);
-      ctx.font = '7px monospace'; ctx.fillStyle = '#8d8272'; const t = L ? `+${Math.round(L * XP_RULES.PER_LEVEL * 100)}%` : ''; ctx.fillText(t, x + PAD + bw + 4, y + 15);
-    });
-  }
-  drawCraft(ctx, x, gy, items, icons) {
-    const n = this.rowsVis || RECIPES.length, s0 = this.scroll || 0;
-    if (s0 > 0 || s0 + n < RECIPES.length) {                               // marcas de rolagem (e áreas de toque)
-      ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#d9a066'; const ax = x + W - PAD - 8;
-      if (s0 > 0) { ctx.fillText('▲', ax, gy - 2); if (this.hits) this.hits.up = { x: ax - 10, y: gy - 14, w: 26, h: 16 }; }
-      if (s0 + n < RECIPES.length) { ctx.fillText('▼', ax, gy + n * RH + 6); if (this.hits) this.hits.down = { x: ax - 10, y: gy + n * RH - 4, w: 26, h: 16 }; }
+  // grade de ícones (itens, baú ou receitas); `ids` = itens [k, n] ou índices de receita
+  drawGrid(ctx, L, items, icons, ids, craft) {
+    this._ctx = ctx; const cols = Math.max(3, Math.floor(L.gw / CELL)); this.cols = cols; const rowsVis = Math.max(2, Math.floor(L.gh / CELL)); this.rowsVis = rowsVis;
+    const total = Math.max(rowsVis > 2 ? 1 : 2, Math.ceil(ids.length / cols)); this.fitScroll(L, total, rowsVis, Math.floor(this.sel / cols), CELL);
+    if (!ids.length) { ctx.font = '9px monospace'; ctx.fillStyle = '#8d8272'; ctx.fillText(craft ? 'Nenhuma receita aqui.' : this.chest && this.tab === 'chest' ? 'O baú está vazio.' : 'Nada nesta categoria.', L.gx + 4, L.gy + 14); return; }
+    const first = this.scroll * cols;
+    for (let k = 0; k < cols * rowsVis; k++) {
+      const i = first + k; if (i >= ids.length) break; const cx = L.gx + (k % cols) * CELL, cy = L.gy + Math.floor(k / cols) * CELL, on = i === this.sel;
+      this.hits.cells.push({ i, x: cx, y: cy, w: CELL, h: CELL });
+      ctx.fillStyle = on ? 'rgba(217,160,102,0.38)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(cx + 1, cy + 1, CELL - 2, CELL - 2);
+      if (on) { ctx.strokeStyle = '#d9a066'; ctx.lineWidth = 1; ctx.strokeRect(cx + 1.5, cy + 1.5, CELL - 3, CELL - 3); }
+      if (craft) {
+        const r = RECIPES[ids[i]], c = this.canCraft(r, items); ctx.globalAlpha = c.ok || c.why === 'Você já tem' ? 1 : 0.4; this.drawIcon(ctx, icons[r.item], cx + CELL / 2, cy + CELL / 2, 22); ctx.globalAlpha = 1;
+        if (c.ok) { ctx.fillStyle = '#7fd36a'; ctx.fillRect(cx + CELL - 6, cy + 3, 3, 3); } else if (c.why === 'Você já tem') { ctx.fillStyle = '#d9a066'; ctx.fillRect(cx + CELL - 6, cy + 3, 3, 3); }
+        if (r.out > 1) { ctx.font = 'bold 7px monospace'; const t = 'x' + r.out, tw = ctx.measureText(t).width; ctx.fillStyle = '#000'; ctx.fillText(t, cx + CELL - tw - 2, cy + CELL - 2); ctx.fillStyle = '#fff'; ctx.fillText(t, cx + CELL - tw - 3, cy + CELL - 3); }
+        continue;
+      }
+      const [key, q] = ids[i];
+      if (DURABILITY[key]) { const f = Math.max(0, Math.min(1, ((this.dur || {})[key] ?? DURABILITY[key]) / DURABILITY[key])), bw2 = CELL - 8;   // barra de durabilidade embaixo do ícone
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(cx + 4, cy + CELL - 5, bw2, 3); ctx.fillStyle = f > 0.5 ? '#7fd36a' : f > 0.2 ? '#e8c84a' : '#e05a4a'; ctx.fillRect(cx + 4, cy + CELL - 5, Math.max(1, Math.round(bw2 * f)), 3); }
+      this.drawIcon(ctx, icons[key], cx + CELL / 2, cy + CELL / 2 - 1, 22);
+      if (DURABILITY[key] && q === 1) continue;                                // ferramenta: a barra substitui o número
+      ctx.font = 'bold 8px monospace'; const t = String(q), tw = ctx.measureText(t).width; ctx.fillStyle = '#000'; ctx.fillText(t, cx + CELL - tw - 2, cy + CELL - 2); ctx.fillStyle = '#fff'; ctx.fillText(t, cx + CELL - tw - 3, cy + CELL - 3);
     }
-    RECIPES.forEach((r, i) => {
-      if (i < s0 || i >= s0 + n) return;
-      const ry = gy + (i - s0) * RH, c = this.canCraft(r, items);
-      if (this.hits) this.hits.cells.push({ i, x: x + PAD, y: ry, w: W - PAD * 2, h: RH });
-      ctx.fillStyle = i === this.sel ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(x + PAD, ry, W - PAD * 2, RH - 2);
-      this.drawIcon(ctx, icons[r.item], x + PAD + 11, ry + RH / 2 - 1, 18);
-      const name = ITEMS[r.item].label + (r.out > 1 ? ` x${r.out}` : '');
-      ctx.font = 'bold 8px monospace'; ctx.fillStyle = c.ok ? '#f3e9d8' : '#8f8170'; ctx.fillText(name, x + PAD + 24, ry + 10);
-      ctx.font = '7px monospace'; let nx = x + PAD + 24;
-      if (!c.ok && c.why === 'Você já tem') { ctx.fillStyle = '#d9a066'; ctx.fillText('Já tem esta ferramenta', nx, ry + 20); return; }
-      const parts = Object.entries(r.needs).map(([k, n]) => [`${ITEMS[k].label} ${Math.min(items[k] || 0, n)}/${n}`, (items[k] || 0) >= n]);
-      if (r.tool) parts.push([`+ ${ITEMS[r.tool].label.toLowerCase()}`, !!items[r.tool]]);
-      for (const [t, okk] of parts) { const tw = ctx.measureText(t).width; if (nx + tw > x + W - PAD) break; ctx.fillStyle = okk ? '#a8e08a' : '#e08a7a'; ctx.fillText(t, nx, ry + 20); nx += tw + 5; }
-    });
+  }
+  // lista das lendas (ícone do animal, nome, efeito, se está ativa)
+  drawLegendRows(ctx, L, icons) {
+    this._ctx = ctx; const RH = 26, g = this.game, now = g ? g.clock.minutes : 0, act = g ? g.legends.active : {}, keys = this.legendKeys(), rowsVis = Math.max(2, Math.floor(L.gh / RH)); this.rowsVis = rowsVis;
+    this.fitScroll(L, keys.length, rowsVis, this.sel, RH);
+    if (!keys.length) { ctx.font = '9px monospace'; ctx.fillStyle = '#8d8272'; ctx.fillText('Nenhuma lenda ativa.', L.gx + 4, L.gy + 14); return; }
+    keys.forEach((k, i) => { if (i < this.scroll || i >= this.scroll + rowsVis) return; const Lg = LEGENDS[k], ry = L.gy + (i - this.scroll) * RH, w = L.gw;
+      this.hits.cells.push({ i, x: L.gx, y: ry, w, h: RH - 2 });
+      ctx.fillStyle = i === this.sel ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.06)'; ctx.fillRect(L.gx, ry, w, RH - 2);
+      this.drawIcon(ctx, icons[Lg.animal], L.gx + 12, ry + RH / 2 - 1, 18);
+      const c = g ? g.legendCan(k, LG_TIERS[this.ltier || 0]) : { ok: false }, a = act[k] && act[k].until > now ? act[k] : null;
+      ctx.font = 'bold 8px monospace'; ctx.fillStyle = c.ok ? '#f3e9d8' : '#a89a86'; ctx.fillText(Lg.label, L.gx + 26, ry + 10);
+      ctx.font = '7px monospace'; ctx.fillStyle = a ? '#e8c84a' : '#8d8272'; ctx.fillText(a ? (a.until === Infinity ? 'ativa para sempre' : `ativa: ~${Math.max(1, Math.round((a.until - now) / 60))} h`) : 'não ativa', L.gx + 26, ry + 20); });
+  }
+  // habilidades (barras) ou Diário (marcos com ✓)
+  drawSkillRows(ctx, L) {
+    this._ctx = ctx; const sk = this.skills; if (!sk) return; const diary = this.cat === 1, RH = diary ? 17 : 24, keys = diary ? MS_KEYS : SKILL_ORDER, rowsVis = Math.max(2, Math.floor(L.gh / RH)); this.rowsVis = rowsVis;
+    this.fitScroll(L, keys.length, rowsVis, this.sel, RH); const inB = {}; for (const b of this.bundles || []) for (const [k, n] of Object.entries(b.xp || {})) inB[k] = (inB[k] || 0) + n;
+    keys.forEach((k, i) => { if (i < this.scroll || i >= this.scroll + rowsVis) return; const ry = L.gy + (i - this.scroll) * RH, w = L.gw; this.hits.cells.push({ i, x: L.gx, y: ry, w, h: RH - 1 });
+      ctx.fillStyle = i === this.sel ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.05)'; ctx.fillRect(L.gx, ry, w, RH - 1);
+      if (diary) { const done = sk.journal.includes(k); ctx.fillStyle = done ? '#7fd36a' : 'rgba(255,255,255,0.18)'; ctx.fillRect(L.gx + 4, ry + 5, 7, 7); if (done) { ctx.fillStyle = '#1a1410'; ctx.fillRect(L.gx + 6, ry + 7, 3, 3); }
+        ctx.font = '8px monospace'; ctx.fillStyle = done ? '#f3e9d8' : '#8d8272'; let t = MILESTONES[k].text; while (ctx.measureText(t).width > w - 20 && t.length > 6) t = t.slice(0, -2); ctx.fillText(t, L.gx + 16, ry + 12); return; }
+      const xp = sk.xp[k], lv = sk.level(k), lo = XP_AT[lv], hi = XP_AT[Math.min(10, lv + 1)], f = lv >= 10 ? 1 : (xp - lo) / (hi - lo), bw2 = w - 12;
+      ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText(SKILLS[k].label, L.gx + 5, ry + 9); ctx.fillStyle = '#d9a066'; const lvs = `nv ${lv}`; ctx.fillText(lvs, L.gx + w - 6 - ctx.measureText(lvs).width, ry + 9);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(L.gx + 5, ry + 13, bw2, 5);
+      if (inB[k] && lv < 10) { const fb = Math.min(1, (xp + inB[k] - lo) / (hi - lo)); ctx.fillStyle = 'rgba(217,160,102,0.3)'; ctx.fillRect(L.gx + 5, ry + 13, Math.round(bw2 * fb), 5); }
+      ctx.fillStyle = '#d9a066'; ctx.fillRect(L.gx + 5, ry + 13, Math.round(bw2 * Math.max(0, f)), 5); });
+  }
+  // ---------- card do item selecionado (coluna da direita) ----------
+  drawCard(ctx, L, items, icons) {
+    const hits = this.hits, ix = L.rx + PAD, iw = L.rw - PAD * 2, bot = L.bot - 2; let y = L.top + 6;
+    const lines = (txt, font, color, gap = 10) => { ctx.font = font; ctx.fillStyle = color; for (const l of wrapText(ctx, txt, iw)) { if (y > bot - (btn ? 22 : 4)) return; ctx.fillText(l, ix, y); y += gap; } };
+    const head = (key, name, tag, tagColor) => {                                   // ícone grande + nome + etiqueta
+      ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(ix, y, 46, 46); ctx.strokeStyle = 'rgba(217,160,102,0.35)'; ctx.strokeRect(ix + 0.5, y + 0.5, 45, 45);
+      this.drawIcon(ctx, icons[key], ix + 23, y + 23, 44); ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#f3e9d8';
+      const nl = wrapText(ctx, name, iw - 52).slice(0, 2); nl.forEach((l, k) => ctx.fillText(l, ix + 52, y + 12 + k * 10));
+      ctx.font = 'bold 7px monospace'; ctx.fillStyle = tagColor; const tl = wrapText(ctx, tag, iw - 52).slice(0, 2); tl.forEach((l, k) => ctx.fillText(l, ix + 52, y + 12 + nl.length * 10 + 2 + k * 8)); y += 54; };
+    let btn = null;
+    if (this.grid) {
+      const list = this.listFor(items), cur = list[this.sel];
+      if (!cur) { y += 4; lines(this.chest && this.tab === 'chest' ? 'O baú está vazio. Na aba Mochila, E guarda o item selecionado.' : 'Nada por aqui. Colha frutas, pegue pedras e madeira, bata em rochas e minérios.', '9px monospace', '#8d8272'); return; }
+      const k = cur[0], it = ITEMS[k], tag = itemTag(k, this.dur); const fd = it.food;
+      btn = this.chest ? { label: this.tab === 'chest' ? 'Pegar' : 'Guardar', can: true, key: 'eat' } : it.place ? { label: 'Colocar', can: true, key: 'eat' } : it.use ? { label: 'Usar', can: true, key: 'eat' } : fd ? { label: 'Comer', can: !(this.vitals && this.vitals.hunger >= 98), key: 'eat' } : null;
+      head(k, it.label + (cur[1] > 1 ? `  x${cur[1]}` : ''), tag.text, tag.color); lines(it.text, '8px monospace', '#c8bfae');
+      if (DURABILITY[k]) { y += 2; const d = Math.max(0, (this.dur || {})[k] ?? DURABILITY[k]), f = d / DURABILITY[k]; ctx.font = '8px monospace'; ctx.fillStyle = '#8fc3ea'; ctx.fillText(`Durabilidade ${d}/${DURABILITY[k]}`, ix, y); y += 4;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(ix, y, iw, 4); ctx.fillStyle = f > 0.5 ? '#7fd36a' : f > 0.2 ? '#e8c84a' : '#e05a4a'; ctx.fillRect(ix, y, Math.max(1, Math.round(iw * f)), 4); y += 10; }
+      if (fd) { y += 2; lines(`Alimenta: ${fd.hunger ? `+${fd.hunger} fome` : ''}${fd.energy ? ` +${fd.energy} energia` : ''}${fd.hp ? ` ${fd.hp > 0 ? '+' : ''}${fd.hp} vida` : ''}`.replace(/  +/g, ' '), '8px monospace', fd.hp < 0 ? '#e08a7a' : '#a8e08a'); }
+      if (!this.touch && btn) { y += 2; lines(`E: ${btn.label.toLowerCase()}`, 'bold 8px monospace', '#d9a066'); }
+    } else if (this.tab === 'craft') {
+      const ids = this.recipeIdx(), r = RECIPES[ids[this.sel]]; if (!r) { lines('Nenhuma receita nesta categoria.', '9px monospace', '#8d8272'); return; }
+      const it = ITEMS[r.item], c = this.canCraft(r, items), tag = itemTag(r.item, {}); btn = { label: 'Fabricar', can: c.ok, key: 'craft' };
+      head(r.item, it.label + (r.out > 1 ? `  x${r.out}` : ''), tag.text.replace(/\s+\d+\/\d+$/, ''), tag.color); lines(it.text, '8px monospace', '#c8bfae'); y += 3;
+      ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#d9a066'; if (y < bot - 22) ctx.fillText('Precisa:', ix, y); y += 10;
+      const row = (txt, ok) => { if (y > bot - (btn ? 22 : 4)) return; ctx.fillStyle = ok ? '#7fd36a' : '#e05a4a'; ctx.fillRect(ix, y - 6, 4, 4); ctx.font = '8px monospace'; ctx.fillStyle = ok ? '#a8e08a' : '#e08a7a'; ctx.fillText(txt, ix + 8, y); y += 10; };
+      for (const [k, n] of Object.entries(r.needs)) row(`${ITEMS[k].label} ${Math.min(items[k] || 0, n)}/${n}`, (items[k] || 0) >= n);
+      if (r.tool) row(`${ITEMS[r.tool].label} (ferramenta)`, !!items[r.tool]);
+      if (r.bench) row('Perto da bancada', !!this.nearBench); if (r.sea) row('Na beira do mar', !!this.nearSea);
+      y += 2; if (this.msg) lines(this.msg, 'bold 8px monospace', /fez/.test(this.msg) ? '#a8e08a' : '#e8c84a');
+      else if (c.ok) lines('Pronto para fabricar.', 'bold 8px monospace', '#a8e08a'); else lines(c.why === 'Você já tem' ? 'Você já tem esta ferramenta.' : c.why + '.', 'bold 8px monospace', '#e8c84a');
+      if (!this.touch) lines('E: fabricar', 'bold 8px monospace', '#d9a066');
+    } else if (this.tab === 'legends') {
+      const g = this.game, k = this.legendKey(), Lg = LEGENDS[k], tier = LG_TIERS[this.ltier || 0], T = TIERS[tier], c = g ? g.legendCan(k, tier) : { ok: false, why: '' }; btn = { label: 'Preparar', can: !!c.ok, key: 'legend' };
+      head(Lg.animal, Lg.label, `LENDA  ${Lg.effect}`.slice(0, 60), '#c9a0e8');
+      LG_TIERS.forEach((tk, i) => { const tw = Math.floor((iw - 4) / 3), tx = ix + i * (tw + 2), on = i === (this.ltier || 0); ctx.fillStyle = on ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(tx, y, tw, 12);
+        ctx.font = 'bold 7px monospace'; ctx.fillStyle = on ? '#1a1410' : '#b9ad9a'; const lb = TIERS[tk].label + (tk === 'ritual' ? ' ∞' : ` ${TIERS[tk].days}d`); ctx.fillText(lb, tx + Math.max(1, (tw - ctx.measureText(lb).width) / 2), y + 9); hits.ltiers.push({ i, x: tx, y: y - 2, w: tw, h: 16 }); }); y += 18;
+      lines(tier === 'ritual' ? 'Para sempre, com metade da força. Só uma vez por lenda.' : `Dura ${T.days} dia${T.days > 1 ? 's' : ''} de jogo.`, '8px monospace', '#c8bfae'); y += 2;
+      ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#d9a066'; if (y < bot - 22) ctx.fillText('Leva:', ix, y); y += 10;
+      const needs = g ? g.legendNeeds(k, tier) : {}; for (const [it2, q] of Object.entries(needs)) { if (y > bot - 22) break; const ok = (items[it2] || 0) >= q; ctx.fillStyle = ok ? '#7fd36a' : '#e05a4a'; ctx.fillRect(ix, y - 6, 4, 4); ctx.font = '8px monospace'; ctx.fillStyle = ok ? '#a8e08a' : '#e08a7a'; ctx.fillText(`${ITEMS[it2].label} ${Math.min(items[it2] || 0, q)}/${q}`, ix + 8, y); y += 10; }
+      y += 2; lines(this.msg || (c.ok ? 'Pronta para preparar.' : c.why), 'bold 8px monospace', c.ok ? '#a8e08a' : '#e8c84a'); if (!this.touch) lines('E: preparar · ←→ duração', 'bold 8px monospace', '#d9a066');
+    } else {
+      const sk = this.skills; if (!sk) return;
+      if (this.cat === 1) { const k = MS_KEYS[this.sel], m = MILESTONES[k], done = sk.journal.includes(k); ctx.font = 'bold 9px monospace'; ctx.fillStyle = done ? '#a8e08a' : '#c8bfae'; lines(m.text, 'bold 9px monospace', done ? '#a8e08a' : '#c8bfae', 11); y += 2;
+        lines(done ? 'Concluído.' : 'Ainda não feito.', '8px monospace', done ? '#7fd36a' : '#8d8272'); lines(`Rende ${m.xp} XP em ${SKILLS[m.skill].label.toLowerCase()} na primeira vez.`, '8px monospace', '#c8bfae'); return; }
+      const k = SKILL_ORDER[this.sel], Sk = SKILLS[k], xp = sk.xp[k], lv = sk.level(k), lo = XP_AT[lv], hi = XP_AT[Math.min(10, lv + 1)];
+      ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText(Sk.label, ix, y + 8); ctx.fillStyle = '#d9a066'; ctx.fillText(`nível ${lv}`, ix + iw - ctx.measureText(`nível ${lv}`).width, y + 8); y += 16;
+      ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(ix, y, iw, 6); ctx.fillStyle = '#d9a066'; ctx.fillRect(ix, y, Math.round(iw * (lv >= 10 ? 1 : (xp - lo) / (hi - lo))), 6); y += 14;
+      lines(lv >= 10 ? `${Math.round(xp)} XP (nível máximo)` : `${Math.round(xp)} / ${hi} XP para o nível ${lv + 1}`, '8px monospace', '#c8bfae'); y += 2;
+      lines(`Bônus: ${Sk.bonus}${lv ? ` (+${Math.round(lv * XP_RULES.PER_LEVEL * 100)}% agora)` : ''}.`, '8px monospace', '#a8e08a'); y += 2;
+      const pend = Math.round(sk.pending[Sk.quality] || 0); lines(`Também fortalece a qualidade ${({ vigor: 'Vigor', metabolism: 'Metabolismo', lung: 'Fôlego', hardiness: 'Resistência' })[Sk.quality]}, mas só fica de vez quando você dorme${pend ? ` (${pend} XP esperando)` : ''}.`, '8px monospace', '#8d8272');
+      y += 2; lines('Morrer guarda 10% da XP na trouxa.', '7px monospace', '#8d8272');
+    }
+    if (btn && this.touch) {                                                        // botão grande no toque
+      const bx = ix, by = L.bot - 18, bw2 = iw; ctx.fillStyle = btn.can ? 'rgba(217,160,102,0.9)' : 'rgba(255,255,255,0.1)'; ctx.fillRect(bx, by, bw2, 16);
+      ctx.font = 'bold 9px monospace'; ctx.fillStyle = btn.can ? '#1a1410' : '#8f8170'; ctx.fillText(btn.label, bx + (bw2 - ctx.measureText(btn.label).width) / 2, by + 12); hits[btn.key] = { x: bx - 2, y: by - 4, w: bw2 + 4, h: 24 };
+    }
   }
 }

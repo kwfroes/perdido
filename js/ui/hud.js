@@ -80,7 +80,7 @@ export function drawHud(ctx, info) {
   ctx.font = '10px monospace';
   if (info.hintTime > 0 && !info.touch) {
     ctx.globalAlpha = Math.min(1, info.hintTime);
-    box(ctx, 'WASD mover | Shift correr | E agir (segure p/ golpear) | I mochila | +/- zoom | F4 mapa | K código | F2 menu | F1 esta ajuda', 6, info.vh - 20);
+    box(ctx, 'WASD mover | Shift correr | E agir (segure p/ golpear) | I mochila | T apagar tocha | +/- zoom | F4 mapa | G GPS | K código | F2 menu | F1 esta ajuda', 6, info.vh - 20);
     ctx.globalAlpha = 1;
   }
   if (info.debugLevel > 0) {

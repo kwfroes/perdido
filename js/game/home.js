@@ -6,25 +6,26 @@
 //   casa: kit = base; depois 3 etapas (material + tempo de jogo, como o conserto da canoa). Pronta, abriga de chuva e trovoada.
 //   abrigo: embaixo dele, a chuva e a trovoada não pegam você nem a fogueira.
 import { ITEMS, STAGE_BY_TYPE, CHEST } from '../data/items.js';
-import { FINISHED, STYLES, STYLE_OF_TYPE } from './houseIn.js';
+import { FINISHED, STYLES, STYLE_OF_TYPE, PREFIX, houseLevel } from './houseIn.js';
+import { OBJECT_DEFS } from '../data/objects.js';
 
 export const HOME = { BENCH_R: 72, ABRIGO_RX: 40, ABRIGO_RY: 44, HOUSE_RX: 86, HOUSE_UP: 70, HOUSE_DOWN: 40, SLEEP_FADE: 1.2 };
 const LABEL = { abrigo: 'abrigo', cama: 'cama', bau: 'baú', bancada: 'bancada', casa_1: 'base da casa' };
 
 export class HomeMixin {
   initHomes(save) {
-    this.homes = []; this.bed = save && save.bed && Number.isFinite(save.bed.x) ? { x: save.bed.x, y: save.bed.y, ...(save.bed.house ? { house: save.bed.house } : {}) } : null; this.sleeping = null;
+    this.homes = []; this.bed = save && save.bed && Number.isFinite(save.bed.x) ? { x: save.bed.x, y: save.bed.y, ...(save.bed.house ? { house: save.bed.house, upper: !!save.bed.upper } : {}) } : null; this.sleeping = null;
     for (const h of (save && Array.isArray(save.homes) ? save.homes : [])) if (h && Number.isFinite(h.x) && Number.isFinite(h.y) && h.type) this.attachHome({ ...h, items: h.items ? { ...h.items } : undefined });
   }
   attachHome(h) {
     h.id = h.id || `${h.type}:${Math.round(h.x)}:${Math.round(h.y)}:${this.homes.length}`; if (h.type === 'bau' && !h.items) h.items = {};
-    if (h.inHouse && !(this.cave && this.cave.isHouse && this.cave.home.id === h.inHouse)) { this.homes.push(h); return h; }   // móvel de dentro: entra com a casa
+    if (h.inHouse && !(this.cave && this.cave.isHouse && this.cave.id.slice(5) === h.inHouse)) { this.homes.push(h); return h; }   // móvel de dentro: entra com a casa
     h.obj = this.addObject({ type: h.type, x: h.x, y: h.y }, `casa:${h.id}`); h.obj.home = h; this.homes.push(h); return h;
   }
   homesToJSON() { return this.homes.map(h => ({ id: h.id, type: h.type, x: h.x, y: h.y, ...(h.items ? { items: { ...h.items } } : {}), ...(h.inHouse ? { inHouse: h.inHouse } : {}),
-    ...(STYLE_OF_TYPE[h.type] ? { style: STYLE_OF_TYPE[h.type] } : {}), ...(h.scene ? { insideDelta: h.scene.delta.toJSON() } : h.insideDelta ? { insideDelta: h.insideDelta } : {}) })); }
+    ...(STYLE_OF_TYPE[h.type] ? { style: STYLE_OF_TYPE[h.type] } : {}), ...(h.scene ? { insideDelta: h.scene.delta.toJSON() } : h.insideDelta ? { insideDelta: h.insideDelta } : {}), ...(h.upScene ? { upDelta: h.upScene.delta.toJSON() } : h.upDelta ? { upDelta: h.upDelta } : {}) })); }
   placeHome(type, x, y) {
-    const inH = this.cave && this.cave.isHouse ? this.cave.home.id : null; const h = this.attachHome({ type, x, y, ...(inH ? { inHouse: inH } : {}) }); this.gain('construcao', 15); this.mark('abrigo');
+    const inH = this.cave && this.cave.isHouse ? this.cave.id.slice(5) : null; const h = this.attachHome({ type, x, y, ...(inH ? { inHouse: inH } : {}) }); this.gain('construcao', 15); this.mark('abrigo');
     this.toast(STYLE_OF_TYPE[type] ? `Base ${type === 'palafita_1' ? 'da palafita' : type === 'oca_1' ? 'da oca' : 'da casa'} pronta. Chegue perto para continuar a obra.` : ['rede', 'jirau', 'talha'].includes(type) ? `${type === 'rede' ? 'Rede pendurada' : type === 'jirau' ? 'Jirau montado' : 'Talha no lugar'}.` : type === 'casa_1' ? 'Base da casa pronta. Chegue perto para levantar as paredes.' : type === 'abrigo' ? 'Abrigo montado. Embaixo dele a chuva não pega.' : `${LABEL[type][0].toUpperCase()}${LABEL[type].slice(1)} montad${type === 'cama' || type === 'bancada' ? 'a' : 'o'}.`, 2.8);
     return h;
   }
@@ -45,9 +46,27 @@ export class HomeMixin {
     if (h.type === 'jirau') return null;
     if (h.type === 'bau') return { kind: 'home', op: 'chest', label: `Abrir o baú (${Object.keys(h.items).length}/20)` };
     if (h.type === 'bancada') return { kind: 'home', op: 'bench', label: 'Bancada (fabricar)' };
-    if (FINISHED.has(h.type)) return { kind: 'home', op: 'enter', label: `Entrar ${h.type === 'oca_4' ? 'na oca' : h.type === 'palafita_4' ? 'na palafita' : 'em casa'}` };
+    if (FINISHED.has(h.type)) { const lv = houseLevel(h.type), word = /^oca/.test(h.type) ? (lv >= 2 ? 'na maloca' : 'na oca') : /^palafita/.test(h.type) ? 'na palafita' : 'em casa';
+      return lv < 4 && !h.inHouse ? { kind: 'home', op: 'houseMenu', label: `Casa (nível ${lv})…` } : { kind: 'home', op: 'enter', label: `Entrar ${word}` }; }
     const st = STAGE_BY_TYPE[this.nextStage(h)]; if (!st) return null;
     return { kind: 'home', op: 'build', stage: st, label: `${st.label} (${st.n}/4)` };
+  }
+  // Casas e vilas: menu da casa pronta — entrar ou ampliar (nível 2: maior, 2 cômodos; nível 3: andar de cima). Nível 4: honra (6C).
+  upgradeOf(h) { const lv = houseLevel(h.type), st = STYLE_OF_TYPE[h.type]; return lv >= 1 && lv < 3 ? STAGE_BY_TYPE[`${PREFIX[st]}_n${lv + 1}`] : null; }
+  upgradeBlockers(h, st) { const w = (OBJECT_DEFS[st.type] || { sprite: [200] }).sprite[0]; return this.houseBlockers(h.x, h.y, Math.round(w * 0.45)).filter(o => o !== h.obj); }
+  openHouseMenu(h) {
+    const lv = houseLevel(h.type), st = this.upgradeOf(h), opts = [{ label: 'Entrar', run: () => this.enterHouse(h) }];
+    if (st) { const miss = Object.entries(st.needs).filter(([k, q]) => (this.items[k] || 0) < q);
+      opts.push({ label: `${st.label} (nível ${st.n})`, hint: miss.length ? 'falta material' : `${Math.round(st.minutes / 60)} h de obra`, run: () => this.startUpgrade(h, st) }); }
+    else if (lv === 3) opts.push({ label: 'Casa do líder (nível 4)', hint: 'honra de uma vila', disabled: true, run: () => {} });
+    this.menu.show(STYLES[STYLE_OF_TYPE[h.type]].label + ` · nível ${lv}`, opts);
+  }
+  startUpgrade(h, st) {
+    const miss = Object.entries(st.needs).filter(([k, q]) => (this.items[k] || 0) < q);
+    if (miss.length) { this.toast(`${st.label}: falta ${miss.map(([k, q]) => `${q - (this.items[k] || 0)} ${ITEMS[k].label.toLowerCase()}`).join(', ')}.`, 4); return; }
+    const b = this.upgradeBlockers(h, st); if (b.length) { this.toast('Para ampliar, ' + this.blockerSummary(b).replace('Limpe o terreno', 'limpe em volta da casa'), 4); return; }
+    this.task = { kind: 'build', home: h, stage: st, t: 0, need: Math.round(st.minutes * (1 - this.sb('construcao'))) };
+    this.toast(`${st.label}... (Esc cancela; o material só é gasto no fim)`, 2.5);
   }
   nextStage(h) { return { casa_1: 'casa_2', casa_2: 'casa_3', casa_3: 'casa', oca_1: 'oca_2', oca_2: 'oca_3', oca_3: 'oca_4', palafita_1: 'palafita_2', palafita_2: 'palafita_3', palafita_3: 'palafita_4' }[h.type] || null; }
   homeAct(t, a) {
@@ -57,6 +76,7 @@ export class HomeMixin {
     if (a.op === 'chest') { this.inventory.openChest(h); return; }
     if (a.op === 'bench') { this.inventory.open = true; this.inventory.chest = null; this.inventory.tab = 'craft'; this.inventory.sel = 0; this.inventory.msg = null; return; }
     if (a.op === 'enter') { this.enterHouse(h); return; }
+    if (a.op === 'houseMenu') { this.openHouseMenu(h); return; }
     if (a.op === 'drink') { const v = this.vitals; v.energy = Math.min(100, v.energy + 5); this.toast('Água fresca da talha. +5 energia.', 1.8); return; }
     if (a.op === 'build') {
       const st = a.stage, miss = Object.entries(st.needs).filter(([k, q]) => (this.items[k] || 0) < q);
@@ -67,7 +87,9 @@ export class HomeMixin {
   }
   buildDone(k) {
     const st = k.stage, h = k.home; for (const [it, q] of Object.entries(st.needs)) { this.items[it] -= q; if (!this.items[it]) delete this.items[it]; }
+    if (st.upgrade) this.resetHouseScenes(h);
     const w = this.changeHomeType(h, st.type); this.interaction.target = w; this.gain('construcao', 30); if (FINISHED.has(st.type)) this.mark('casa');
+    if (st.upgrade) { this.mark('casa'); this.toast(st.n === 2 ? 'A casa cresceu! Agora são dois cômodos.' : 'Casa de dois andares pronta! A escada fica no canto da sala.', 3.5); return; }
     this.toast(FINISHED.has(st.type) ? `${STYLES[STYLE_OF_TYPE[st.type]].label} pronta! E na porta para entrar; perto dela a chuva e a trovoada não te pegam.` : `Pronto: ${st.label.toLowerCase()}.`, 3.5);
   }
   changeHomeType(h, type) { this.removeObject(h.obj); h.type = type; h.obj = this.addObject({ type, x: h.x, y: h.y }, `casa:${h.id}`); h.obj.home = h; return h.obj; }
@@ -94,8 +116,8 @@ export class HomeMixin {
   }
   startSleep(h) {
     const night = this.clock.hour >= 18 || this.clock.hour < 5;
-    const inH = this.cave && this.cave.isHouse ? this.cave.home.id : null;
-    this.bed = { x: h.x, y: h.y + 18, ...(inH ? { house: inH } : {}) }; this.sleeping = { t: 0, done: false, night, home: !!inH }; this.menu.close(); this.placing = null;
+    const inH = this.cave && this.cave.isHouse ? this.cave.id.slice(5) : null;   // 'ID' ou 'ID:cima'
+    this.bed = { x: h.x, y: h.y + 18, ...(inH ? { house: inH.replace(':cima', ''), upper: inH.endsWith(':cima') } : {}) }; this.sleeping = { t: 0, done: false, night, home: !!inH }; this.menu.close(); this.placing = null;
   }
   sleepStep(dt) {
     const s = this.sleeping; if (!s) return; s.t += dt;

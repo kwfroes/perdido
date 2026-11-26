@@ -35,10 +35,18 @@ if (globalThis.addEventListener) {
   globalThis.addEventListener('visibilitychange', () => { if (globalThis.document && document.visibilityState === 'hidden') saveNow('hidden'); });
 }
 
+// clique do mouse na mochila e no mapa (no celular, quem trata é o touchControls); coordenadas lógicas = pixel da tela / escala
+const logical = (e) => { const r = canvas.getBoundingClientRect(), k = renderer.scale; return [(e.clientX - r.left) / k, (e.clientY - r.top) / k]; };
+if (canvas.addEventListener) {
+  canvas.addEventListener('pointerdown', (e) => { if (!(app.mode === 'playing' && app.session) || e.pointerType === 'touch') return; const [x, y] = logical(e); if (app.session.mouseDown(x, y)) e.preventDefault(); });
+  canvas.addEventListener('pointermove', (e) => { if (!(app.mode === 'playing' && app.session) || e.pointerType === 'touch') return; const [x, y] = logical(e); app.session.mouseMove(x, y); });
+}
 // roda do mouse: afasta/aproxima (só durante a partida)
 if (canvas.addEventListener) canvas.addEventListener('wheel', (e) => {
   if (!(app.mode === 'playing' && app.session)) return;
-  e.preventDefault(); app.session.zoom(e.deltaY > 0 ? +1 : -1);
+  e.preventDefault(); const inv = app.session.inventory;
+  if (inv && inv.open) { inv.scrollBy(e.deltaY > 0 ? 1 : -1); return; }         // mochila aberta: a roda rola a grade (não muda o zoom)
+  app.session.zoom(e.deltaY > 0 ? +1 : -1);
 }, { passive: false });
 
 function update(dt) {

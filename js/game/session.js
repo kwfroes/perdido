@@ -37,10 +37,13 @@ import { LightingMixin } from './lighting.js';
 import { CanoeMixin } from './canoe.js';
 import { CavesMixin } from './caves.js';
 import { HomeMixin } from './home.js';
-import { HouseInMixin } from './houseIn.js';
+import { HouseInMixin, houseLevel } from './houseIn.js';
 import { HuntMixin } from './hunt.js';
 import { FarmMixin } from './farm.js';
 import { SwimMixin } from './swim.js';
+import { VillagesMixin } from './villages.js';
+import { NpcMixin } from './npcs.js';
+import { GpsMixin } from './gps.js';
 import { RiverMixin } from './river.js';
 import { computeDepth } from '../world/depth.js';
 import { ProgressMixin } from './progress.js';
@@ -123,8 +126,11 @@ export class Session {
     this.initHunt();                                                           // 5C.1: caça e pesca                                                      // 5B: casa, cama, baú, bancada, abrigo
     this.placeCaves(save && save.caves);
     this.initRiver();                                                          // correnteza dos rios
+    this.initVillages(save);
+    this.initGps(save);                                                        // Interface 2: destino e GPS
+    this.initNpcs();                                                           // 6B: moradores (posição calculada pela agenda)                                                   // 6A: vilas nas ilhas novas (antes da roça e das ruínas)
     this.initFarm(save);                                                       // 5C.2: roça                                       // 5A: entradas das cavernas (só 400x400)
-    this.torch = save && save.torch && save.torch.left > 0 ? { left: save.torch.left } : null;
+    this.torch = save && save.torch && save.torch.left > 0 ? { left: save.torch.left } : null; this.stub = save && save.torchStub && save.torchStub.left > 0 ? { left: save.torchStub.left } : null;
     this.camera = new Camera(WORLD_W, WORLD_H);
     this.interaction = new Interaction();
     this.dialog = new Dialog();
@@ -140,7 +146,7 @@ export class Session {
     renderer.onZoom = () => { this.camera.snapTo(...this.camTarget(), renderer.width, renderer.height); this.toast(`Zoom ${renderer.scale}x`, 1.2); };
     input.reset();
     if (save && save.scene && Number.isInteger(save.scene.cave) && this.caveList[save.scene.cave]) this.enterCave(save.scene.cave, { x: save.player.x, y: save.player.y });
-    else if (save && save.scene && save.scene.house) { const h = this.homes.find(x => x.id === save.scene.house); if (h) this.enterHouse(h, { x: save.player.x, y: save.player.y }); }
+    else if (save && save.scene && save.scene.house) { const h = this.homes.find(x => x.id === save.scene.house); if (h) { if (save.scene.upper && houseLevel(h.type) >= 3) { this.enterHouse(h); this.useStair('up'); this.player.x = save.player.x; this.player.y = save.player.y; } else this.enterHouse(h, { x: save.player.x, y: save.player.y }); } }
   }
   makeObject(o) {
     const a = this.assets, sp = o.type.split('_')[0];                       // 'banana_4' -> 'banana'; as estações decidem quando há fruta
@@ -173,8 +179,8 @@ export class Session {
       boat: { state: b.state, x: Math.round(b.x * 10) / 10, y: Math.round(b.y * 10) / 10, dir: b.dir, hasPaddle: b.hasPaddle, built: this.builtCanoe,
         wear: { dur: Math.round(this.canoe.dur), built: this.canoe.built, repairs: this.canoe.repairs, broken: this.canoe.broken } },
       items: { ...this.items }, durability: { ...this.dur }, delta: (this._over ? this._over.delta : this.delta).toJSON(),
-      scene: this.cave ? (this.cave.isHouse ? { house: this.cave.home.id } : { cave: this.cave.id }) : null, caves: this.cavesToJSON(), torch: this.torch && this.torch.left > 0 ? { left: Math.round(this.torch.left) } : null,
-      vitals: this.vitals.toJSON(), traits: { ...this.vitals.traits }, fires: this.fires.toJSON(), homes: this.homesToJSON(), farm: this.farmToJSON(), skills: this.skills.toJSON(), legends: this.legends.toJSON(), caught: [...(this.caught || [])], bed: this.bed ? { x: Math.round(this.bed.x), y: Math.round(this.bed.y), ...(this.bed.house ? { house: this.bed.house } : {}) } : null, furnaces: this.furnaces.toJSON(),
+      scene: this.cave ? (this.cave.isHouse ? { house: this.cave.home.id, upper: !!this.cave.upper } : { cave: this.cave.id }) : null, caves: this.cavesToJSON(), torch: this.torch && this.torch.left > 0 ? { left: Math.round(this.torch.left) } : null, torchStub: this.stub && this.stub.left > 0 ? { left: Math.round(this.stub.left) } : null,
+      vitals: this.vitals.toJSON(), traits: { ...this.vitals.traits }, fires: this.fires.toJSON(), homes: this.homesToJSON(), farm: this.farmToJSON(), gps: this.gpsToJSON(), villages: this.villagesToJSON(), skills: this.skills.toJSON(), legends: this.legends.toJSON(), caught: [...(this.caught || [])], bed: this.bed ? { x: Math.round(this.bed.x), y: Math.round(this.bed.y), ...(this.bed.house ? { house: this.bed.house, upper: !!this.bed.upper } : {}) } : null, furnaces: this.furnaces.toJSON(),
       bundles: this.bundles.map(b => ({ id: b.id, x: b.x, y: b.y, items: { ...b.items }, durability: { ...b.durability }, xp: { ...(b.xp || {}) }, ...(b.cave !== undefined ? { cave: b.cave } : {}) })),
     };
   }
@@ -241,18 +247,20 @@ export class Session {
     if (inv.open) {
       const h = inv.hitTest(x, y); if (!h) return true;
       if (h.type === 'close' || h.type === 'outside') inv.open = false;
-      else if (h.type === 'tab') { if (inv.tab !== h.tab) inv.switchTab(); }
+      else if (h.type === 'tab') { if (inv.tab !== h.tab) { inv.tab = h.tab; inv.cat = 0; inv.sel = 0; inv.scroll = 0; inv.msg = null; } }
       else if (h.type === 'slot') inv.sel = h.i;
       else if (h.type === 'scroll') inv.scrollBy(h.d);
       else if (h.type === 'recipe') { if (inv.sel === h.i) this.craftSelected(); else { inv.sel = h.i; inv.msg = null; } }   // 2º toque na receita fabrica
       else if (h.type === 'craft') this.craftSelected();
-      else if (h.type === 'legend') this.makeLegend(Object.keys(LEGENDS)[inv.sel], ['simples', 'curada', 'ritual'][inv.ltier || 0]);
+      else if (h.type === 'legend') this.makeLegend(inv.legendKey(), ['simples', 'curada', 'ritual'][inv.ltier || 0]);
+      else if (h.type === 'cat') inv.setCat(h.i);
+      else if (h.type === 'skillRow') { inv.sel = h.i; inv.msg = null; }
       else if (h.type === 'legendRow') { inv.sel = h.i; inv.msg = null; }
       else if (h.type === 'ltier') { inv.ltier = h.i; inv.msg = null; }
       else if (h.type === 'eat') { if (inv.chest) this.chestMove(inv.tab === 'items'); else this.useSelected(); }
       return true;
     }
-    if (this.overview.open) { this.overview.open = false; return true; }
+    if (this.overview.open) return this.mapTap(x, y);                                // Interface 2: toque/clique no mapa marca o destino
     if (this.dialog.isOpen) { this.dialog.advance(); return true; }
     return false;
   }
@@ -270,7 +278,9 @@ export class Session {
     if (input.wasPressed('F3')) state.debugLevel = (state.debugLevel + 1) % 3;
     if (input.wasPressed('F1')) state.hintTime = state.hintTime > 0 ? 0 : 12;                 // A1: F1 mostra/esconde a barra de teclas
     if (input.wasPressed('F4')) { if (this.cave) this.toast(this.cave.isHouse ? 'Você está em casa. A porta fica embaixo.' : 'Sem mapa aqui dentro. A saída fica na parede de cima.', 2); else overview.toggle(); }
+    if (input.wasPressed('KeyG') && !overview.open && !this.terminal.open && !this.inventory.open && !dialog.isOpen) this.toggleGps();   // G: liga/desliga o GPS
     if (input.wasPressed('KeyK')) this.copyCode();
+    if (input.wasPressed('KeyT') && !this.terminal.open && !this.inventory.open && !this.dialog.isOpen) { if (this.torch && this.torch.left > 0) this.snuffTorch(); else if (this.stub && this.stub.left > 0) this.lightTorch(); }   // T: apaga / reacende a tocha
     if (input.wasPressed('Minus') || input.wasPressed('NumpadSubtract')) this.zoom(+1);      // afasta: vê mais mundo
     if (input.wasPressed('Equal') || input.wasPressed('NumpadAdd')) this.zoom(-1);          // aproxima
     const act = input.wasPressed('KeyE') || input.wasPressed('Space') || input.wasPressed('Enter');
@@ -280,17 +290,18 @@ export class Session {
     if (this.inventory.open) {
       const inv = this.inventory; inv.nearBench = this.nearBench(); inv.nearSea = this.nearSea();
       if (input.wasPressed('Escape')) inv.open = false;
-      if (input.wasPressed('Tab') || input.wasPressed('KeyQ')) inv.switchTab();
+      if (input.wasPressed('Tab')) inv.switchTab();
+      if (input.wasPressed('KeyQ')) inv.switchCat();                                 // Interface 1: Q troca a categoria
       const n = inv.listFor(this.items).length;
       if (inv.tab === 'craft' && act) this.craftSelected();
-      else if (inv.tab === 'legends' && act) this.makeLegend(Object.keys(LEGENDS)[inv.sel], ['simples', 'curada', 'ritual'][inv.ltier || 0]);
+      else if (inv.tab === 'legends' && act) this.makeLegend(inv.legendKey(), ['simples', 'curada', 'ritual'][inv.ltier || 0]);
       else if (inv.chest && act) this.chestMove(inv.tab === 'items');              // 5B: baú aberto: E guarda / pega
       else if (inv.tab === 'items' && act) this.useSelected();
       if (input.wasPressed('ArrowRight') || input.wasPressed('KeyD')) this.inventory.move(1, 0, n);
       if (input.wasPressed('ArrowLeft') || input.wasPressed('KeyA')) this.inventory.move(-1, 0, n);
       if (input.wasPressed('ArrowDown') || input.wasPressed('KeyS')) this.inventory.move(0, 1, n);
       if (input.wasPressed('ArrowUp') || input.wasPressed('KeyW')) this.inventory.move(0, -1, n);
-    } else if (overview.open) { if (input.wasPressed('Escape')) overview.open = false; }
+    } else if (overview.open) { if (input.wasPressed('Escape')) overview.open = false; else this.mapKeys(input); }
     else if (dialog.isOpen) {
       if (act) dialog.advance();
       if (input.wasPressed('Escape')) dialog.close();
@@ -307,6 +318,8 @@ export class Session {
       this.fishInput(act, input);
     } else if (this.placing) {
       this.placeStep(act);
+    } else if (act && this.interaction.target && this.interaction.target.npc) {
+      this.talkTo(this.interaction.target.npc);
     } else if (act && (this.boat.sailing || this.interaction.target)) {
       if (!this.boatAction() && !this.fieldAction() && this.interaction.target) dialog.show(this.interaction.target.label, this.interaction.target.text);
     }
@@ -319,9 +332,9 @@ export class Session {
       else this._holdT = 0;
       if (act) this._holdT = 0;
     }
-    const locked = dialog.isOpen || overview.open || this.inventory.open || this.terminal.open || !!(player.swing && player.swing.t < 0.12);
-    const m0 = this.clock.minutes; this.clock.paused = locked; this.clock.advance(dt); const gameMin = Math.max(0, Math.min(60, this.clock.minutes - m0));   // terminal pulando dias não conta                            // o tempo para com o diálogo ou o mapa abertos
-    this.weatherDt = locked ? 0 : dt; this.weather.update(this.clock.minutes, this.weatherDt); this.water.windOff = this.weather.windOff;
+    const ui = dialog.isOpen || overview.open || this.inventory.open || this.terminal.open, locked = ui || !!(player.swing && player.swing.t < 0.12);   // o golpe no ar trava o jogador, mas NÃO o relógio nem o clima (a chuva não pode parar a cada golpe)
+    const m0 = this.clock.minutes; this.clock.paused = ui; this.clock.advance(dt); const gameMin = Math.max(0, Math.min(60, this.clock.minutes - m0));   // terminal pulando dias não conta                            // o tempo para com o diálogo ou o mapa abertos
+    this.weatherDt = ui ? 0 : dt; this.weather.update(this.clock.minutes, this.weatherDt); this.water.windOff = this.weather.windOff;
     this.fauna.night = this.clock.isNight; this.fauna.season = this.clock.info.season;
     if (this.sleeping && !locked) this.sleepStep(dt);
     if (!locked) { this.shotsStep(dt); this.fishStep(dt); this.groundStep(dt); }
@@ -342,7 +355,8 @@ export class Session {
         if (Math.hypot(f.x - player.x, f.y - player.y) < 400) this.toast(`O forno terminou: ${Object.entries(items).map(([k, n]) => `${n} ${ITEMS[k].label.toLowerCase()}`).join(', ')}.`, 2.5);
       for (const f of this.furnaces.list) if (f.obj) { const k = this.furnaces.frame(f, this.time); if (f.obj._frame !== k) { f.obj._frame = k; f.obj.img = this.assets[k]; } }
       if (this.placing) this.placeTrack();
-      this.riverStep(); this.taskStep(gameMin); this.farmStep(gameMin); if (!locked) this.exploreStep(); if (gameMin > 0) this.legendStep(); this.torchStep(gameMin); if (this.cave && !locked) this.caveStep(dt);
+      this.riverStep(); this.taskStep(gameMin); this.farmStep(gameMin); if (!locked) { this.villageStep(); this.gpsStep(); }
+      if (!locked) this.npcStep(dt); if (!locked) this.exploreStep(); if (gameMin > 0) this.legendStep(); this.torchStep(gameMin); if (this.cave && !locked) this.caveStep(dt);
       { const st = wearStage(this.canoeFrac); this.boat.wearStage = st; const c = this.canoeObj, im = this.assets.canoeEmptyWorn && this.assets.canoeEmptyWorn[st]; if (c && im && c.img !== im) c.img = im; }
     }
     { // S1: status (pausa junto com o relógio)
@@ -356,7 +370,8 @@ export class Session {
         if (lowHp && !this._warnHp) this.toast('Sua vida está baixa!', 3); this._warnHp = lowHp;
         const cold = v.res <= 0; if (cold && !this._warnC) this.toast('Você está com frio: cansa mais e não se recupera. Procure uma fogueira.', 4); this._warnC = cold; }
     }
-    this.overview.bundles = this.bundles.filter(b => b.cave === undefined); this.overview.caves = this.caveList.map(c => ({ x: c.x, y: c.y, seen: this.caveSaved.visited.has(c.id) }));
+    this.overview.bundles = this.bundles.filter(b => b.cave === undefined); this.overview.caves = this.caveList.map(c => ({ x: c.x, y: c.y, seen: this.caveSaved.visited.has(c.id) })); this.overview.villages = this.villages.map(v => ({ x: v.x, y: v.y, seen: this.villageSaved.seen.has(v.isle) }));
+    this.overview.wp = this.gps.wp; this.overview.gpsOn = this.gps.on;
     this.overview.canoePos = this.boat.state === 'beached' || this.boat.state === 'none' ? null : { x: this.boat.x, y: this.boat.y };
     if (!this.cave) this.fauna.update(dt, player, Math.round(this.camera.x), Math.round(this.camera.y), renderer.width, renderer.height);
     if (this.wreck) this.interaction.target = null;
@@ -373,6 +388,7 @@ export class Session {
       const t = this.interaction.target, near = this.fauna.nearest(player.x, player.y, CONFIG.INTERACT_RANGE + 6);
       if (near) { const c = t && (t.hit || t.collider), dObj = c ? Math.hypot(player.x - Math.min(Math.max(player.x, c.x), c.x + c.w), player.y - Math.min(Math.max(player.y, c.y), c.y + c.h)) : Infinity;
         if (near.dist < dObj) this.interaction.target = near.target; }
+      { const nn = this.npcNear(player.x, player.y - 10, 34); if (nn) this.interaction.target = { npc: nn.target, label: this.npcLabel(nn.target), text: '', x: nn.target.x, y: nn.target.y }; }   // 6B: morador perto
       // 5C.1: minhoca e sombra de peixe (perto); bicho no alcance do arco; água à frente (vara) — só se não houver alvo melhor
       const ps = this.pseudoTarget(); if (ps) this.interaction.target = ps;
       else if (!this.interaction.target) { const b = this.bowTarget(); if (b) this.interaction.target = b; else { const ft = this.fillTarget() || this.fishTarget() || this.farmTarget(); if (ft) this.interaction.target = ft; } } }
@@ -411,13 +427,14 @@ export class Session {
 
     // objetos visíveis já vêm ordenados por y; o jogador entra na posição certa (Y-sort sem reordenar)
     const vis = this.index.visible(camX - 8, camY - 8, camX + vw + 8, camY + vh + 8, this._vis);
-    const fv = this.cave ? [] : this.fauna.visible(camX - 8, camY - 8, camX + vw + 8, camY + vh + 8, this._fvis), air = [];
+    const fv0 = this.cave ? [] : this.fauna.visible(camX - 8, camY - 8, camX + vw + 8, camY + vh + 8, this._fvis), air = [];
+    const nv = this.npcVisible(camX, camY, camX + vw, camY + vh), fv = nv.length ? [...fv0, ...nv.map(n => ({ npc: n, sortY: n.y }))].sort((a, b) => a.sortY - b.sortY) : fv0;   // 6B: moradores na mesma ordem
     // três listas já ordenadas por y (objetos, animais, jogador) intercaladas: Y-sort sem reordenar
     let drawn = false, j = 0;
     const drawPlayer = () => { if (this.wreck) this.drawWreck(ctx); else if (!this.boat.sailing && player.swimming && this.drawSwim(ctx)) { /* nadando */ } else if (this.boat.sailing) this.boat.draw(ctx, assets, player.characterId); else { this.drawHandTorch(ctx, false); if (!this.drawSwinging(ctx)) player.draw(ctx, assets.characters[player.characterId]); this.drawHandTorch(ctx, true); } };
     const moored = this.boat.state === 'moored' ? this.boat : null; let mooredDrawn = !moored;
     const drawMooredUpTo = (y) => { if (!mooredDrawn && moored.sortY <= y) { moored.draw(ctx, assets, player.characterId); mooredDrawn = true; } };
-    const drawAnimalsUpTo = (y) => { while (j < fv.length && fv[j].sortY <= y) { const e = fv[j++]; if (e.alt > 2) air.push(e); else this.fauna.drawEntity(ctx, e, assets); } };
+    const drawAnimalsUpTo = (y) => { while (j < fv.length && fv[j].sortY <= y) { const e = fv[j++]; if (e.npc) this.drawNpc(ctx, e.npc); else if (e.alt > 2) air.push(e); else this.fauna.drawEntity(ctx, e, assets); } };
     for (const o of vis) {
       drawAnimalsUpTo(o.sortY - 0.001); drawMooredUpTo(o.sortY - 0.001);
       if (!drawn && player.sortY < o.sortY) { drawAnimalsUpTo(player.sortY - 0.001); drawPlayer(); drawn = true; }
@@ -429,7 +446,7 @@ export class Session {
     drawAnimalsUpTo(Infinity); drawMooredUpTo(Infinity);
     for (const e of air) this.fauna.drawEntity(ctx, e, assets);       // quem está voando passa por cima das copas
     if (this.cave) this.drawBats(ctx);
-    this.drawShots(ctx); this.drawFishing(ctx);
+    this.drawBees(ctx, camX, camY, vw, vh); this.drawShots(ctx); this.drawFishing(ctx);
     this.drawNight(ctx, camX, camY, vw, vh);                                     // luz do dia (com a luz das fogueiras)
     this.drawPlacing(ctx);
 
@@ -442,7 +459,8 @@ export class Session {
 
     this.dialog.draw(ctx, vw, vh);
     this.inventory.vitals = this.vitals; this.inventory.skills = this.skills; this.inventory.game = this; this.inventory.bundles = this.bundles; this.inventory.draw(ctx, vw, vh, this.items, this.assets.itemIcons, this.dur);
-    drawHud(ctx, { ...state, touch: this.touchMode, vitals: this.vitals, legends: this.legends.hud(this.clock.minutes), legendIcons: this.assets.legendIcons, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
+    drawHud(ctx, { ...state, hintTime: this.inventory.open ? 0 : state.hintTime, touch: this.touchMode, vitals: this.vitals, legends: this.legends.hud(this.clock.minutes), legendIcons: this.assets.legendIcons, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
+    this.drawGps(ctx, vw, vh, Math.round(this.camera.x), Math.round(this.camera.y));   // Interface 2: minimapa, bússola e seta
     this.drawPlaceButtons(ctx, vw, vh);
     this.drawTask(ctx, vw, vh);
     this.drawSleep(ctx, vw, vh);
@@ -474,4 +492,4 @@ function installMixins(target, ...mixins) {
     Object.defineProperty(target.prototype, k, d);
   }
 }
-installMixins(Session, GatheringMixin, StationsMixin, PlacementMixin, LightingMixin, CanoeMixin, CavesMixin, HomeMixin, ProgressMixin, LegendsMixin, HouseInMixin, HuntMixin, FarmMixin, SwimMixin, RiverMixin);
+installMixins(Session, GatheringMixin, StationsMixin, PlacementMixin, LightingMixin, CanoeMixin, CavesMixin, HomeMixin, ProgressMixin, LegendsMixin, HouseInMixin, HuntMixin, FarmMixin, SwimMixin, VillagesMixin, NpcMixin, GpsMixin, RiverMixin);

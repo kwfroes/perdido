@@ -21,11 +21,11 @@ export class FarmMixin {
     const f = save && save.farm;
     this.farm = { tilled: new Set(f && f.tilled || []), plots: new Map(), seeded: !!(f && f.seeded), regrow: new Map(Object.entries(f && f.regrow || {}).map(([k, v]) => [k, +v || 0])) };   // regrow: minutos (ponderados) parado
     for (const p of (f && f.plots) || []) if (p && p.k) this.farm.plots.set(p.k, { k: p.k, crop: p.crop || null, grow: +p.grow || 0, dry: +p.dry || 0, water: +p.water || 0, state: p.state || null });
-    if (this.world.W >= 400) { this.placeWildCassava(); if (!this.farm.seeded) this.seedAbandonedFarm(); }
+    if (this.world.W >= 400) { this.placeWildCassava(); if (!this.farm.seeded) this.seedAbandonedFarm(); else if (f && f.old) this.restoreOldFarm(f.old); this.placeRuins(); }
     this.farm.seeded = true;
     for (const p of this.farm.plots.values()) this.attachPlot(p);
   }
-  farmToJSON() { return { regrow: Object.fromEntries([...this.farm.regrow].filter(([k, v]) => this.farm.tilled.has(k) && v > 0).map(([k, v]) => [k, Math.round(v)])), tilled: [...this.farm.tilled], plots: [...this.farm.plots.values()].map(p => ({ k: p.k, crop: p.crop, grow: Math.round(p.grow), dry: Math.round(p.dry), water: Math.round(p.water), state: p.state })), seeded: true }; }
+  farmToJSON() { return { ...(this.oldFarm ? { old: this.oldFarm } : {}), regrow: Object.fromEntries([...this.farm.regrow].filter(([k, v]) => this.farm.tilled.has(k) && v > 0).map(([k, v]) => [k, Math.round(v)])), tilled: [...this.farm.tilled], plots: [...this.farm.plots.values()].map(p => ({ k: p.k, crop: p.crop, grow: Math.round(p.grow), dry: Math.round(p.dry), water: Math.round(p.water), state: p.state })), seeded: true }; }
   bestOf(list) { for (const [item, tool] of list) if (this.items[item]) return { item, tool }; return null; }
   // ---------- plantas (objetos) ----------
   plotStage(p) { if (!p.crop) return 0; const C = CROPS[p.crop], d = p.grow / 1440; let s = 1; for (let i = 1; i < 5; i++) if (d >= C.stages[i]) s = i; return Math.min(4, Math.max(1, s)); }
@@ -159,12 +159,20 @@ export class FarmMixin {
     }
   }
   // ---------- roça abandonada: casa velha + roça largada (uma por mundo; às vezes numa ilhota) ----------
+  // ao carregar: a casa velha e a estaca da roça abandonada voltam no mesmo lugar (as covas vêm do save)
+  restoreOldFarm(o) {
+    if (!o || !Number.isFinite(o.x)) return; this.oldFarm = o;
+    for (const ob of this.index.near(o.x - 180, o.y - 120, o.x + 180, o.y + 140, []).slice()) if (ob.type !== 'canoe' && ob.type !== 'paddle' && !ob.caveId && !ob.plot) this.removeObject(ob);
+    if (!this.delta.removed.has('roca-velha:casa')) this.addObject({ type: 'casa_ruina', x: o.x, y: o.y }, 'roca-velha:casa');
+    if (!this.delta.removed.has('roca-velha:estaca')) this.addObject({ type: 'roca_estaca', x: o.x + 88, y: o.y + 40 }, 'roca-velha:estaca');
+  }
   seedAbandonedFarm() {
     const W = this.world, rng = mulberry32(streamSeed(W.key || W.code, 'roca-velha')), st = W.start, wantIslet = rng() < 0.4;
     const ok = (tx, ty) => { for (let dy = -4; dy <= 3; dy++) for (let dx = -5; dx <= 5; dx++) { const x = tx + dx, y = ty + dy; if (x < 2 || y < 2 || x >= W.W - 2 || y >= W.H - 2) return false; const t = W.terrain[y * W.W + x]; if (t === TR.WATER || t === TR.SAND) return false; } return true; };
     let spot = null;
     for (const pass of wantIslet ? ['islet', 'main'] : ['main']) for (let tries = 0; tries < 6000 && !spot; tries++) {
-      const tx = 6 + Math.floor(rng() * (W.W - 12)), ty = 6 + Math.floor(rng() * (W.H - 12)), isl = !!(W.islet && W.islet[ty * W.W + tx]);
+      const tx = 6 + Math.floor(rng() * (W.W - 12)), ty = 6 + Math.floor(rng() * (W.H - 12)), il = W.islet ? W.islet[ty * W.W + tx] : 0, isl = il > 0 && il < 100;   // 6A: ilhas de vila (101+) não
+      if (il > 100) continue;
       if ((pass === 'islet') !== isl || Math.hypot(tx - st.tx, ty - st.ty) < 30 || !ok(tx, ty)) continue;
       if (this.caveList && this.caveList.some(c => Math.hypot(c.tx - tx, c.ty - ty) < 12)) continue; spot = [tx, ty];
     }
@@ -177,6 +185,25 @@ export class FarmMixin {
       if (i % 3 === 2) return;                                                  // capinado, mas vazio (mal arado)
       this.farm.plots.set(k, i % 2 ? { k, crop: 'mandioca', grow: CROPS.mandioca.stages[4] * 1440, dry: 0, water: 0, state: null } : { k, crop: 'milho', grow: 0, dry: 0, water: 0, state: 'velho' }); });
   }
+  // Casas e vilas: 3–5 ruínas dos 3 povos espalhadas (só 400x400), por semente; revirar dá material uma vez
+  placeRuins() {
+    const W = this.world; if (W.W < 400) return; const rng = mulberry32(streamSeed(W.key || W.code, 'ruinas')), st = W.start, n = 3 + Math.floor(rng() * 3);
+    const types = ['oca_ruina', 'casa_ruina', 'palafita_ruina'], placed = [];
+    const ok = (tx, ty) => { for (let dy = -4; dy <= 1; dy++) for (let dx = -4; dx <= 4; dx++) { const x = tx + dx, y = ty + dy; if (x < 2 || y < 2 || x >= W.W - 2 || y >= W.H - 2) return false; const t = W.terrain[y * W.W + x]; if (t === TR.WATER) return false; } return true; };
+    for (let tries = 0; tries < 8000 && placed.length < n; tries++) {
+      const tx = 6 + Math.floor(rng() * (W.W - 12)), ty = 6 + Math.floor(rng() * (W.H - 12)), type = types[Math.floor(rng() * 3)];
+      if (Math.hypot(tx - st.tx, ty - st.ty) < 25 || !ok(tx, ty)) continue;
+      if ((this.villages || []).some(v => Math.hypot(v.x / TS - tx, v.y / TS - ty) < 30)) continue;   // 6A: longe das vilas
+      if (placed.some(p => Math.hypot(p[0] - tx, p[1] - ty) < 40) || (this.oldFarm && Math.hypot(this.oldFarm.tx - tx, this.oldFarm.ty - ty) < 20)) continue;
+      if (this.caveList && this.caveList.some(c => Math.hypot(c.tx - tx, c.ty - ty) < 12)) continue;
+      if (type === 'palafita_ruina') { let near = false; for (let dy = -4; dy <= 5 && !near; dy++) for (let dx = -5; dx <= 5; dx++) if (W.at(tx + dx, ty + dy) === TR.WATER) { near = true; break; } if (!near) continue; }
+      const x = tx * TS + 16, y = ty * TS + 20;
+      for (const o of this.index.near(x - 100, y - 110, x + 100, y + 40, []).slice()) if (o.type !== 'canoe' && o.type !== 'paddle' && !o.caveId && !o.plot && o.type !== 'casa_ruina') this.removeObject(o);
+      const o = this.addObject({ type, x, y }, `ruina:${placed.length}`); o.ruin = true; placed.push([tx, ty]);
+    }
+    this.ruins = placed.map(([tx, ty]) => ({ tx, ty }));
+    const old = this.objects.find(o => o.id === 'roca-velha:casa'); if (old) old.ruin = true;   // a casa velha da roça também se revira
+  }
   drawFarmGround(ctx, camX, camY, vw, vh) {
     const img = this.assets.farm_terra; if (!img || this.cave) return; const T = TS, now = this.clock.minutes, seca = this.clock.info.season === 2 && !this.weather.raining;
     const x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = Math.floor((camX + vw) / T) + 1, y1 = Math.floor((camY + vh) / T) + 1;
@@ -186,9 +213,9 @@ export class FarmMixin {
       ctx.drawImage(img, f * T, 0, T, T, tx * T, ty * T, T, T); }
   }
   // ---------- terreno limpo para a base da casa ----------
-  houseFootprint(x, y) { return { x0: x - 72, y0: y - 84, x1: x + 72, y1: y + 6 }; }
-  houseBlockers(x, y) {
-    const f = this.houseFootprint(x, y), out = [];
+  houseFootprint(x, y, half = 72) { return { x0: x - half, y0: y - 84, x1: x + half, y1: y + 6 }; }
+  houseBlockers(x, y, half = 72) {
+    const f = this.houseFootprint(x, y, half), out = [];
     for (const o of this.index.near(f.x0 - 30, f.y0 - 30, f.x1 + 30, f.y1 + 30, [])) {
       if (!o.type || o.home || o.plot || o.caveId || o.type === 'canoe' || o.type === 'paddle' || o.type === 'buraco_toco') continue;
       if (o.x < f.x0 || o.x > f.x1 || o.y < f.y0 || o.y > f.y1) continue;
