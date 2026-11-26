@@ -100,7 +100,7 @@ export class NpcMixin {
       if (!first && !s.hidden && !n.hidden) { const gap = Math.hypot(s.x - n.x, s.y - n.y);       // visível: nunca salta; se a agenda o deixou para trás, anda até ela
         if (gap > 6 && (n.catchUp || gap > 40)) { const step = NPC.SPEED * 1.6 * dt; if (gap <= step) { n.catchUp = false; } else { nx = n.x + (s.x - n.x) / gap * step; ny = n.y + (s.y - n.y) / gap * step; walkBack = true; } } else n.catchUp = false; }
       const moved = Math.hypot(nx - n.x, ny - n.y); n.seen = true; n.x = nx; n.y = ny; n.state = walkBack ? 'WALKING' : s.state; n.hidden = s.hidden; n.task = s.task;
-      const fx = walkBack ? s.x - n.x : s.face[0], fy = walkBack ? s.y - n.y : s.face[1]; if (Math.abs(fx) + Math.abs(fy) > 0.1) n.face = [fx, fy]; n.animT += dt; n.moving = moved > 0.05;
+      const fx = walkBack ? s.x - n.x : s.face[0], fy = walkBack ? s.y - n.y : s.face[1]; if (Math.abs(fx) + Math.abs(fy) > 0.1) n.face = [fx, fy]; n.animT += dt; n.moving = moved > 0.05; if (n.moving && (n.state === 'WALKING' || n.state === 'CARRYING')) n.stepAcc = (n.stepAcc || 0) + moved;   // a passada anda por DISTÂNCIA (como a do jogador), não por tempo: os pés acompanham o chão
     }
   }
   // entidades para desenhar (mesma ordenação dos animais)
@@ -114,7 +114,8 @@ export class NpcMixin {
     if (n.state === 'WORKING' && row0 !== undefined && (CAN_ANIM[n.role] || []).includes(place)) { const im = a[`npc_${n.sheet}_work`]; if (im) { const row = row0, f = Math.floor(n.animT * 4) % 3, left = n.face[0] < 0;
       if (left) { ctx.save(); ctx.translate(px + cw, py); ctx.scale(-1, 1); ctx.drawImage(im, f * cw, row * ch, cw, ch, 0, 0, cw, ch); ctx.restore(); } else ctx.drawImage(im, f * cw, row * ch, cw, ch, px, py, cw, ch); return; } }
     const im = a[`npc_${n.sheet}_walk`]; if (!im) return; const row = S.walk.rows[this.npcDir(n)];
-    const col = n.state === 'WALKING' || n.state === 'CARRYING' ? S.walk.steps[Math.floor(n.animT * 8) % 4] : S.walk.idle;
+    const sd = (this.npcDir(n) === 'left' || this.npcDir(n) === 'right') ? 9.5 : 10.5;                           // px por quadro da sequência (mesmos valores do jogador)
+    const col = n.state === 'WALKING' || n.state === 'CARRYING' ? S.walk.steps[Math.floor((n.stepAcc || 0) / sd) % 4] : S.walk.idle;
     ctx.drawImage(im, col * cw, row * ch, cw, ch, px, py, cw, ch);
     if (n.state === 'CARRYING') { ctx.fillStyle = '#8a5a2b'; ctx.fillRect(Math.round(n.x) - 6, py + 22, 12, 8); ctx.fillStyle = '#c99a5b'; ctx.fillRect(Math.round(n.x) - 5, py + 22, 10, 2); }   // cesto (provisório, por código)
   }
