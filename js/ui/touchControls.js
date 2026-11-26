@@ -51,9 +51,9 @@ export class TouchControls {
     base.addEventListener('pointerup', end); base.addEventListener('pointercancel', end); base.addEventListener('lostpointercapture', end);
     // AGIR (direita)
     const act = this.btn('tc-act', '<b>AGIR</b><span></span>', 'Agir (E)'); this.label = act.querySelector('span');
-    this.bindHold(act, () => this.state.actDown(), () => this.state.actUp());
+    this.bindHold(act, () => { const s = this.app.session; if (s && s.secretAct && s.secretAct()) return; this.state.actDown(); }, () => this.state.actUp());   // com o código quase completo, o AGIR é do código (não age no jogo)
     // atalhos (canto superior direito, abaixo do relógio)
-    const bar = document.createElement('div'); bar.className = 'tc-bar';
+    const bar = this.bar = document.createElement('div'); bar.className = 'tc-bar';
     const bag = this.btn('', SVG.bag, 'Mochila (I)'), map = this.btn('', SVG.map, 'Mapa (F4)'), menu = this.btn('', SVG.menu, 'Salvar e menu (F2)');
     const tab = this.tabBtn = this.btn('tc-tab', SVG.tab, 'Trocar aba (Tab)'), zin = this.zin = this.btn('', SVG.plus, 'Aproximar'), zout = this.zout = this.btn('', SVG.minus, 'Afastar');
     this.bindTap(bag, 'KeyI'); this.bindTap(map, 'F4'); this.bindTap(menu, 'F2'); this.bindTap(tab, 'Tab'); this.bindTap(zin, 'Equal'); this.bindTap(zout, 'Minus');
@@ -90,6 +90,7 @@ export class TouchControls {
     const app = this.app, s = app.session, show = app.mode === 'playing' && !!s && !app.blocked;
     if (show !== this.visible) { this.visible = show; this.root.hidden = !show; if (!show) this.state.releaseAll(); }
     if (!show) return;
+    const cb = s.hudHits && s.hudHits.clockBottom, top = cb ? Math.round(cb * (this.renderer.scale || 1)) + 6 : 48; if (top !== this._barTop) { this._barTop = top; this.bar.style.top = top + 'px'; }   // abaixo do relógio (que fica maior no toque)
     const l = actLabel(s); if (l !== this._l) { this._l = l; this.label.textContent = l; }
     const inv = !!(s.inventory && s.inventory.open); if (inv !== this._inv) { this._inv = inv; this.tabBtn.hidden = !inv; }
     const zi = this.renderer.canZoomIn(), zo = this.renderer.canZoomOut();

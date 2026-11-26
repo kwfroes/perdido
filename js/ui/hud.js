@@ -18,7 +18,7 @@ function box(ctx, text, x, y, color = '#f3e9d8', bg = 'rgba(0,0,0,0.55)') {
 }
 
 // relógio (canto superior direito): ícone de sol ou lua, hora, dia e estação
-export function drawClock(ctx, c, vw, weather) {
+export function drawClock(ctx, c, vw, weather) {   // devolve { clock, weather }: retângulos (px locais) usados pelo toque
   const txt = `${formatTime(c.hour)}  Dia ${c.day}  ${c.seasonLabel}`;
   ctx.font = 'bold 10px monospace'; const w = Math.ceil(ctx.measureText(txt).width) + 26, x = vw - w - 6, y = 5;
   ctx.fillStyle = 'rgba(24,18,12,0.85)'; ctx.fillRect(x, y, w, 16);
@@ -27,12 +27,14 @@ export function drawClock(ctx, c, vw, weather) {
   if (ph === 'night') { ctx.fillStyle = '#e8e6c8'; ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(24,18,12,1)'; ctx.beginPath(); ctx.arc(cx + 2.2, cy - 1.5, 3.8, 0, Math.PI * 2); ctx.fill(); }
   else { ctx.fillStyle = ph === 'day' ? '#ffd23f' : '#ff9a4a'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = '#f3e9d8'; ctx.fillText(txt, x + 19, y + 12);
+  const rects = { clock: { x, y, w, h: 16 }, weather: { x: x - 22, y, w: 18, h: 16 } };         // o alvo do clima existe sempre, mesmo sem o ícone
   if (weather && weather.state !== 'clear') {                       // ícone do tempo à esquerda do relógio
     const ix = x - 22, iy = y; ctx.fillStyle = 'rgba(24,18,12,0.85)'; ctx.fillRect(ix, iy, 18, 16); ctx.strokeStyle = '#d9a066'; ctx.strokeRect(ix + 0.5, iy + 0.5, 17, 15);
     ctx.fillStyle = weather.state === 'storm' ? '#9aa3b2' : '#d8dde4'; ctx.beginPath(); ctx.arc(ix + 7, iy + 7, 3.2, 0, Math.PI * 2); ctx.arc(ix + 11, iy + 6.5, 3.6, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(ix + 4, iy + 7, 11, 3);
     if (weather.state === 'rain' || weather.state === 'storm') { ctx.fillStyle = '#7fc4ff'; for (const dx of [5, 9, 13]) ctx.fillRect(ix + dx, iy + 11, 1, 3); }
     if (weather.state === 'storm') { ctx.fillStyle = '#ffd23f'; ctx.fillRect(ix + 9, iy + 10, 2, 2); ctx.fillRect(ix + 8, iy + 12, 2, 2); }
   }
+  return rects;
 }
 
 // S1: barras de Vida, Fome e Energia (+ S2 Resistência) no canto superior esquerdo; abaixo das linhas de depuração quando elas aparecem
@@ -60,6 +62,7 @@ export function drawVitals(ctx, v, x, y, t = 0, legends = null, icons = null) {
   });
   const tags = []; if (v.tired) tags.push('cansado'); if (v.warm) tags.push('aquecido'); else if (v.sheltered) tags.push('abrigado da chuva'); else if (Number.isFinite(v.res) && v.res <= 0) tags.push('com frio');
   if (tags.length) { ctx.font = '8px monospace'; ctx.fillStyle = '#f2d24a'; ctx.fillText(tags.join(' · '), x + 3, y + H + 8); }
+  return rows.map(r => r[0]);
 }
 
 // C1: barra da canoa (só remando ou consertando)
@@ -72,11 +75,17 @@ export function drawCanoeBar(ctx, c, x, y, t = 0) {
   ctx.fillStyle = blink ? '#ffffff' : f > 0.5 ? '#b07a46' : f > 0.25 ? '#e8913a' : '#e05a4a'; ctx.fillRect(x + 11, y + 3, Math.round(W * f), 4);
 }
 
+// No celular os indicadores são desenhados maiores (as barras eram pequenas demais para o dedo); o toque vale numa área um pouco maior que o desenho.
+export const HUD_TOUCH_SCALE = 1.6;
 export function drawHud(ctx, info) {
-  if (info.clock) drawClock(ctx, info.clock, info.vw, info.weather);
-  if (info.vitals) drawVitals(ctx, info.vitals, 4, info.debugLevel > 0 ? 36 : 4, info.time || 0, info.legends, info.legendIcons);
-  if (info.light) { const y = (info.debugLevel > 0 ? 36 : 4) + 4 * 9 + 5 + (info.canoe ? 24 : 12); ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(24,18,12,0.75)'; const t = '✦ ' + info.light, w = ctx.measureText(t).width + 6; ctx.fillRect(4, y - 8, w, 11); ctx.fillStyle = '#f2c46a'; ctx.fillText(t, 7, y); }
-  if (info.canoe) drawCanoeBar(ctx, info.canoe, 4, (info.debugLevel > 0 ? 36 : 4) + 4 * 9 + 5 + 12, info.time || 0);
+  const k = info.touch ? HUD_TOUCH_SCALE : 1, vy0 = info.debugLevel > 0 ? 36 : 4, hits = info.hudHits || null, gap = k > 1 ? 8 * k : 0, PADH = 3;
+  if (hits) for (const key of Object.keys(hits)) delete hits[key];
+  if (info.clock) { ctx.save(); ctx.translate(info.vw, 0); ctx.scale(k, k); const r = drawClock(ctx, info.clock, 0, info.weather); ctx.restore();
+    if (hits) for (const n of ['clock', 'weather']) { const q = r[n]; hits[n] = { x: info.vw + q.x * k - PADH, y: q.y * k - PADH, w: q.w * k + 2 * PADH, h: q.h * k + 2 * PADH }; hits.clockBottom = (r.clock.y + r.clock.h) * k; } }
+  if (info.vitals) { ctx.save(); ctx.translate(4, vy0); ctx.scale(k, k); const keys = drawVitals(ctx, info.vitals, 0, 0, info.time || 0, info.legends, info.legendIcons); ctx.restore();
+    if (hits) keys.forEach((n, i) => { hits[n] = { x: 0, y: vy0 + (2 + i * 9) * k, w: 4 + 78 * k, h: 9 * k }; }); }
+  if (info.light) { const y = vy0 + 41 * k + gap + (info.canoe ? 24 : 12) - (k > 1 ? 0 : 0); ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(24,18,12,0.75)'; const t = '✦ ' + info.light, w = ctx.measureText(t).width + 6; ctx.fillRect(4, y - 8, w, 11); ctx.fillStyle = '#f2c46a'; ctx.fillText(t, 7, y); }
+  if (info.canoe) drawCanoeBar(ctx, info.canoe, 4, vy0 + 41 * k + gap + 12, info.time || 0);
   ctx.font = '10px monospace';
   if (info.hintTime > 0 && !info.touch) {
     ctx.globalAlpha = Math.min(1, info.hintTime);

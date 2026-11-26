@@ -119,7 +119,8 @@ export class Inventory {
   // ---------- desenho ----------
   layout(vw, vh) {
     // a janela fica abaixo dos indicadores de vida/fome e das etiquetas (canto superior esquerdo, até y≈54) e centrada no resto
-    const bw = Math.min(vw - 8, 600), bh = Math.min(vh - 62, 332), x = Math.round((vw - bw) / 2), y = Math.max(56, Math.round((vh - bh) / 2)), wide = bw >= 470;
+    const bw = Math.min(vw - 8, 600), bh = Math.min(vh - 82, 332),   // 82 = 56 de cima (vida/fome) + 26 de baixo para o aviso (toast) caber abaixo da janela
+     x = Math.round((vw - bw) / 2), y = Math.max(56, Math.round((vh - bh) / 2)), wide = bw >= 470;
     const lw = wide ? 86 : 0, rw = wide ? Math.min(190, Math.round(bw * 0.35)) : Math.round(bw * 0.42), chipH = wide ? 0 : 15;
     const top = y + 24, bot = y + bh - (this.touch ? 4 : 14);
     return { x, y, bw, bh, wide, lw, rw, chipH, midX: x + lw, midW: bw - lw - rw, rx: x + bw - rw, top, bot, gx: x + lw + PAD, gy: top + chipH + 3, gw: bw - lw - rw - PAD * 2 - SB, gh: bot - (top + chipH + 3) };

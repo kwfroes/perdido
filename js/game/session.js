@@ -44,6 +44,7 @@ import { SwimMixin } from './swim.js';
 import { VillagesMixin } from './villages.js';
 import { NpcMixin } from './npcs.js';
 import { GpsMixin } from './gps.js';
+import { DevMixin } from './devTools.js';
 import { RiverMixin } from './river.js';
 import { computeDepth } from '../world/depth.js';
 import { ProgressMixin } from './progress.js';
@@ -136,7 +137,7 @@ export class Session {
     this.dialog = new Dialog();
     this.overview = new Overview(world);
     this.inventory = new Inventory();
-    this.terminal = new Terminal(this);
+    this.terminal = new Terminal(this); this.initDev();                       // tela de comandos (celular) e o código secreto
     this.chars = Object.keys(assets.characters);
     this.state = { debugLevel: CONFIG.DEBUG_LEVEL, hintTime: 9, fps: 0, frames: 0, fpsTimer: 0, toast: null };
     this.toast(this.restoreNotes.length ? this.restoreNotes.join(' ') : save ? `Jogo carregado · Dia ${this.clock.info.day}` : `Mundo ${world.code}`, 5);
@@ -207,7 +208,6 @@ export class Session {
   }
   footFreeOnLand(x, y) { const m = this.area; return x > 0 && y > 0 && x < m.W * TS && y < m.H * TS && m.at(Math.floor(x / TS), Math.floor((y - 1) / TS)) !== 3 && this.footFree(x, y); }
 
-
   // true se os pés do jogador estão dentro da água de um vau (só existe no gerador v2). Perto de uma margem de terra o desenho do tile
   // ainda mostra a faixa de areia/espuma (WATER_INSET px): enquanto os pés estão nessa faixa, o personagem ainda não está "na água".
   inFord() {
@@ -240,6 +240,7 @@ export class Session {
   craftSelected() { const it = this.inventory.craft(this.items); if (it) { this.ensureDur(); this.gain('construcao', 2); this.toast(`Você fez: ${ITEMS[it].label}!`, 2.5); } return it; }
   // toque direto no canvas (x, y lógicos). Devolve true se alguma janela usou o toque.
   tapAt(x, y) {
+    if (this.cmd.open) return this.cmd.tap(x, y);
     if (this.menu.open) return this.menu.tap(x, y);
     if (this.placing) { const h = this.placeHits, inR = (r) => r && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
       if (inR(h && h.ok)) { this.placeStep(true); return true; } if (inR(h && h.cancel)) { this.placing = null; this.toast('Cancelado.', 1.2); return true; } return false; }
@@ -262,7 +263,7 @@ export class Session {
     }
     if (this.overview.open) return this.mapTap(x, y);                                // Interface 2: toque/clique no mapa marca o destino
     if (this.dialog.isOpen) { this.dialog.advance(); return true; }
-    return false;
+    return this.hudTap(x, y);
   }
   update(dt) {
     const { input, state, player, dialog, overview, renderer } = this;
@@ -273,7 +274,8 @@ export class Session {
     if (state.toast) { state.toast.t -= dt; if (state.toast.t <= 0) state.toast = null; }
 
     // terminal (tecla ' / Backquote; pede o código na 1a vez): enquanto aberto, o jogo não recebe teclas e o tempo para
-    if (this.terminal.open) input.pressed.clear();
+    if (this.cmd.open) { if (input.wasPressed('Escape')) this.cmd.close(); input.pressed.clear(); }
+    else if (this.terminal.open) input.pressed.clear();
     else if (input.wasPressed('Backquote')) { this.terminal.show(); input.pressed.clear(); }
     if (input.wasPressed('F3')) state.debugLevel = (state.debugLevel + 1) % 3;
     if (input.wasPressed('F1')) state.hintTime = state.hintTime > 0 ? 0 : 12;                 // A1: F1 mostra/esconde a barra de teclas
@@ -325,14 +327,14 @@ export class Session {
     }
 
     { // segurar E (ou espaço) num alvo de golpe repete o golpe no ritmo da ferramenta
-      const held = !dialog.isOpen && !overview.open && !this.inventory.open && !this.boat.sailing && !this.placing && !this.menu.open && !this.task && !this.wreck && !this.sleeping && !this.fishing && (input.isDown('KeyE') || input.isDown('Space'));
+      const held = !dialog.isOpen && !overview.open && !this.inventory.open && !this.cmd.open && !this.boat.sailing && !this.placing && !this.menu.open && !this.task && !this.wreck && !this.sleeping && !this.fishing && (input.isDown('KeyE') || input.isDown('Space'));
       const tg = this.interaction.target; if (tg && this.delta.hits.get(tg.id)) this._chopIntent = true;   // árvore já começada: segurar E continua cortando
       const a = held && tg ? this.actionFor(tg) : null; this._chopIntent = false;
       if (a && a.kind === 'hit' && a.best) { this._holdT = (this._holdT || 0) + dt; if (this._holdT >= CONFIG.HIT_REPEAT * (this.vitals.tired ? 1.6 : 1)) { this._holdT = 0; this.strike(this.interaction.target, a); } }
       else this._holdT = 0;
       if (act) this._holdT = 0;
     }
-    const ui = dialog.isOpen || overview.open || this.inventory.open || this.terminal.open, locked = ui || !!(player.swing && player.swing.t < 0.12);   // o golpe no ar trava o jogador, mas NÃO o relógio nem o clima (a chuva não pode parar a cada golpe)
+    const ui = dialog.isOpen || overview.open || this.inventory.open || this.terminal.open || this.cmd.open, locked = ui || !!(player.swing && player.swing.t < 0.12);   // o golpe no ar trava o jogador, mas NÃO o relógio nem o clima (a chuva não pode parar a cada golpe)
     const m0 = this.clock.minutes; this.clock.paused = ui; this.clock.advance(dt); const gameMin = Math.max(0, Math.min(60, this.clock.minutes - m0));   // terminal pulando dias não conta                            // o tempo para com o diálogo ou o mapa abertos
     this.weatherDt = ui ? 0 : dt; this.weather.update(this.clock.minutes, this.weatherDt); this.water.windOff = this.weather.windOff;
     this.fauna.night = this.clock.isNight; this.fauna.season = this.clock.info.season;
@@ -459,13 +461,14 @@ export class Session {
 
     this.dialog.draw(ctx, vw, vh);
     this.inventory.vitals = this.vitals; this.inventory.skills = this.skills; this.inventory.game = this; this.inventory.bundles = this.bundles; this.inventory.draw(ctx, vw, vh, this.items, this.assets.itemIcons, this.dur);
-    drawHud(ctx, { ...state, hintTime: this.inventory.open ? 0 : state.hintTime, touch: this.touchMode, vitals: this.vitals, legends: this.legends.hud(this.clock.minutes), legendIcons: this.assets.legendIcons, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
+    drawHud(ctx, { ...state, hintTime: this.inventory.open ? 0 : state.hintTime, touch: this.touchMode, hudHits: this.hudHits, vitals: this.vitals, legends: this.legends.hud(this.clock.minutes), legendIcons: this.assets.legendIcons, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
     this.drawGps(ctx, vw, vh, Math.round(this.camera.x), Math.round(this.camera.y));   // Interface 2: minimapa, bússola e seta
     this.drawPlaceButtons(ctx, vw, vh);
     this.drawTask(ctx, vw, vh);
     this.drawSleep(ctx, vw, vh);
     this.menu.draw(ctx, vw, vh, this.touchMode);
     this.terminal.draw(ctx, vw, vh);                                            // por cima de tudo
+    this.cmd.draw(ctx, vw, vh);
     if (this.overview.open) this.overview.draw(ctx, vw, vh, player, this.camera);   // por cima de tudo
   }
 
@@ -492,4 +495,4 @@ function installMixins(target, ...mixins) {
     Object.defineProperty(target.prototype, k, d);
   }
 }
-installMixins(Session, GatheringMixin, StationsMixin, PlacementMixin, LightingMixin, CanoeMixin, CavesMixin, HomeMixin, ProgressMixin, LegendsMixin, HouseInMixin, HuntMixin, FarmMixin, SwimMixin, VillagesMixin, NpcMixin, GpsMixin, RiverMixin);
+installMixins(Session, GatheringMixin, StationsMixin, PlacementMixin, LightingMixin, CanoeMixin, CavesMixin, HomeMixin, ProgressMixin, LegendsMixin, HouseInMixin, HuntMixin, FarmMixin, SwimMixin, VillagesMixin, NpcMixin, GpsMixin, DevMixin, RiverMixin);

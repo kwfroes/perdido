@@ -8,7 +8,7 @@ rios que realmente descem até o mar, lagos, trilhas e vegetação por bioma.
   (1 dia de jogo = 12 min reais); sobrevivência (vida, fome, energia, resistência, morte com trouxa); ferramentas de pedra a platina;
   fogo, forno, sal; canoa; cavernas; casa em 3 estilos e 3 níveis com interior; XP e Diário; lendas; caça, pesca e roça;
   natação e correnteza; **moradores nas vilas** com rotina semanal (6B-A, já com as correções do relatório 6B-A3).
-- **Próxima etapa:** 6B-B (clima nas rotinas, ferramentas na mão, casas das vilas por dentro, despensa). Já pronta: mochila em 3 colunas (categorias, grade com rolagem e card do item; tecla **Q** troca a categoria) e o **minimapa com GPS** (tecla **G**; marque o destino no mapa **F4** com o mouse, o toque ou as setas + E).
+- **Próxima etapa:** 6B-B (clima nas rotinas, ferramentas na mão, casas das vilas por dentro, despensa). Já pronta: mochila em 3 colunas (categorias, grade com rolagem e card do item; tecla **Q** troca a categoria) e o **minimapa com GPS** (tecla **G**; marque o destino no mapa **F4** com o mouse, o toque ou as setas + E). **Comandos de desenvolvedor:** no computador, a tecla `'`; no celular, a sequência secreta de toques (veja `docs/ROADMAP.md`) abre uma tela de comandos em lista.
 - **Outros documentos:** `docs/POVOS_E_CASAS.md` (povos, NPCs, casas e prompts de arte), `docs/MISSOES.json` (missões da 6C),
   `docs/FERRAMENTAS_E_TIERS.md`, `docs/MUNDO_VILAS_CAVERNAS.md`, `docs/GERADOR_V2.md`, `docs/MOBILE.md`.
 

@@ -45,6 +45,7 @@ if (canvas.addEventListener) {
 if (canvas.addEventListener) canvas.addEventListener('wheel', (e) => {
   if (!(app.mode === 'playing' && app.session)) return;
   e.preventDefault(); const inv = app.session.inventory;
+  if (app.session.cmd && app.session.cmd.open) { app.session.cmd.scrollBy(e.deltaY > 0 ? 1 : -1); return; }
   if (inv && inv.open) { inv.scrollBy(e.deltaY > 0 ? 1 : -1); return; }         // mochila aberta: a roda rola a grade (não muda o zoom)
   app.session.zoom(e.deltaY > 0 ? +1 : -1);
 }, { passive: false });
@@ -120,6 +121,7 @@ async function main() {
     if (!save) await saveNow('new');                         // jogo novo: já ocupa o espaço escolhido
     await new Promise((resolve) => { app.wantMenu = resolve; });   // espera F2 (que salva antes de voltar)
     if (app.session && app.session.terminal) app.session.terminal.dispose();
+    if (app.session && app.session.cmd) app.session.cmd.dispose();
     app.session = null; app.slot = null;
   }
 }

@@ -53,10 +53,10 @@ export class GpsMixin {
   // clique do mouse (coordenadas lógicas): mochila e mapa. No toque, quem trata é o touchControls (não duplica).
   mouseDown(x, y) {
     if (this.touchMode) return false;
-    if (this.inventory.open || this.overview.open) return this.tapAt(x, y);
+    if (this.inventory.open || this.overview.open || this.cmd.open) return this.tapAt(x, y);
     return false;
   }
-  mouseMove(x, y) { const ov = this.overview; if (this.touchMode || !ov.open) return; const t = ov.tileAt(x, y); if (t) ov.cursor = t; }
+  mouseMove(x, y) { if (this.cmd.open) { this.cmd.hovCard = x >= (this.cmd.cardX || 1e9); return; } const ov = this.overview; if (this.touchMode || !ov.open) return; const t = ov.tileAt(x, y); if (t) ov.cursor = t; }
   gpsStep() {
     const w = this.gps.wp; if (!w || this.cave) return;
     if (this.gpsDist() <= GPS.ARRIVE) { this.gps.wp = null; this.toast('Você chegou ao destino.', 2.5); }
@@ -64,7 +64,8 @@ export class GpsMixin {
   // ---- desenho na tela (depois do HUD) ----
   drawGps(ctx, vw, vh, camX, camY) {
     if (!this.gps || !this.gps.on) return;
-    const p = this.player, M = GPS.MINI, R = GPS.RADIUS, W = this.world, x = vw - M - 7, y = 26, t = this.time;
+    const p = this.player, M = GPS.MINI, R = GPS.RADIUS, W = this.world, touch = this.touchMode, scale = this.renderer.scale || 1,
+      x = vw - M - 7 - (touch ? Math.ceil(56 / scale) : 0), y = touch ? Math.round(((this.hudHits && this.hudHits.clockBottom) || 21) + 5) : 26, t = this.time;   // no toque: abaixo do relógio grande e à esquerda dos botões
     if (this.cave) { ctx.fillStyle = 'rgba(24,18,12,0.8)'; ctx.fillRect(x, y, M, 14); ctx.font = '8px monospace'; ctx.fillStyle = '#9c8a74'; ctx.fillText('GPS: sem sinal', x + 5, y + 10); return; }
     const ptx = p.x / TS, pty = p.y / TS, sx = ptx - R, sy = pty - R, src = this.overview.canvas;
     // minimapa: recorte de (2R x 2R) tiles em volta do jogador (o que sai do mundo fica escuro)
