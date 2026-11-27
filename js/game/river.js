@@ -42,13 +42,30 @@ export class RiverMixin {
   }
   // cheia: tile de margem alagado?
   floodedAt(i) { return this.river && this.river.flooded && this.ringSet.has(i); }
+  // margem alagada: a peça vem dos vizinhos (N, L, S, O): a água CONTINUA onde o vizinho é rio ou outra margem alagada, e TERMINA em margem onde é chão
+  floodSides(tx, ty) {
+    const w = this.world, wet = (x, y) => { if (x < 0 || y < 0 || x >= w.W || y >= w.H) return true; const j = y * w.W + x; return w.terrain[j] === TR.WATER || this.ringSet.has(j); };
+    return (wet(tx, ty - 1) ? 'N' : '') + (wet(tx + 1, ty) ? 'E' : '') + (wet(tx, ty + 1) ? 'S' : '') + (wet(tx - 1, ty) ? 'W' : '');
+  }
+  // diagonais de chão: nos 4 lados a água continua, mas uma diagonal é chão → peça de CANTO INTERNO (o canto indicado é o que é chão)
+  floodCorner(tx, ty) {
+    const w = this.world, wet = (x, y) => { if (x < 0 || y < 0 || x >= w.W || y >= w.H) return true; const j = y * w.W + x; return w.terrain[j] === TR.WATER || this.ringSet.has(j); };
+    const dry = [['NW', -1, -1], ['NE', 1, -1], ['SE', 1, 1], ['SW', -1, 1]].filter(([, dx, dy]) => !wet(tx + dx, ty + dy)); return dry.length === 1 ? dry[0][0] : null;   // só 1 diagonal seca; com 2 ou mais, a peça cheia (não há canto duplo)
+  }
+  drawFlooded(ctx, tx, ty, i) {
+    const T = TS, s = this.floodSides(tx, ty), cn = s === 'NESW' ? this.floodCorner(tx, ty) : null, im0 = cn ? this.assets[`floodc_${cn}`] : null;
+    if (im0) { ctx.drawImage(im0, tx * T, ty * T); return; }
+    const key = s === 'NESW' ? `full_${(Math.floor(this.time * 1.2) + tx + ty) % 2}` : s || '-', im = this.assets[`flood_${key}`];
+    if (im) { ctx.drawImage(im, tx * T, ty * T); return; }
+    ctx.fillStyle = 'rgba(88,104,86,0.62)'; ctx.fillRect(tx * T, ty * T, T, T);                       // sem a peça: o bloco antigo
+  }
   drawRiver(ctx, camX, camY, vw, vh) {
     if (this.cave || !this.world.waterKind) return; const w = this.world, T = TS, r = this.river, t = this.time;   // mundos do gerador v1 não têm tipo de água
     const x0 = Math.max(0, Math.floor(camX / T)), y0 = Math.max(0, Math.floor(camY / T)), x1 = Math.min(w.W - 1, Math.floor((camX + vw) / T)), y1 = Math.min(w.H - 1, Math.floor((camY + vh) / T));
     const muddy = Math.max(0, Math.min(0.32, (r.level - 1.1) * 0.5));
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
       const i = ty * w.W + tx, k = w.waterKind[i];
-      if (r.flooded && this.ringSet.has(i)) { ctx.fillStyle = 'rgba(88,104,86,0.62)'; ctx.fillRect(tx * T, ty * T, T, T); ctx.fillStyle = 'rgba(210,235,240,0.45)'; ctx.fillRect(tx * T, ty * T + ((tx + Math.floor(t * 2)) % 4) * 8, T, 1); continue; }
+      if (r.flooded && this.ringSet.has(i)) { this.drawFlooded(ctx, tx, ty, i); continue; }
       if (k !== WK.RIVER && k !== WK.FORD) continue;
       if (muddy > 0.02) { ctx.fillStyle = `rgba(122,92,52,${muddy.toFixed(2)})`; ctx.fillRect(tx * T, ty * T, T, T); }
       if (this.cur.rapid[i]) {                                                    // corredeira: espuma andando no sentido da água

@@ -461,11 +461,9 @@ export class Session {
 
     this.dialog.draw(ctx, vw, vh);
     this.inventory.vitals = this.vitals; this.inventory.skills = this.skills; this.inventory.game = this; this.inventory.bundles = this.bundles; this.inventory.draw(ctx, vw, vh, this.items, this.assets.itemIcons, this.dur);
-    drawHud(ctx, { ...state, hintTime: this.inventory.open ? 0 : state.hintTime, touch: this.touchMode, hudHits: this.hudHits, vitals: this.vitals, legends: this.legends.hud(this.clock.minutes), legendIcons: this.assets.legendIcons, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
+    drawHud(ctx, { quiet: this.inventory.open || this.cmd.open, ...state, hintTime: this.inventory.open ? 0 : state.hintTime, touch: this.touchMode, hudHits: this.hudHits, vitals: this.vitals, legends: this.legends.hud(this.clock.minutes), legendIcons: this.assets.legendIcons, light: this.items.lanterna ? 'lanterna' : this.torch && this.torch.left > 0 ? `tocha ~${(this.torch.left / 60).toFixed(1).replace('.', ',')} h` : null, invBox: this.inventory.open && this.inventory.hits ? this.inventory.hits.box : null, canoe: this.boat.sailing || (this.task && this.task.kind === 'repair') ? { frac: this.canoeFrac, built: this.canoe.built } : null, time: this.time, clock: this.clock.info, weather: this.weather.now, items: this.items, vw, vh, scale: this.renderer.scale, px: player.x, py: player.y, code: this.world.code, chunks: this.cave ? `caverna ${this.cave.id}` : `${this.ground.cache.size}/${this.ground.max}` });
     this.drawGps(ctx, vw, vh, Math.round(this.camera.x), Math.round(this.camera.y));   // Interface 2: minimapa, bússola e seta
-    this.drawPlaceButtons(ctx, vw, vh);
-    this.drawTask(ctx, vw, vh);
-    this.drawSleep(ctx, vw, vh);
+    this.drawPlaceButtons(ctx, vw, vh); this.drawTask(ctx, vw, vh); this.drawSleep(ctx, vw, vh);
     this.menu.draw(ctx, vw, vh, this.touchMode);
     this.terminal.draw(ctx, vw, vh);                                            // por cima de tudo
     this.cmd.draw(ctx, vw, vh);

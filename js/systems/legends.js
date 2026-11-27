@@ -6,7 +6,7 @@ export const LEGENDS = {
   sopa_jabuti:     { label: 'Sopa de jabuti',    status: 'hp',     animal: 'carne_jabuti',     effect: '+25% de vida máxima',                mult: { maxHp: 1.25 } },
   gemada_coruja:   { label: 'Gemada de coruja',  status: 'energy', animal: 'ovo_coruja', effect: 'correr, remar e golpear gastam 30% menos', mult: { effort: 0.7 } },
   moqueca_teiu:    { label: 'Moqueca de teiú',   status: 'hunger', animal: 'carne_teiu',       effect: 'a fome cai 30% mais devagar',        mult: { hunger: 0.7 } },
-  peixe_fundo:     { label: 'Peixe do fundo',    status: 'lung',   animal: 'file_peixe',      effect: 'o fôlego debaixo d\'água dura 50% mais (quando der para nadar)', mult: { lung: 1.5 } },
+  peixe_fundo:     { label: 'Peixe do fundo',    status: 'lung',   animal: 'file_peixe',      effect: 'o fôlego debaixo d\'água dura 50% mais', mult: { lung: 1.5 } },
 };
 // os outros ingredientes de cada lenda (além do animal); a fogueira é obrigatória (perto de uma acesa)
 export const LEGEND_NEEDS = {

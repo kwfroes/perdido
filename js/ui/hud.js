@@ -76,8 +76,23 @@ export function drawCanoeBar(ctx, c, x, y, t = 0) {
 }
 
 // No celular os indicadores são desenhados maiores (as barras eram pequenas demais para o dedo); o toque vale numa área um pouco maior que o desenho.
+function drawToast(ctx, info) {
+  if (info.toast && info.toast.t > 0) {
+    ctx.globalAlpha = Math.min(1, info.toast.t);
+    ctx.font = 'bold 10px monospace';
+    const w = Math.ceil(ctx.measureText(info.toast.text).width) + 16;
+    const x = Math.round((info.vw - w) / 2), b = info.invBox;
+    // mochila aberta: o aviso vai para baixo dela (ou para o rodapé), em vez de cobrir as abas
+    const y = !b ? 28 : b.y + b.h + 24 <= info.vh ? b.y + b.h + 4 : info.vh - 22;
+    ctx.fillStyle = 'rgba(24,18,12,0.94)'; ctx.fillRect(x, y, w, 18);
+    ctx.strokeStyle = '#d9a066'; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 17);
+    ctx.fillStyle = '#f3e9d8'; ctx.fillText(info.toast.text, x + 8, y + 12);
+    ctx.globalAlpha = 1;
+  }
+}
 export const HUD_TOUCH_SCALE = 1.6;
 export function drawHud(ctx, info) {
+  if (info.quiet) { drawToast(ctx, info); return; }                       // janela aberta: só o aviso (o resto do HUD fica escondido)
   const k = info.touch ? HUD_TOUCH_SCALE : 1, vy0 = info.debugLevel > 0 ? 36 : 4, hits = info.hudHits || null, gap = k > 1 ? 8 * k : 0, PADH = 3;
   if (hits) for (const key of Object.keys(hits)) delete hits[key];
   if (info.clock) { ctx.save(); ctx.translate(info.vw, 0); ctx.scale(k, k); const r = drawClock(ctx, info.clock, 0, info.weather); ctx.restore();
@@ -96,16 +111,5 @@ export function drawHud(ctx, info) {
     box(ctx, `FPS ${info.fps} | ${info.scale}x | vista ${info.vw}x${info.vh} | pos ${Math.round(info.px)},${Math.round(info.py)} | chunks ${info.chunks}`, 4, 3, '#fff');
     box(ctx, `mundo ${info.code}`, 4, 19, '#ffd9a0');
   }
-  if (info.toast && info.toast.t > 0) {
-    ctx.globalAlpha = Math.min(1, info.toast.t);
-    ctx.font = 'bold 10px monospace';
-    const w = Math.ceil(ctx.measureText(info.toast.text).width) + 16;
-    const x = Math.round((info.vw - w) / 2), b = info.invBox;
-    // mochila aberta: o aviso vai para baixo dela (ou para o rodapé), em vez de cobrir as abas
-    const y = !b ? 28 : b.y + b.h + 24 <= info.vh ? b.y + b.h + 4 : info.vh - 22;
-    ctx.fillStyle = 'rgba(24,18,12,0.94)'; ctx.fillRect(x, y, w, 18);
-    ctx.strokeStyle = '#d9a066'; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 17);
-    ctx.fillStyle = '#f3e9d8'; ctx.fillText(info.toast.text, x + 8, y + 12);
-    ctx.globalAlpha = 1;
-  }
+  drawToast(ctx, info);
 }

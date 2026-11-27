@@ -126,6 +126,7 @@ export class Inventory {
     return { x, y, bw, bh, wide, lw, rw, chipH, midX: x + lw, midW: bw - lw - rw, rx: x + bw - rw, top, bot, gx: x + lw + PAD, gy: top + chipH + 3, gw: bw - lw - rw - PAD * 2 - SB, gh: bot - (top + chipH + 3) };
   }
   draw(ctx, vw, vh, items, icons, dur = {}) {
+    this.icons = icons;                                                          // (icons.diary = medalhas do Diário)
     if (!this.open) return; this.dur = dur; const L = this.layout(vw, vh), { x, y, bw, bh } = L;
     ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(0, 0, vw, vh);
     ctx.fillStyle = 'rgba(24,18,12,0.97)'; ctx.fillRect(x, y, bw, bh);
@@ -139,6 +140,7 @@ export class Inventory {
     if (this.touch) { const bx = x + bw - 24, by = y + 3; ctx.strokeStyle = '#d9a066'; ctx.strokeRect(bx + 0.5, by + 0.5, 19, 17); ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText('X', bx + 7, by + 13); hits.close = { x: bx - 6, y: by - 4, w: 32, h: 26 }; }
     else { ctx.font = '8px monospace'; ctx.fillStyle = '#9c8a74'; const hint = 'Tab aba · Q categoria · setas movem · E age · I fecha'; ctx.fillText(hint, x + PAD + 2, y + bh - 4); }
     ctx.fillStyle = 'rgba(217,160,102,0.25)'; ctx.fillRect(x + 1, y + 23, bw - 2, 1);
+    this.drawMiniBars(ctx, x, y, bw);
     // clamp da seleção
     const n = this.listLen(items); if (this.sel >= n) this.sel = Math.max(0, n - 1);
     this.drawCats(ctx, L);
@@ -151,6 +153,22 @@ export class Inventory {
     ctx.restore();
     ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(L.rx, L.top, L.rw - 1, L.bot - L.top + 1); ctx.fillStyle = 'rgba(217,160,102,0.2)'; ctx.fillRect(L.rx - 1, L.top, 1, L.bot - L.top + 1);
     ctx.save(); ctx.beginPath(); ctx.rect(L.rx, L.top, L.rw, L.bot - L.top + 1); ctx.clip(); this.drawCard(ctx, L, items, icons); ctx.restore();
+  }
+  // com a mochila aberta o HUD some; os 4 indicadores continuam à vista, pequenos, na faixa das abas (para ver a fome subir ao comer)
+  drawMiniBars(ctx, x, y, bw) {
+    const v = this.vitals; if (!v) return; const rows = [[v.hp / v.maxHp, '#e05a4a'], [v.hunger / 100, '#e8913a'], [v.energy / 100, '#f2d24a']]; if (Number.isFinite(v.res)) rows.push([v.res / 100, '#7fb7e0']);
+    const bwid = 22, gap = 5, total = rows.length * (bwid + gap) - gap, right = x + bw - (this.touch ? 30 : 8), sx = right - total; if (sx < x + bw * 0.5) return;
+    rows.forEach(([f, col], k) => { const bx = sx + k * (bwid + gap); ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bx, y + 9, bwid, 5); ctx.fillStyle = col; ctx.fillRect(bx, y + 9, Math.round(bwid * Math.max(0, Math.min(1, f))), 5); ctx.strokeStyle = 'rgba(217,160,102,0.35)'; ctx.strokeRect(bx + 0.5, y + 9.5, bwid - 1, 4); });
+  }
+  // medalha do Diário: feita = em cores com selo ✓; não feita = em cinza escurecido com um cadeado pequeno
+  drawMedal(ctx, im, x, y, size, done) {
+    if (!im) { ctx.fillStyle = done ? '#7fd36a' : 'rgba(255,255,255,0.18)'; ctx.fillRect(x + 4, y + 4, 7, 7); return; }
+    if (done) { ctx.drawImage(im, x, y, size, size); ctx.fillStyle = '#5fbf4a'; ctx.fillRect(x + size - 5, y + size - 5, 6, 6); ctx.fillStyle = '#10170f'; ctx.fillRect(x + size - 4, y + size - 3, 1, 1); ctx.fillRect(x + size - 3, y + size - 2, 1, 1); ctx.fillRect(x + size - 2, y + size - 4, 1, 3); return; }
+    const c = this._grey || (this._grey = new Map()); let g = c.get(im);
+    if (!g) { g = document.createElement('canvas'); g.width = im.width; g.height = im.height; const q = g.getContext('2d'); q.drawImage(im, 0, 0); const d = q.getImageData(0, 0, g.width, g.height), p = d.data;
+      for (let k = 0; k < p.length; k += 4) { const v = (p[k] * 0.3 + p[k + 1] * 0.59 + p[k + 2] * 0.11) * 0.55; p[k] = p[k + 1] = p[k + 2] = v; } q.putImageData(d, 0, 0); c.set(im, g); }
+    ctx.drawImage(g, x, y, size, size);
+    ctx.fillStyle = '#d6cdb8'; ctx.fillRect(x + size - 6, y + size - 4, 5, 4); ctx.fillStyle = '#10170f'; ctx.fillRect(x + size - 5, y + size - 5, 3, 1); ctx.fillRect(x + size - 6, y + size - 6, 1, 2); ctx.fillRect(x + size - 2, y + size - 6, 1, 2);
   }
   drawIcon(ctx, im, cx, cy, size) {
     if (!im) return; const m = Math.max(im.width, im.height), s = m > size ? size / m : Math.max(1, Math.floor(size / m));
@@ -225,8 +243,8 @@ export class Inventory {
     this.fitScroll(L, keys.length, rowsVis, this.sel, RH); const inB = {}; for (const b of this.bundles || []) for (const [k, n] of Object.entries(b.xp || {})) inB[k] = (inB[k] || 0) + n;
     keys.forEach((k, i) => { if (i < this.scroll || i >= this.scroll + rowsVis) return; const ry = L.gy + (i - this.scroll) * RH, w = L.gw; this.hits.cells.push({ i, x: L.gx, y: ry, w, h: RH - 1 });
       ctx.fillStyle = i === this.sel ? 'rgba(217,160,102,0.35)' : 'rgba(255,255,255,0.05)'; ctx.fillRect(L.gx, ry, w, RH - 1);
-      if (diary) { const done = sk.journal.includes(k); ctx.fillStyle = done ? '#7fd36a' : 'rgba(255,255,255,0.18)'; ctx.fillRect(L.gx + 4, ry + 5, 7, 7); if (done) { ctx.fillStyle = '#1a1410'; ctx.fillRect(L.gx + 6, ry + 7, 3, 3); }
-        ctx.font = '8px monospace'; ctx.fillStyle = done ? '#f3e9d8' : '#8d8272'; let t = MILESTONES[k].text; while (ctx.measureText(t).width > w - 20 && t.length > 6) t = t.slice(0, -2); ctx.fillText(t, L.gx + 16, ry + 12); return; }
+      if (diary) { const done = sk.journal.includes(k); this.drawMedal(ctx, this.icons && this.icons.diary && this.icons.diary[k], L.gx + 3, ry + 1, 15, done);
+        ctx.font = '8px monospace'; ctx.fillStyle = done ? '#f3e9d8' : '#8d8272'; let t = MILESTONES[k].text; while (ctx.measureText(t).width > w - 26 && t.length > 6) t = t.slice(0, -2); ctx.fillText(t, L.gx + 22, ry + 12); return; }
       const xp = sk.xp[k], lv = sk.level(k), lo = XP_AT[lv], hi = XP_AT[Math.min(10, lv + 1)], f = lv >= 10 ? 1 : (xp - lo) / (hi - lo), bw2 = w - 12;
       ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText(SKILLS[k].label, L.gx + 5, ry + 9); ctx.fillStyle = '#d9a066'; const lvs = `nv ${lv}`; ctx.fillText(lvs, L.gx + w - 6 - ctx.measureText(lvs).width, ry + 9);
       ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(L.gx + 5, ry + 13, bw2, 5);
@@ -235,13 +253,15 @@ export class Inventory {
   }
   // ---------- card do item selecionado (coluna da direita) ----------
   drawCard(ctx, L, items, icons) {
-    const hits = this.hits, ix = L.rx + PAD, iw = L.rw - PAD * 2, bot = L.bot - 2; let y = L.top + 6;
+    const hits = this.hits, ix = L.rx + PAD, iw = L.rw - PAD * 2, bot = L.bot - 2; let y = L.top + 11;   // 11: o primeiro texto não encosta na linha de cima
     const lines = (txt, font, color, gap = 10) => { ctx.font = font; ctx.fillStyle = color; for (const l of wrapText(ctx, txt, iw)) { if (y > bot - (btn ? 22 : 4)) return; ctx.fillText(l, ix, y); y += gap; } };
     const head = (key, name, tag, tagColor) => {                                   // ícone grande + nome + etiqueta
       ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(ix, y, 46, 46); ctx.strokeStyle = 'rgba(217,160,102,0.35)'; ctx.strokeRect(ix + 0.5, y + 0.5, 45, 45);
       this.drawIcon(ctx, icons[key], ix + 23, y + 23, 44); ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#f3e9d8';
       const nl = wrapText(ctx, name, iw - 52).slice(0, 2); nl.forEach((l, k) => ctx.fillText(l, ix + 52, y + 12 + k * 10));
-      ctx.font = 'bold 7px monospace'; ctx.fillStyle = tagColor; const tl = wrapText(ctx, tag, iw - 52).slice(0, 2); tl.forEach((l, k) => ctx.fillText(l, ix + 52, y + 12 + nl.length * 10 + 2 + k * 8)); y += 54; };
+      ctx.font = 'bold 7px monospace'; ctx.fillStyle = tagColor; const room = Math.max(1, Math.floor((46 - nl.length * 10 - 2) / 8)); let tl = wrapText(ctx, tag, iw - 52);
+      if (tl.length > room) { tl = tl.slice(0, room); let last = tl[room - 1]; while (last.length > 3 && ctx.measureText(last + '…').width > iw - 52) last = last.slice(0, -1); tl[room - 1] = last + '…'; }   // não cabe: reticências (nada some em silêncio)
+      tl.forEach((l, k) => ctx.fillText(l, ix + 52, y + 12 + nl.length * 10 + 2 + k * 8)); y += 54; };
     let btn = null;
     if (this.grid) {
       const list = this.listFor(items), cur = list[this.sel];
@@ -267,16 +287,17 @@ export class Inventory {
       if (!this.touch) lines('E: fabricar', 'bold 8px monospace', '#d9a066');
     } else if (this.tab === 'legends') {
       const g = this.game, k = this.legendKey(), Lg = LEGENDS[k], tier = LG_TIERS[this.ltier || 0], T = TIERS[tier], c = g ? g.legendCan(k, tier) : { ok: false, why: '' }; btn = { label: 'Preparar', can: !!c.ok, key: 'legend' };
-      head(Lg.animal, Lg.label, `LENDA  ${Lg.effect}`.slice(0, 60), '#c9a0e8');
+      head(Lg.animal, Lg.label, `LENDA  ${Lg.effect}`, '#c9a0e8');
       LG_TIERS.forEach((tk, i) => { const tw = Math.floor((iw - 4) / 3), tx = ix + i * (tw + 2), on = i === (this.ltier || 0); ctx.fillStyle = on ? 'rgba(217,160,102,0.85)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(tx, y, tw, 12);
-        ctx.font = 'bold 7px monospace'; ctx.fillStyle = on ? '#1a1410' : '#b9ad9a'; const lb = TIERS[tk].label + (tk === 'ritual' ? ' ∞' : ` ${TIERS[tk].days}d`); ctx.fillText(lb, tx + Math.max(1, (tw - ctx.measureText(lb).width) / 2), y + 9); hits.ltiers.push({ i, x: tx, y: y - 2, w: tw, h: 16 }); }); y += 18;
+        ctx.font = 'bold 7px monospace'; ctx.fillStyle = on ? '#1a1410' : '#b9ad9a'; const lb = TIERS[tk].label + (tk === 'ritual' ? ' ∞' : ` ${TIERS[tk].days}d`); ctx.fillText(lb, tx + Math.max(1, (tw - ctx.measureText(lb).width) / 2), y + 9); hits.ltiers.push({ i, x: tx, y: y - 2, w: tw, h: 16 }); }); y += 25;
       lines(tier === 'ritual' ? 'Para sempre, com metade da força. Só uma vez por lenda.' : `Dura ${T.days} dia${T.days > 1 ? 's' : ''} de jogo.`, '8px monospace', '#c8bfae'); y += 2;
       ctx.font = 'bold 8px monospace'; ctx.fillStyle = '#d9a066'; if (y < bot - 22) ctx.fillText('Leva:', ix, y); y += 10;
       const needs = g ? g.legendNeeds(k, tier) : {}; for (const [it2, q] of Object.entries(needs)) { if (y > bot - 22) break; const ok = (items[it2] || 0) >= q; ctx.fillStyle = ok ? '#7fd36a' : '#e05a4a'; ctx.fillRect(ix, y - 6, 4, 4); ctx.font = '8px monospace'; ctx.fillStyle = ok ? '#a8e08a' : '#e08a7a'; ctx.fillText(`${ITEMS[it2].label} ${Math.min(items[it2] || 0, q)}/${q}`, ix + 8, y); y += 10; }
       y += 2; lines(this.msg || (c.ok ? 'Pronta para preparar.' : c.why), 'bold 8px monospace', c.ok ? '#a8e08a' : '#e8c84a'); if (!this.touch) lines('E: preparar · ←→ duração', 'bold 8px monospace', '#d9a066');
     } else {
       const sk = this.skills; if (!sk) return;
-      if (this.cat === 1) { const k = MS_KEYS[this.sel], m = MILESTONES[k], done = sk.journal.includes(k); ctx.font = 'bold 9px monospace'; ctx.fillStyle = done ? '#a8e08a' : '#c8bfae'; lines(m.text, 'bold 9px monospace', done ? '#a8e08a' : '#c8bfae', 11); y += 2;
+      if (this.cat === 1) { const k = MS_KEYS[this.sel], m = MILESTONES[k], done = sk.journal.includes(k); y += 4; this.drawMedal(ctx, this.icons && this.icons.diary && this.icons.diary[k], ix + Math.floor((iw - 44) / 2), y, 44, done); y += 52;
+        ctx.font = 'bold 9px monospace'; ctx.fillStyle = done ? '#a8e08a' : '#c8bfae'; lines(m.text, 'bold 9px monospace', done ? '#a8e08a' : '#c8bfae', 11); y += 3;
         lines(done ? 'Concluído.' : 'Ainda não feito.', '8px monospace', done ? '#7fd36a' : '#8d8272'); lines(`Rende ${m.xp} XP em ${SKILLS[m.skill].label.toLowerCase()} na primeira vez.`, '8px monospace', '#c8bfae'); return; }
       const k = SKILL_ORDER[this.sel], Sk = SKILLS[k], xp = sk.xp[k], lv = sk.level(k), lo = XP_AT[lv], hi = XP_AT[Math.min(10, lv + 1)];
       ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#f3e9d8'; ctx.fillText(Sk.label, ix, y + 8); ctx.fillStyle = '#d9a066'; ctx.fillText(`nível ${lv}`, ix + iw - ctx.measureText(`nível ${lv}`).width, y + 8); y += 16;

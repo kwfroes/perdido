@@ -27,6 +27,9 @@ for (const [k, it] of Object.entries(ITEMS)) FILES[`icon_${k}`] = it.icon;
 FILES.trouxa_glow = 'assets/environment/trouxa_glow.png';
 for (const k of HUNT_SPRITES) FILES[k] = `assets/fish/${k}.png`;   // 5C.1
 FILES.farm_terra = 'assets/farm/terra.png';   // 5C.2
+for (const n of ['-', 'N', 'E', 'S', 'W', 'NE', 'ES', 'SW', 'NW', 'NS', 'EW', 'NES', 'NSW', 'NEW', 'ESW', 'full_0', 'full_1']) FILES[`flood_${n}`] = `assets/flood/f_${n}.png`;   // cheia: margem alagada (16 peças + 2 de água cheia)
+for (const n of ['NW', 'NE', 'SE', 'SW']) FILES[`floodc_${n}`] = `assets/flood/c_${n}.png`;   // cheia: 4 cantos internos (a água continua nos 4 lados e uma diagonal é chão)
+for (const k of ['fogueira', 'arvore', 'pedra', 'ferro', 'remar', 'caverna', 'cristal', 'abrigo', 'casa', 'dormir', 'lenda', 'caca', 'peixe']) FILES[`diary_${k}`] = `assets/items/diary_${k}.png`;   // medalhas do Diário
 for (const k of Object.keys(NPC_SPRITES.sheets)) FILES[`npc_${k}`] = `assets/npcs/${k}.png`;   // 6B
 for (const st of ['indigena', 'quilombola', 'ribeirinho']) for (const k of ['piso0', 'piso1', 'piso2', 'piso3', 'guarda']) FILES[`up_${st}_${k}`] = `assets/home/up_${st}_${k}.png`;   // andar de cima
 for (const k of ['in_indigena', 'in_ribeirinho', 'in_quilombola', 'luz_janela', 'luz_porta', 'fogao_0', 'fogao_1', 'fogao_2', 'fogao_3', 'rede_ocupada']) FILES[k] = `assets/home/${k}.png`;   // casa por dentro
@@ -101,6 +104,7 @@ export async function loadAssets() {
     assets.bat_fly_flip = c; }
   assets.legendIcons = Object.fromEntries(['res', 'hp', 'energy', 'hunger', 'lung'].map(k => [k, assets[`lenda_${k}`]]));
   assets.itemIcons = Object.fromEntries(Object.keys(ITEMS).map(k => [k, assets[`icon_${k}`]]));
+  assets.itemIcons.diary = Object.fromEntries(['fogueira', 'arvore', 'pedra', 'ferro', 'remar', 'caverna', 'cristal', 'abrigo', 'casa', 'dormir', 'lenda', 'caca', 'peixe'].map(k => [k, assets[`diary_${k}`]]));
   assets.characters = {};
   const ids = Object.keys(CHARACTERS);
   for (let i = 0; i < ids.length; i++) {

@@ -40,7 +40,7 @@ export class TouchControls {
     const root = this.root = document.createElement('div'); root.id = 'touch-controls'; root.hidden = true;
     root.addEventListener('contextmenu', (e) => e.preventDefault());
     // analógico (esquerda)
-    const base = document.createElement('div'); base.className = 'tc-stick'; const knob = document.createElement('div'); knob.className = 'tc-knob'; base.appendChild(knob);
+    const base = this.base = document.createElement('div'); base.className = 'tc-stick'; const knob = document.createElement('div'); knob.className = 'tc-knob'; base.appendChild(knob);
     let cx = 0, cy = 0, R = 1, pid = null;
     const move = (e) => { let dx = e.clientX - cx, dy = e.clientY - cy; const m = Math.hypot(dx, dy);
       if (m > R) { dx = dx / m * R; dy = dy / m * R; } knob.style.transform = `translate(${dx}px, ${dy}px)`; this.state.setStick(dx, dy, R); };
@@ -50,7 +50,7 @@ export class TouchControls {
     const end = (e) => { if (e.pointerId !== pid) return; pid = null; knob.style.transform = ''; base.classList.remove('on'); this.state.releaseStick(); };
     base.addEventListener('pointerup', end); base.addEventListener('pointercancel', end); base.addEventListener('lostpointercapture', end);
     // AGIR (direita)
-    const act = this.btn('tc-act', '<b>AGIR</b><span></span>', 'Agir (E)'); this.label = act.querySelector('span');
+    const act = this.act = this.btn('tc-act', '<b>AGIR</b><span></span>', 'Agir (E)'); this.label = act.querySelector('span');
     this.bindHold(act, () => { const s = this.app.session; if (s && s.secretAct && s.secretAct()) return; this.state.actDown(); }, () => this.state.actUp());   // com o código quase completo, o AGIR é do código (não age no jogo)
     // atalhos (canto superior direito, abaixo do relógio)
     const bar = this.bar = document.createElement('div'); bar.className = 'tc-bar';
@@ -93,6 +93,7 @@ export class TouchControls {
     const cb = s.hudHits && s.hudHits.clockBottom, top = cb ? Math.round(cb * (this.renderer.scale || 1)) + 6 : 48; if (top !== this._barTop) { this._barTop = top; this.bar.style.top = top + 'px'; }   // abaixo do relógio (que fica maior no toque)
     const l = actLabel(s); if (l !== this._l) { this._l = l; this.label.textContent = l; }
     const inv = !!(s.inventory && s.inventory.open); if (inv !== this._inv) { this._inv = inv; this.tabBtn.hidden = !inv; }
+    const win = inv || !!(s.cmd && s.cmd.open); if (win !== this._win) { this._win = win; this.base.style.visibility = win ? 'hidden' : ''; this.act.style.visibility = win ? 'hidden' : ''; for (const b of this.bar.children) if (b !== this.tabBtn) b.style.visibility = win ? 'hidden' : ''; if (win) this.state.releaseAll(); }   // janela aberta: some o joystick, o AGIR e os botões (só o Tab fica)
     const zi = this.renderer.canZoomIn(), zo = this.renderer.canZoomOut();
     if (zi !== this._zi) { this._zi = zi; this.zin.hidden = !zi; } if (zo !== this._zo) { this._zo = zo; this.zout.hidden = !zo; }
   }
