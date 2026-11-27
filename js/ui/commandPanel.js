@@ -2,6 +2,7 @@
 // 3 colunas, como a mochila: CATEGORIAS | LISTA de comandos | CARD (o que faz, opções para escolher, Executar e o resultado).
 // Embaixo, uma linha de texto: tocar nela abre o teclado do celular (um campo escondido) para digitar qualquer comando; Enviar executa.
 // Tudo vira texto e passa pelo mesmo Terminal.run do computador (as regras ficam num lugar só).
+import { VERSION } from '../version.js';
 import { CMD_CATS, COMMANDS, defaultValues } from '../data/commands.js';
 
 const PAD = 4, ROW = 15, INPUT_H = 17;
@@ -85,7 +86,7 @@ export class CommandPanel {
     const bw = Math.min(vw - 6, 620), bh = Math.min(vh - 6, 330), x = Math.round((vw - bw) / 2), y = Math.round((vh - bh) / 2), hits = { cats: [], rows: [], chips: [] };
     ctx.fillStyle = 'rgba(6,8,10,0.97)'; ctx.fillRect(0, 0, vw, vh);
     ctx.fillStyle = 'rgba(24,18,12,0.98)'; ctx.fillRect(x, y, bw, bh); ctx.strokeStyle = '#5fbf6f'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, bh - 1);
-    ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#b8e6c0'; ctx.fillText('Comandos', x + PAD + 2, y + 11);
+    ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#b8e6c0'; ctx.fillText(`Comandos · v${VERSION}`, x + PAD + 2, y + 11);
     hits.close = { x: x + bw - 26, y: y + 2, w: 24, h: 13 }; ctx.fillStyle = 'rgba(95,191,111,0.25)'; ctx.fillRect(hits.close.x, hits.close.y, hits.close.w, hits.close.h); ctx.fillStyle = '#b8e6c0'; ctx.fillText('✕', hits.close.x + 8, hits.close.y + 10);
     const top = y + 17, ih = INPUT_H, bottom = y + bh - ih - PAD - 2, ch = bottom - top;
     const lw = Math.max(62, Math.min(84, Math.round(bw * 0.2))), rw = Math.max(126, Math.min(210, Math.round(bw * 0.38))), mw = bw - lw - rw - PAD * 4;

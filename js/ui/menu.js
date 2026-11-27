@@ -1,3 +1,4 @@
+import { VERSION, BUILD_DATE } from '../version.js';
 import { CHARACTERS } from '../data/characters.js';
 import { CONFIG } from '../core/config.js';
 import { hasCharSelect, runCharSelect } from './charsel.js';
@@ -62,6 +63,7 @@ export function runMenu(opts = {}) {
       else if (a === 'select') selected = n;
       redraw();
     };
+    const ver = document.getElementById('app-version'); if (ver) ver.textContent = `v${VERSION} · ${BUILD_DATE}`;   // versão visível no menu inicial
     const menu = $('menu'), input = $('seed-input'), err = $('seed-error'), note = $('seed-note');
     const radios = [...document.querySelectorAll('input[name=size]')];
     let character = loadChar() || CONFIG.PLAYER.DEFAULT;                 // último escolhido (a escolha é na tela seguinte)

@@ -51,6 +51,7 @@ export const COMMANDS = [
   simple('dormir', 'casa', 'Dormir', 'Dorme na primeira cama montada.', 'dormir'),
   withParam('nivel', 'casa', 'Nível da casa', 'Muda sua casa para o nível escolhido (1 a 4), sem gastar material.', { key: 'n', label: 'Nível', opts: o('1', '2', '3', '4') }, (v) => `nivel ${v.n}`),
   // ---- Mundo ----
+  simple('versao', 'mundo', 'Versão do jogo', 'Mostra a versão e a data deste pacote.', 'versao'),
   simple('onde', 'mundo', 'Onde estou', 'Mostra a posição em tiles e o código do mundo.', 'onde'),
   withParam('ir', 'mundo', 'Ir para…', 'Leva você para perto do lugar escolhido.', { key: 'l', label: 'Lugar', opts: o(['Início', 'inicio'], ['Canoa', 'canoa'], ['Ilhota', 'ilhota']) }, (v) => `ir ${v.l}`),
   simple('vilas', 'mundo', 'Listar vilas', 'Lista as ilhas de vila e quem mora em cada uma.', 'vila'),

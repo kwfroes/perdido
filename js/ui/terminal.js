@@ -1,3 +1,4 @@
+import { VERSION, BUILD_DATE } from '../version.js';
 import { CHARACTERS } from '../data/characters.js';
 import { CONFIG } from '../core/config.js';
 import { ITEMS, ITEM_ORDER } from '../data/items.js';
@@ -50,13 +51,14 @@ export class Terminal {
     const s = this.s, [cmd0, ...args] = cmdLine.trim().split(/\s+/), cmd = norm(cmd0), a0 = norm(args[0] || '');
     const findItem = (name) => { const n = norm(name); return ITEM_ORDER.find(k => k === n || norm(ITEMS[k].label) === n) || ITEM_ORDER.find(k => norm(ITEMS[k].label).startsWith(n)); };
     switch (cmd) {
+      case 'versao': return `Perdido v${VERSION} (${BUILD_DATE})`;
       case 'ajuda': case 'help': case '?':
         return ['dar <item> [n] | dar ferramentas | dar materiais | dar tudo | itens',
           'limpar-inventario   reparar   durabilidade',
           'clima <aberto|nublado|chuva|trovoada|auto>   relampago <on|off>',
           'agua <on|off>   personagem <nawa|caua|helena|mateus>',
           'vila [n | ir n]   nivel <1..4>   roca   caca   pesca   casa (kits)   bancada (de bolso)   dormir   canoa [<0..100> | quebrar | nova]   caverna [n | sair]   luz',
-          'status   curar   vida <n>   fome <n>   energia <n>   resistencia <n>   (fogueira: dar kit_fogueira)',
+          'versao   status   curar   vida <n>   fome <n>   energia <n>   resistencia <n>   (fogueira: dar kit_fogueira)',
           'hora <hh[:mm]>   noite   manha   dia [+n]   estacao <chuvas|estiagem|seca|trovoadas|proxima>',
           'ir <inicio|canoa|ilhota|x y>   onde   limpar   fechar'].join('\n');
       case 'itens': return ITEM_ORDER.join(', ');

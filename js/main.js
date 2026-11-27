@@ -92,7 +92,7 @@ async function main() {
   let choice = auto ? { action: 'new', code: parseCode(auto.code).code, slot: auto.slot || null } : null;
   for (;;) {
     if (!choice) {
-      app.mode = 'menu'; app.status = 'Escolha uma semente...';
+      { const de = document.documentElement; if (de && de.classList) de.classList.remove('playing'); } app.mode = 'menu'; app.status = 'Escolha uma semente...';
       let slots = []; try { slots = await app.store.list(); } catch (e) { app.error = 'Não consegui ler os jogos salvos: ' + e.message; }
       choice = await runMenu({ error: app.error, slots, onDelete: async (n) => { await app.store.remove(n); return app.store.list(); } }); app.error = '';
     }
@@ -114,7 +114,7 @@ async function main() {
       if (save && worldFingerprint(world) !== save.fingerprint && (await askMismatch(save.code)) === 'new') save = null;
       session = new Session({ world, assets, renderer, input, onCopy: copyText, save, character: choiceChar });
     } catch (e) { console.error(e); app.error = 'Não foi possível criar este mundo: ' + (e && e.message ? e.message : e); app.mode = 'menu'; continue; }
-    app.session = session; app.slot = slot; app.saveTimer = 0; session.touchMode = touch.enabled;
+    { const de = document.documentElement; if (de && de.classList) de.classList.add('playing'); } app.session = session; app.slot = slot; app.saveTimer = 0; session.touchMode = touch.enabled;
     window.__game = Object.assign(app.session, { app });     // acesso para depuração/testes
     writeHashCode(world.code);
     app.mode = 'playing';

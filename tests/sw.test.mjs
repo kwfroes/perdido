@@ -3,7 +3,8 @@ const R = []; const ok = (n, c) => R.push([c, n]);
 const B = 'https://kwfroes.github.io/perdido/', store = new Map(); let online = true, deleted = null, navInit = null;
 const keyStr = (r) => (typeof r === 'string' ? r : r.url);
 const cacheObj = { match: async (r) => store.get(keyStr(r)) || null, put: async (r, res) => { store.set(keyStr(r), res); }, addAll: async (l) => { for (const u of l) store.set(new URL(u, B).href, new Res('pre:' + u)); } };
-globalThis.caches = { open: async () => cacheObj, keys: async () => ['perdido-v1', 'perdido-v2'], delete: async (k) => { deleted = k; } };
+const CUR = (await import('fs')).readFileSync(new URL('../sw.js', import.meta.url), 'utf8').match(/const VERSION = ["']([^"']+)["']/)[1];   // nome do cache atual (vem da versão do jogo)
+globalThis.caches = { open: async () => cacheObj, keys: async () => ['perdido-v1', CUR], delete: async (k) => { deleted = k; } };
 class Res { constructor(b, o = {}) { this.body = b; this.status = o.status || 200; this.ok = this.status < 300; this.type = 'basic'; } clone() { return this; } }
 globalThis.Response = Res;
 globalThis.fetch = async (r, init) => { if (r.mode === 'navigate') navInit = init; if (!online) throw new Error('offline'); return new Res('rede:' + (r.url || r)); };
